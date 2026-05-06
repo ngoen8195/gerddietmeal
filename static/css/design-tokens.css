@@ -1,0 +1,1298 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+:root {
+    --primary: #0B2B26;
+    --bg: #0B2B26;
+    --surface: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.1);
+    --border-hover: rgba(255, 255, 255, 0.2);
+    --text: #FFFFFF;
+    --text-muted: #E2E8F0;
+    --cta: #235347;
+    --cta-hover: #38806e;
+    --fav-active: #FBBF24;
+    /* Orangy-yellow */
+    --accent: #E2E8F0;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Poppins', sans-serif;
+
+    /* Progress & Gradients */
+    --gradient-primary: linear-gradient(90deg, #059669 0%, #10b981 100%);
+    --primary-light: rgba(16, 185, 129, 0.4);
+
+    /* Variable Height Logic */
+    --meal-card-x: 420px;
+    /* Total Column Height */
+    --meal-card-y: 85px;
+    /* Info/Compact Height */
+    --meal-gap: 10px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0
+}
+
+/* Custom Scrollbar for Modals and Lists */
+.modal::-webkit-scrollbar,
+.command-list::-webkit-scrollbar {
+    width: 8px;
+    height: 6px;
+    background: transparent;
+}
+
+.modal::-webkit-scrollbar-thumb,
+.command-list::-webkit-scrollbar-thumb {
+    background: #ffffffb0;
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 10px;
+}
+
+.modal::-webkit-scrollbar-track,
+.command-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body {
+    font-family: var(--font-body);
+    background: url('/resources/background.png') no-repeat center center fixed;
+    background-size: cover;
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: var(--font-heading);
+    color: var(--text);
+    font-weight: 700
+}
+
+a {
+    color: var(--cta);
+    text-decoration: none;
+    transition: color var(--transition)
+}
+
+a:hover {
+    color: var(--cta-hover)
+}
+
+:focus-visible {
+    outline: 3px solid var(--cta);
+    outline-offset: 3px
+}
+
+@media(prefers-reduced-motion:reduce) {
+    * {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important
+    }
+}
+
+/* ─── Layout ───────────────────────────────────── */
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column
+}
+
+.app-header {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 0 40px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    /* Deleted gap between gerd and dietmeal */
+    font-family: var(--font-heading);
+    color: #FFFFFF;
+    font-size: 1.3rem;
+    letter-spacing: .02em;
+    flex-shrink: 0;
+}
+
+.logo-bold {
+    font-weight: 700;
+}
+
+.logo-light {
+    font-weight: 300;
+}
+
+.app-header .logo img {
+    height: 36px;
+    width: 36px;
+}
+
+.tab-nav {
+    display: flex;
+    gap: 8px;
+    height: 100%;
+}
+
+.tab-btn {
+    padding: 0 20px;
+    font-family: var(--font-body);
+    font-size: .9rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all var(--transition);
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.tab-btn:hover {
+    color: #FFFFFF;
+}
+
+.tab-btn.active {
+    color: var(--cta);
+    border-bottom-color: var(--cta);
+}
+
+.tab-content {
+    display: none;
+    padding: 40px;
+    flex: 1;
+}
+
+.tab-content.active {
+    display: block
+}
+
+main {
+    flex: 1
+}
+
+/* ─── Buttons ──────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-primary {
+    background: var(--cta);
+    color: #fff;
+    white-space: nowrap;
+}
+
+.btn-primary:hover {
+    background: var(--cta-hover);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    padding: 6px;
+    border-radius: 4px;
+    transition: all var(--transition);
+}
+
+.btn-icon:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-icon.fav-active {
+    color: var(--fav-active);
+}
+
+.btn-icon.fav-active svg {
+    fill: var(--fav-active);
+}
+
+/* ─── Home Tab: Weekly Planner ─────────────────── */
+.planner-header {
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.planner-header #btn-generate-plan {
+    justify-self: end;
+}
+
+.planner-header .week-navigation {
+    grid-column: 2;
+    justify-self: center;
+}
+
+.week-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.week-dropdown {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px 35px 10px 20px;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+}
+
+.week-dropdown option,
+.food-filters select option,
+.form-group select option,
+.select-shadcn option {
+    color: #0b2b26;
+}
+
+/* ─── Shadcn-inspired UI Components ────────────── */
+.input-shadcn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    transition: all var(--transition);
+    width: 100%;
+}
+
+.input-shadcn:focus {
+    border-color: var(--cta);
+    outline: 2px solid rgba(35, 83, 71, 0.3);
+    outline-offset: 0;
+}
+
+.input-shadcn::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.select-shadcn {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px 35px 10px 16px;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    transition: all var(--transition);
+}
+
+.select-shadcn:focus {
+    border-color: var(--cta);
+}
+
+.search-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.search-wrapper .search-icon {
+    position: absolute;
+    left: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    width: 16px;
+    height: 16px;
+}
+
+.search-wrapper .input-shadcn {
+    padding-left: 38px;
+}
+
+/* Exact Geometry Grid - Centered */
+.week-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: center;
+}
+
+.day-row-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.day-label {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: left;
+    margin-bottom: 4px;
+}
+
+.day-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+
+.meal-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--meal-gap);
+    height: var(--meal-card-x);
+}
+
+/* Full Meal Card */
+.meal-card-full {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    transition: border-color var(--transition);
+}
+
+.meal-card-full.breakfast {
+    height: var(--meal-card-x);
+}
+
+.meal-card-img-wrapper {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.meal-card-full.breakfast .meal-card-img-wrapper {
+    height: calc(var(--meal-card-x) - var(--meal-card-y));
+}
+
+.meal-card-full.lunch-dinner .meal-card-img-wrapper {
+    height: calc(var(--meal-card-x) - (3 * var(--meal-card-y)) - (2 * var(--meal-gap)));
+}
+
+.meal-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--transition);
+}
+
+.meal-card-full:hover .meal-card-img {
+    transform: scale(1.05);
+}
+
+/* Gradients for Overlay Visibility */
+.meal-card-gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 40%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.meal-card-gradient-top {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent);
+}
+
+.meal-card-gradient-bottom {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
+}
+
+.meal-card-overlay-edit {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0);
+    border: 0px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.meal-card-overlay-edit:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+.meal-card-overlay-link {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 2;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 300;
+    text-decoration: none;
+    max-width: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.9;
+    font-family: var(--font-body);
+}
+
+.meal-card-overlay-link:hover {
+    text-decoration: underline;
+    opacity: 1;
+}
+
+.meal-card-info-box {
+    height: var(--meal-card-y);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.meal-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.meal-card-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    /* Change mouse icon to hand */
+}
+
+.meal-card-stats {
+    font-family: var(--font-body);
+    font-weight: 300;
+    /* Light Poppins */
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.meal-card-actions {
+    display: flex;
+    gap: 4px;
+}
+
+/* Compact Meal Card */
+.meal-card-compact {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    height: var(--meal-card-y);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color var(--transition);
+}
+
+.meal-card-compact:hover {
+    border-color: var(--border-hover);
+}
+
+/* ─── Library and Modals ───────────────────────── */
+.food-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    /* Smaller padding for compact look */
+    transition: all var(--transition);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.food-card:hover {
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.food-card h4 {
+    font-size: 1rem;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    min-height: 2.8em;
+}
+
+.food-category {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: normal;
+}
+
+.food-badge {
+    align-self: flex-start;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.food-badge.safe {
+    background: rgba(35, 83, 71, 0.3);
+    color: #4ade80;
+}
+
+.food-badge.avoid {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.food-badge.remedy {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.food-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    /* Force 1 line */
+    overflow: hidden;
+}
+
+.food-type-tag {
+    align-self: flex-start;
+    padding: 4px 10px;
+    /* Same as food-badge */
+    border-radius: 20px;
+    /* Capsule style like food-badge */
+    font-size: 0.75rem;
+    /* Same as food-badge */
+    font-weight: 600;
+    /* Same as food-badge */
+    text-transform: capitalize;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(255, 255, 255, 0.1);
+    /* Single color style */
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    flex-shrink: 1;
+    /* Allow to shrink to stay on one line */
+    min-width: 0;
+}
+
+.food-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+}
+
+.food-grid,
+.meal-lib-grid,
+.fav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    /* Smaller cards */
+    gap: 20px;
+}
+
+/* Redesigned Meal Library Card */
+.meal-lib-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    height: 340px;
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--transition);
+}
+
+.meal-lib-card:hover {
+    border-color: var(--border-hover);
+}
+
+.meal-lib-card-img-wrapper {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.meal-lib-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.meal-lib-card-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.meal-lib-card-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.meal-lib-card-stats {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.meal-lib-card-stats .vn-badge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    padding: 1px 3px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.4rem;
+}
+
+.meal-lib-card-stats .en-badge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    padding: 1px 3px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.4rem;
+}
+
+.meal-lib-card-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: auto;
+    align-items: center;
+}
+
+.meal-lib-card-overlay-link {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    z-index: 2;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 300;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    opacity: 0.9;
+}
+
+.meal-lib-card-overlay-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+
+
+
+/* ─── Library and Modals ───────────────────────── */
+.food-grid-header,
+.meal-lib-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 35px;
+    flex-wrap: wrap;
+}
+
+.food-filters,
+.meal-lib-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.food-grid,
+.meal-lib-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    /* Smaller cards */
+    gap: 24px;
+}
+
+/* Modal Overlay & Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-overlay.visible {
+    display: flex;
+}
+
+.modal {
+    background: #0c2d28e6;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 70vh;
+    /* Reverted to 600px as requested by the x button logic */
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+}
+
+.modal-glass {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #FFFFFF;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-img-preview {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 20px;
+    border-radius: var(--radius);
+}
+
+.modal-footer {
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: var(--font-body);
+    transition: border-color var(--transition);
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group input:focus {
+    border-color: var(--cta);
+    outline: none;
+}
+
+.ingredient-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: center;
+    /* Center the X button and inputs */
+}
+
+/* Tooltip */
+.meal-tooltip {
+    position: fixed;
+    z-index: 2000;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    width: 300px;
+    pointer-events: none;
+    display: none;
+    backdrop-filter: blur(50px);
+    overflow: hidden;
+}
+
+.meal-tooltip.visible {
+    display: block;
+}
+
+.meal-tooltip img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+}
+
+.meal-tooltip-body {
+    padding: 12px 16px;
+}
+
+.meal-tooltip-body h4 {
+    margin-bottom: 4px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+.meal-tooltip-body p {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* Stats Badges */
+.food-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.food-badge.safe {
+    background: rgba(35, 83, 71, 0.5);
+    color: #38806e;
+}
+
+.food-badge.avoid {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+}
+
+.food-badge.remedy {
+    background: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .day-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .meal-col {
+        height: auto;
+    }
+}
+
+/* ─── Combobox & Command Component ──────────────── */
+.combobox-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.combobox-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.combobox-trigger:hover {
+    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.combobox-chevron {
+    color: var(--text-muted);
+    transition: transform var(--transition);
+}
+
+.combobox-wrapper.open .combobox-chevron {
+    transform: rotate(180deg);
+}
+
+.combobox-content {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: #1e1e1e;
+    /* Darker surface for contrast */
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    z-index: 1000;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.2s ease;
+}
+
+.combobox-wrapper.open .combobox-content {
+    display: flex;
+}
+
+.command-input-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.command-search-icon {
+    color: var(--text-muted);
+    margin-right: 8px;
+}
+
+#combobox-search {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+    width: 100%;
+}
+
+.command-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.command-item {
+    padding: 8px 12px;
+    border-radius: calc(var(--radius) - 4px);
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.command-item:hover {
+    background: var(--primary-low-op);
+    color: white;
+}
+
+.command-item.selected {
+    background: var(--primary);
+    color: white;
+}
+
+.command-empty {
+    padding: 12px;
+    text-align: center;
+}
+
+.command-add-btn {
+    width: 100%;
+    padding: 8px;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px dashed var(--primary);
+    border-radius: var(--radius);
+    color: white;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all var(--transition);
+}
+
+.command-add-btn:hover {
+    background: var(--primary);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─── Notifications ─────────────────────────────── */
+.notification-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 380px;
+    max-width: calc(100vw - 48px);
+    pointer-events: none;
+}
+
+.alert-shadcn {
+    position: relative;
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    color: var(--text);
+    transition: all 300ms ease;
+    pointer-events: auto;
+    animation: slideInRight 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-shadcn.fade-out {
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+.alert-shadcn-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.alert-shadcn-description {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.alert-shadcn-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition), color var(--transition);
+}
+
+.alert-shadcn-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Calorie & Incomplete Tags */
+.calorie-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    cursor: help;
+    font-size: 0.65rem;
+    font-weight: 300;
+}
+
+.meal-card-stats .calorie-tag {
+    font-size: 0.75rem;
+}
+
+.incomplete-tag {
+    color: #f59e0b;
+    font-weight: bold;
+}
+
+.vn-badge,
+.en-badge {
+    font-size: 0.4rem;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-weight: 800;
+}
+
+.vn-badge {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.en-badge {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}

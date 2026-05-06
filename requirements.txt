@@ -1,0 +1,13 @@
+fastapi[all]
+sqlalchemy[asyncio]
+aiosqlite
+uvicorn
+jinja2
+beautifulsoup4
+httpx
+python-multipart
+deep-translator
+ingredient-parser-nlp
+recipe-scrapers
+rapidfuzz
+usda-fdc

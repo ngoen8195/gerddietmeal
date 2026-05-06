@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+
+# Project specific
+.agents/
+.claude/
+scratch/
+.gemini/
+.tempmediaStorage/
+brain/
+knowledge/
+artifacts/

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Premium Application{% endblock %}</title>
+    
+    <!-- Design System -->
+    <link rel="stylesheet" href="/static/css/design-tokens.css">
+    
+    <!-- Meta Tags -->
+    <meta name="description" content="A sophisticated, high-performance web application built with Pro Max standards.">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header-premium">
+        <nav>
+            <div class="logo">SOPHISTICATED</div>
+            <ul class="nav-links">
+                <li><a href="/">HOME</a></li>
+                <li><a href="/services">SERVICES</a></li>
+                <li><a href="/about">ABOUT</a></li>
+            </ul>
+            <button class="btn-premium">GET STARTED</button>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer-premium">
+        <p>&copy; 2026 Premium Sophisticated. All rights reserved.</p>
+    </footer>
+
+    <!-- Interaction Library -->
+    <script src="/static/js/modules/ui_components.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
