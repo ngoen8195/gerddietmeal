@@ -1,4 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/resources/Font/FZ Poppins-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/resources/Font/FZ Poppins-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/resources/Font/FZ Poppins-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/resources/Font/FZ Poppins-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('/resources/Font/FZ Poppins-ExtraBold.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
 
 :root {
     --primary: #0B2B26;
@@ -6,15 +47,18 @@
     --surface: rgba(255, 255, 255, 0.05);
     --border: rgba(255, 255, 255, 0.1);
     --border-hover: rgba(255, 255, 255, 0.2);
-    --text: #FFFFFF;
-    --text-muted: #E2E8F0;
+    --text: #f8f8f8;
+    --text-light: rgba(255, 255, 255, 0.9);
+    --text-muted: rgba(255, 255, 255, 0.75);
     --cta: #235347;
     --cta-hover: #38806e;
     --fav-active: #FBBF24;
     /* Orangy-yellow */
     --accent: #E2E8F0;
-    --radius: 8px;
-    --radius-lg: 12px;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --radius: 20px;
+    --radius-lg: 24px;
     --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
     --font-heading: 'Montserrat', sans-serif;
     --font-body: 'Poppins', sans-serif;
@@ -29,6 +73,11 @@
     --meal-card-y: 85px;
     /* Info/Compact Height */
     --meal-gap: 10px;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
 *,
@@ -119,7 +168,6 @@ a:hover {
     position: sticky;
     top: 0;
     z-index: 1000;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .app-header .logo {
@@ -221,11 +269,21 @@ main {
 .btn-secondary {
     background: var(--surface);
     color: var(--text);
-    border: 1px solid var(--border);
+    border: none;
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-destructive {
+    background: var(--destructive) !important;
+    color: var(--destructive-foreground) !important;
+    border: none !important;
+}
+
+.btn-destructive:hover {
+    background: #dc2626 !important;
 }
 
 .btn-icon {
@@ -235,7 +293,7 @@ main {
     cursor: pointer;
     display: inline-flex;
     padding: 6px;
-    border-radius: 4px;
+    border-radius: 10px;
     transition: all var(--transition);
 }
 
@@ -287,7 +345,7 @@ main {
 .week-dropdown {
     background: var(--surface);
     color: var(--text);
-    border: 1px solid var(--border);
+    border: none;
     padding: 10px 35px 10px 20px;
     border-radius: var(--radius);
     font-family: var(--font-body);
@@ -313,7 +371,7 @@ main {
 /* ─── Shadcn-inspired UI Components ────────────── */
 .input-shadcn {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     padding: 10px 16px;
     color: var(--text);
@@ -324,7 +382,6 @@ main {
 }
 
 .input-shadcn:focus {
-    border-color: var(--cta);
     outline: 2px solid rgba(35, 83, 71, 0.3);
     outline-offset: 0;
 }
@@ -336,7 +393,7 @@ main {
 .select-shadcn {
     background: var(--surface);
     color: var(--text);
-    border: 1px solid var(--border);
+    border: none;
     padding: 10px 35px 10px 16px;
     border-radius: var(--radius);
     font-family: var(--font-body);
@@ -354,7 +411,7 @@ main {
 }
 
 .select-shadcn:focus {
-    border-color: var(--cta);
+    outline: 2px solid rgba(35, 83, 71, 0.3);
 }
 
 .search-wrapper {
@@ -420,14 +477,14 @@ main {
 /* Full Meal Card */
 .meal-card-full {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
     height: auto;
-    transition: border-color var(--transition);
+    transition: all var(--transition);
 }
 
 .meal-card-full.breakfast {
@@ -487,7 +544,7 @@ main {
     right: 10px;
     z-index: 2;
     background: rgba(255, 255, 255, 0);
-    border: 0px solid rgba(255, 255, 255, 0.3);
+    border: none;
     color: white;
     padding: 6px;
     border-radius: 50%;
@@ -532,6 +589,7 @@ main {
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
+    gap: 5px;
 }
 
 .meal-card-text {
@@ -564,30 +622,30 @@ main {
 
 .meal-card-actions {
     display: flex;
-    gap: 4px;
 }
 
 /* Compact Meal Card */
 .meal-card-compact {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     height: var(--meal-card-y);
     padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: border-color var(--transition);
+    transition: all var(--transition);
+    gap: 5px;
 }
 
 .meal-card-compact:hover {
-    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 /* ─── Library and Modals ───────────────────────── */
 .food-card {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     padding: 16px;
     /* Smaller padding for compact look */
@@ -599,7 +657,6 @@ main {
 }
 
 .food-card:hover {
-    border-color: var(--border-hover);
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -608,6 +665,7 @@ main {
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.4;
@@ -672,7 +730,7 @@ main {
     background: rgba(255, 255, 255, 0.1);
     /* Single color style */
     color: var(--text-muted);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: none;
     flex-shrink: 1;
     /* Allow to shrink to stay on one line */
     min-width: 0;
@@ -697,17 +755,27 @@ main {
 /* Redesigned Meal Library Card */
 .meal-lib-card {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     overflow: hidden;
     height: 340px;
     display: flex;
     flex-direction: column;
-    transition: border-color var(--transition);
+    transition: all var(--transition);
+}
+
+.meal-lib-card.has-avoid,
+.meal-card-full.has-avoid,
+.meal-card-compact.has-avoid {
+    border: thin solid #ff5a3b !important;
+}
+
+.avoid-text {
+    color: #ff5a3b !important;
 }
 
 .meal-lib-card:hover {
-    border-color: var(--border-hover);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .meal-lib-card-img-wrapper {
@@ -745,7 +813,7 @@ main {
 .meal-lib-card-stats {
     font-family: var(--font-body);
     font-weight: 300;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     display: flex;
     align-items: center;
@@ -757,18 +825,18 @@ main {
     background: rgba(239, 68, 68, 0.2);
     color: #fca5a5;
     padding: 1px 3px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.4rem;
+    font-size: 0.5rem;
 }
 
 .meal-lib-card-stats .en-badge {
     background: rgba(59, 130, 246, 0.2);
     color: #93c5fd;
     padding: 1px 3px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.4rem;
+    font-size: 0.5rem;
 }
 
 .meal-lib-card-actions {
@@ -826,6 +894,17 @@ main {
     justify-content: flex-end;
 }
 
+.food-filters .search-wrapper,
+.meal-lib-search .search-wrapper {
+    flex: 2.5;
+}
+
+.food-filters .combobox-wrapper,
+.meal-lib-search .combobox-wrapper {
+    flex: 1;
+    min-width: 140px;
+}
+
 .food-grid,
 .meal-lib-grid {
     display: grid;
@@ -853,7 +932,7 @@ main {
 
 .modal {
     background: #0c2d28e6;
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius-lg);
     width: 100%;
     max-width: 70vh;
@@ -867,16 +946,18 @@ main {
 .modal-glass {
     background: rgba(255, 255, 255, 0.08) !important;
     backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border: none !important;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
 .modal-header {
-    padding: 20px;
-    border-bottom: 1px solid var(--border);
+    padding-block: 15px;
+    padding-inline: 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 .modal-close {
@@ -890,20 +971,23 @@ main {
 }
 
 .modal-body {
-    padding: 24px;
+    padding-block: 20px;
+    padding-inline: 30px;
 }
 
 .modal-img-preview {
-    max-width: 100%;
-    height: auto;
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
     display: block;
-    margin: 0 auto 20px;
+    margin: 0 auto 16px;
     border-radius: var(--radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .modal-footer {
     padding: 24px;
-    border-top: 1px solid var(--border);
+    border-top: none;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
@@ -927,12 +1011,12 @@ main {
 .form-group select {
     width: 100%;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     padding: 12px 16px;
     color: var(--text);
     font-family: var(--font-body);
-    transition: border-color var(--transition);
+    transition: all var(--transition);
 }
 
 .form-group textarea {
@@ -941,7 +1025,6 @@ main {
 }
 
 .form-group input:focus {
-    border-color: var(--cta);
     outline: none;
 }
 
@@ -958,7 +1041,7 @@ main {
     position: fixed;
     z-index: 2000;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     width: 300px;
@@ -1045,17 +1128,17 @@ main {
     width: 100%;
     padding: 10px 14px;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: var(--radius);
     color: var(--text);
     font-size: 0.9rem;
     cursor: pointer;
     transition: all var(--transition);
+    gap: 5px;
 }
 
 .combobox-trigger:hover {
-    border-color: var(--border-hover);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .combobox-chevron {
@@ -1072,16 +1155,16 @@ main {
     top: calc(100% + 8px);
     left: 0;
     width: 100%;
-    background: #1e1e1e;
-    /* Darker surface for contrast */
-    border: 1px solid var(--border);
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius);
     z-index: 1000;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
     display: none;
     flex-direction: column;
     overflow: hidden;
-    animation: slideUp 0.2s ease;
+    animation: slideUp 0.15s ease-out;
+    backdrop-filter: blur(12px);
 }
 
 .combobox-wrapper.open .combobox-content {
@@ -1092,7 +1175,7 @@ main {
     display: flex;
     align-items: center;
     padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: none;
 }
 
 .command-search-icon {
@@ -1142,11 +1225,236 @@ main {
     text-align: center;
 }
 
+/* ─── Redesigned Meal View Modal ───────────────── */
+.meal-view-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.view-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.view-recipe-name {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    /* ExtraBold */
+    font-size: 2rem;
+    color: var(--text);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    flex: 1;
+}
+
+.servings-adjuster {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 6px;
+    border-radius: 40px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    align-self: flex-start;
+    margin-top: 5px;
+}
+
+.adj-btn {
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    margin-inline: 5px
+}
+
+.adj-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.adj-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.adj-btn:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+.adj-btn.minus {
+    background: white;
+    color: #38806e;
+}
+
+.adj-btn.plus {
+    background: #38806e;
+    color: white;
+}
+
+.adj-val {
+    font-weight: 700;
+    color: white;
+    font-size: 1rem;
+    min-width: 24px;
+    text-align: center;
+    font-family: var(--font-heading);
+}
+
+.view-source-row {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    opacity: 0.8;
+    margin-top: -15px;
+}
+
+.view-source-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.view-source-link:hover {
+    text-decoration: underline;
+}
+
+.view-stats-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    width: stretch;
+    font-weight: 500;
+}
+
+.stats-divider {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    opacity: 0.3;
+}
+
+.view-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.view-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.view-section-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.view-ingredients-count {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.view-description-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.view-ingredients-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.view-ingredients-table th {
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: bolder;
+    color: var(--text-light);
+    opacity: 0.6;
+    padding-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.view-ingredients-table td {
+    padding-block: 6px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.view-ingredients-table tr:last-child td {
+    border-bottom: none;
+}
+
+.view-ingredient-name-cell {
+    width: 70%;
+}
+
+.view-ingredient-name {
+    font-weight: normal;
+}
+
+.view-ingredient-comment {
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--text-muted);
+    opacity: 0.6;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 250px;
+    /* Truncate if too long */
+    margin-top: 2px;
+}
+
+.view-ingredient-qty {
+    width: 15%;
+    color: var(--text-muted);
+    text-align: left;
+}
+
+.view-ingredient-unit {
+    width: 15%;
+    color: var(--text-muted);
+}
+
+.calorie-tag .incomplete-tag {
+    color: #fbbf24;
+    margin-left: 2px;
+}
+
 .command-add-btn {
     width: 100%;
     padding: 8px;
     background: rgba(var(--primary-rgb), 0.1);
-    border: 1px dashed var(--primary);
+    border: none;
     border-radius: var(--radius);
     color: white;
     font-size: 0.85rem;
@@ -1196,7 +1504,7 @@ main {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: none;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     color: var(--text);
     transition: all 300ms ease;
@@ -1264,7 +1572,7 @@ main {
     align-items: center;
     gap: 2px;
     cursor: help;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     font-weight: 300;
 }
 
@@ -1274,12 +1582,12 @@ main {
 
 .incomplete-tag {
     color: #f59e0b;
-    font-weight: bold;
+    font-weight: normal;
 }
 
 .vn-badge,
 .en-badge {
-    font-size: 0.4rem;
+    font-size: 0.5rem;
     padding: 1px 3px;
     border-radius: 3px;
     font-weight: 800;
@@ -1288,11 +1596,57 @@ main {
 .vn-badge {
     background: rgba(231, 76, 60, 0.1);
     color: #e74c3c;
-    border: 1px solid rgba(231, 76, 60, 0.2);
+    border: none;
 }
 
 .en-badge {
     background: rgba(52, 152, 219, 0.1);
     color: #3498db;
-    border: 1px solid rgba(52, 152, 219, 0.2);
+    border: none;
+}
+
+/* ═══ Shadcn Alert Dialog ═══ */
+.modal-alert {
+    max-width: 400px !important;
+    padding: 24px !important;
+    border-radius: var(--radius-lg) !important;
+    background: #0b2b26e6 !important;
+    border: none !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.modal-alert .modal-header {
+    padding: 0;
+    margin-bottom: 8px;
+}
+
+.modal-alert .modal-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.modal-alert .modal-body {
+    padding: 0;
+    margin-bottom: 24px;
+}
+
+.modal-alert .modal-body p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.modal-alert .modal-footer {
+    border: none;
+    padding: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.modal-alert .btn {
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    height: auto;
+    font-weight: 500;
 }

@@ -14,6 +14,7 @@ from app.core.database import get_session
 from app.models.models import CalorieEntry
 from rapidfuzz import process, fuzz
 from usda_fdc import FdcClient
+import json
 
 router = APIRouter(prefix="/api/fdc", tags=["fdc"])
 
@@ -57,6 +58,7 @@ async def search_calories(query: str, session: AsyncSession = Depends(get_sessio
             "description": e.description,
             "calories": e.calories,
             "data_type": e.data_type,
+            "portions": json.loads(e.portions_json) if e.portions_json else []
         }
         for e in entries
     ]
@@ -108,7 +110,8 @@ async def seed_foundation_foods(session: AsyncSession = Depends(get_session)):
                         fdc_id=fdc_id,
                         description=food.get("description", ""),
                         calories=calories,
-                        data_type="Foundation"
+                        data_type="Foundation",
+                        portions_json=json.dumps(food.get("foodPortions", []))
                     )
                     session.add(entry)
                     new_entries += 1
@@ -178,6 +181,7 @@ async def seed_fdc(session: AsyncSession = Depends(get_session)):
                         description=food.get("description", ""),
                         calories=calories,
                         data_type=food.get("dataType", ""),
+                        portions_json=json.dumps(food.get("foodPortions", []))
                     )
                     session.add(entry)
                     new_entries += 1
@@ -188,7 +192,7 @@ async def seed_fdc(session: AsyncSession = Depends(get_session)):
                 errors.append(f"{query}: {str(e)}")
                 continue
 
-async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool = True, cached_entries: list = None) -> tuple[float, int, str]:
+async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool = True, cached_entries: list = None) -> tuple[float, int, str, list]:
     # Custom scorer to prioritize FDC naming conventions
     def fdc_scorer(q, choices, **kwargs):
         # We need to return a score for each choice
@@ -231,12 +235,23 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
             
         return base_score + bonus
 
-    """Get calories per 100g for a food query.
-    Returns (calories, fdc_id, description).
+async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool = True, cached_entries=None, language: str = "en") -> tuple:
+    """
+    Find calories per 100g for a given food name.
     Checks local cache first (with fuzzy matching), then FDC API if use_api is True.
     """
     if not query:
-        return 0.0, 0, ""
+        return 0.0, 0, "", []
+
+    original_query = query
+    # Translate to English if ingredient is Vietnamese for better FDC matching
+    if language == "vi":
+        from app.api.utils import translate_food_name
+        translated = await translate_food_name(query, "en")
+        if translated:
+            print(f"DEBUG: Translated '{query}' to '{translated}' for FDC matching.")
+            query = translated
+
 
     # 1. Search local cache with fuzzy matching
     if cached_entries is None:
@@ -247,15 +262,19 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
         descriptions = [e.description for e in cached_entries]
         # Use our custom scorer to prioritize FDC naming conventions
         best_match = process.extractOne(query, descriptions, scorer=fdc_scorer)
-        
         if best_match and best_match[1] >= 85:  # Threshold remains 85
             matched_desc = best_match[0]
+            print(f"DEBUG: Local match found: {matched_desc} (Score: {best_match[1]})")
             for e in cached_entries:
                 if e.description == matched_desc:
-                    return e.calories, e.fdc_id, e.description
+                    portions = json.loads(e.portions_json) if e.portions_json else []
+                    print(f"DEBUG: Portions from cache: {len(portions)} items")
+                    return e.calories, e.fdc_id, e.description, portions
+        else:
+            print(f"DEBUG: No local match for {query} (Best: {best_match[0] if best_match else 'None'} {best_match[1] if best_match else 0})")
 
     if not use_api:
-        return 0.0, 0, ""
+        return 0.0, 0, "", []
 
     # 2. Search FDC API using usda-fdc library
     try:
@@ -289,6 +308,21 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
                         calories = nutrient.amount
                         break
             
+            portions = []
+            if food_detail and hasattr(food_detail, 'food_portions'):
+                # Note: usda-fdc objects might have different attribute names than raw API
+                # but we'll try to get it from api_data if possible or just the object
+                if hasattr(food_detail, 'api_data'):
+                    portions = food_detail.api_data.get("foodPortions", [])
+                else:
+                    # Fallback to reconstructing from attributes if possible
+                    for p in getattr(food_detail, 'food_portions', []):
+                        portions.append({
+                            "amount": getattr(p, 'amount', 0),
+                            "modifier": getattr(p, 'modifier', ''),
+                            "gramWeight": getattr(p, 'gram_weight', 0)
+                        })
+            
             # Cache locally
             existing = await session.execute(select(CalorieEntry).where(CalorieEntry.fdc_id == fdc_id))
             if not existing.scalar_one_or_none():
@@ -296,18 +330,19 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
                     fdc_id=fdc_id, 
                     description=desc, 
                     calories=calories, 
-                    data_type=best_food.data_type
+                    data_type=best_food.data_type,
+                    portions_json=json.dumps(portions)
                 )
                 session.add(new_entry)
                 await session.flush()
                 await session.commit()
             
-            return calories, fdc_id, desc
+            return calories, fdc_id, desc, portions
             
     except Exception as e:
         print(f"FDC API Error: {e}")
 
-    return 0.0, 0, ""
+    return 0.0, 0, "", []
 
 async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: bool = True) -> dict:
     """Calculate total calories for a meal based on its ingredients."""
@@ -329,16 +364,93 @@ async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: 
     cached_entries = result.scalars().all()
     
     for ing in meal.ingredients:
-        # 1. Convert to metric weight
-        weight = convert_to_grams(ing.quantity, ing.unit, ing.name)
+        # 1. Get calories and portions from FDC first
+        kcal_100g, fdc_id, fdc_desc, portions = await get_calories_for_food(
+            ing.name, session, use_api=use_api, cached_entries=cached_entries, language=meal.language
+        )
+
+        
+        weight = 0.0
+        found_portion = False
+        
+        if fdc_id and portions:
+            from app.core.units import ureg
+            ing_unit = (ing.unit or "").lower().strip()
+            
+            # Parse quantity once
+            try:
+                qty_val = float(ureg.parse_expression(ing.quantity.replace(' ', '+')))
+            except:
+                import re
+                nums = re.findall(r"[-+]?\d*\.\d+|\d+", ing.quantity)
+                qty_val = float(nums[0]) if nums else 0.0
+
+            if ing_unit and qty_val > 0:
+                print(f"DEBUG: Checking portions for {ing.name} (Unit: {ing_unit}, Qty: {qty_val})")
+                # 1. Direct String Match (e.g. "cup" in "1 cup")
+                for p in portions:
+                    modifier = p.get("modifier", "").lower()
+                    if ing_unit in modifier:
+                        portion_amount = p.get("amount", 1.0)
+                        portion_grams = p.get("gramWeight", 0.0)
+                        if portion_amount > 0:
+                            weight = (qty_val / portion_amount) * portion_grams
+                            found_portion = True
+                            print(f"DEBUG: Direct portion match! Weight: {weight}")
+                            break
+                
+                # 2. Dimensional Bridge (Volume to Volume)
+                # If recipe has ml/cup and FDC has fl oz/tbsp, we can derive density
+                if not found_portion:
+                    try:
+                        u_ing = ureg(ing_unit)
+                        if u_ing.check('[volume]'):
+                            # Map FDC unit strings to valid Pint units
+                            vol_map = [
+                                ('cup', 'cup'),
+                                ('fl oz', 'fluid_ounce'),
+                                ('ml', 'ml'),
+                                ('tbsp', 'tbsp'),
+                                ('tsp', 'tsp'),
+                                ('pint', 'pint'),
+                                ('quart', 'quart'),
+                                ('liter', 'liter'),
+                                ('gallon', 'gallon'),
+                                ('tablespoon', 'tablespoon'),
+                                ('teaspoon', 'teaspoon')
+                            ]
+                            for p in portions:
+                                modifier = p.get("modifier", "").lower()
+                                for vol_keyword, pint_unit in vol_map:
+                                    if vol_keyword in modifier:
+                                        # Match! Calculate implied density from FDC
+                                        u_portion = ureg(pint_unit)
+                                        portion_amount = p.get("amount", 1.0)
+                                        portion_grams = p.get("gramWeight", 0.0)
+                                        
+                                        # ml_in_portion = portion_amount * (u_portion -> ml)
+                                        ml_in_portion = (portion_amount * u_portion).to('milliliter').magnitude
+                                        if ml_in_portion > 0:
+                                            implied_density = portion_grams / ml_in_portion
+                                            # Apply to recipe quantity
+                                            ing_ml = (qty_val * u_ing).to('milliliter').magnitude
+                                            weight = ing_ml * implied_density
+                                            found_portion = True
+                                            print(f"DEBUG: Dimensional bridge match! Density: {implied_density:.3f} g/ml, Weight: {weight}")
+                                            break
+                                if found_portion: break
+                    except Exception as e:
+                        print(f"DEBUG: Dimensional bridge failed or not a volume unit: {e}")
+        
+        # 2. Fallback to DENSITY_MAP if no portion match found
+        if not found_portion:
+            print(f"DEBUG: No portion match, falling back to convert_to_grams for {ing.name}")
+            weight = convert_to_grams(ing.quantity, ing.unit, ing.name)
+            print(f"DEBUG: Fallback weight: {weight}")
+            
         ing.metric_weight_grams = weight
         
-        # 2. Get calories per 100g (passing the cached entries)
-        kcal_100g, fdc_id, fdc_desc = await get_calories_for_food(
-            ing.name, session, use_api=use_api, cached_entries=cached_entries
-        )
-        
-        if fdc_id:
+        if fdc_id is not None:
             ing.fdc_id = fdc_id
             ing_kcal = (weight / 100.0) * kcal_100g
             total_kcal += ing_kcal

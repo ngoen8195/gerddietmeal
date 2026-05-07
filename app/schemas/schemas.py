@@ -9,6 +9,7 @@ from datetime import datetime
 class FoodOut(BaseModel):
     id: int
     name: str
+    name_vi: Optional[str] = None
     reflux: str
     category: str
     is_user_added: bool = False
@@ -27,6 +28,7 @@ class FoodCreate(BaseModel):
 
 class FoodUpdate(BaseModel):
     name: Optional[str] = None
+    name_vi: Optional[str] = None
     reflux: Optional[str] = None
     category: Optional[str] = None
     meal_type: Optional[str] = None
@@ -41,6 +43,7 @@ class IngredientOut(BaseModel):
     comment: str = ""
     metric_weight_grams: float = 0.0
     fdc_id: Optional[int] = None
+    is_avoid: bool = False
 
     class Config:
         from_attributes = True
@@ -53,36 +56,25 @@ class IngredientIn(BaseModel):
     comment: str = ""
 
 
-class MealOut(BaseModel):
-    id: int
+class MealBase(BaseModel):
     name: str
-    description: str = ""
-    image_url: str = ""
-    source_url: str = ""
-    source_site: str = ""
-    calories: float = 0
-    cook_time_hours: float = 0
-    ingredient_count: int = 0
-    language: str = "en"
-    has_avoid_food: bool = False
-    is_favorite: bool = False
-    calories_incomplete: bool = False
-    ingredients: list[IngredientOut] = []
-    created_at: Optional[datetime] = None
+    description: Optional[str] = ""
+    image_url: Optional[str] = ""
+    source_url: Optional[str] = ""
+    source_site: Optional[str] = ""
+    calories: Optional[float] = 0.0
+    cook_time_hours: Optional[float] = 0.0
+    servings: Optional[str] = ""
+    language: Optional[str] = "en"
+    meal_type: Optional[str] = "other"
+    is_favorite: Optional[bool] = False
 
     class Config:
         from_attributes = True
 
 
-class MealCreate(BaseModel):
+class MealCreate(MealBase):
     name: str = Field(..., min_length=1, max_length=300)
-    description: str = ""
-    image_url: str = ""
-    source_url: str = ""
-    source_site: str = ""
-    calories: float = 0
-    cook_time_hours: float = 0
-    language: str = "en"
     ingredients: list[IngredientIn] = []
 
 
@@ -93,7 +85,18 @@ class MealUpdate(BaseModel):
     source_url: Optional[str] = None
     calories: Optional[float] = None
     cook_time_hours: Optional[float] = None
+    servings: Optional[str] = None
     ingredients: Optional[list[IngredientIn]] = None
+
+
+class MealOut(MealBase):
+    id: int
+    ingredient_count: int = 0
+    has_avoid_food: bool = False
+    avoid_percentage: float = 0.0
+    calories_incomplete: bool = False
+    ingredients: list[IngredientOut] = []
+    created_at: Optional[datetime] = None
 
 
 # ─── Meal Plan Schema ──────────────────────────────────────

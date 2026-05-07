@@ -6,39 +6,24 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_session
 from app.models.models import Meal, MealIngredient, FavoriteMeal
 from app.schemas.schemas import MealOut, MealCreate, MealUpdate
+import app.schemas.schemas as schemas
+
+from app.api.utils import get_avoid_food_names, format_meal_out
 
 router = APIRouter(prefix="/api/meals", tags=["meals"])
 
 
-def _meal_to_out(meal: Meal, fav_ids: set = None) -> dict:
-    """Convert a Meal ORM object to a MealOut-compatible dict."""
-    return {
-        "id": meal.id,
-        "name": meal.name,
-        "description": meal.description or "",
-        "image_url": meal.image_url or "",
-        "source_url": meal.source_url or "",
-        "source_site": meal.source_site or "",
-        "calories": meal.calories or 0,
-        "calories_incomplete": meal.calories_incomplete or False,
-        "cook_time_hours": meal.cook_time_hours or 0,
-        "ingredient_count": len(meal.ingredients) if meal.ingredients else 0,
-        "language": meal.language or "en",
-        "has_avoid_food": meal.has_avoid_food or False,
-        "is_favorite": meal.id in (fav_ids or set()),
-        "ingredients": [
-            {
-                "id": i.id, 
-                "name": i.name, 
-                "quantity": i.quantity, 
-                "unit": i.unit, 
-                "comment": i.comment,
-                "metric_weight_grams": i.metric_weight_grams or 0.0,
-                "fdc_id": i.fdc_id
-            } for i in (meal.ingredients or [])
-        ],
-        "created_at": meal.created_at,
-    }
+import re
+
+def _clean_servings(servings: str) -> str:
+    """Extract only the numeric part of the servings string."""
+    if not servings:
+        return ""
+    s = str(servings).strip()
+    match = re.search(r'(\d+[\d\.\-]*\d*)', s)
+    if match:
+        return match.group(1)
+    return s
 
 
 @router.get("/", response_model=list[MealOut])
@@ -49,9 +34,10 @@ async def list_meals(
     session: AsyncSession = Depends(get_session),
 ):
     """List meals with optional search by name/ingredient."""
-    # Get favorite IDs
+    # Get favorite IDs and avoid foods
     fav_result = await session.execute(select(FavoriteMeal.meal_id))
     fav_ids = {row[0] for row in fav_result.fetchall()}
+    avoid_names = await get_avoid_food_names(session)
 
     stmt = select(Meal).options(selectinload(Meal.ingredients)).order_by(Meal.created_at.desc())
     if search:
@@ -62,7 +48,7 @@ async def list_meals(
     stmt = stmt.limit(limit).offset(offset)
     result = await session.execute(stmt)
     meals = result.unique().scalars().all()
-    return [_meal_to_out(m, fav_ids) for m in meals]
+    return [format_meal_out(m, fav_ids, avoid_names) for m in meals]
 
 
 @router.get("/count")
@@ -80,9 +66,12 @@ async def get_meal(meal_id: int, session: AsyncSession = Depends(get_session)):
     meal = result.scalar_one_or_none()
     if not meal:
         raise HTTPException(status_code=404, detail="Meal not found")
+    
     fav_result = await session.execute(select(FavoriteMeal.meal_id).where(FavoriteMeal.meal_id == meal_id))
     fav_ids = {row[0] for row in fav_result.fetchall()}
-    return _meal_to_out(meal, fav_ids)
+    avoid_names = await get_avoid_food_names(session)
+    
+    return format_meal_out(meal, fav_ids, avoid_names)
 
 
 @router.post("/", response_model=MealOut, status_code=201)
@@ -96,6 +85,7 @@ async def create_meal(meal_data: MealCreate, session: AsyncSession = Depends(get
         source_site=meal_data.source_site or "manual",
         calories=meal_data.calories,
         cook_time_hours=meal_data.cook_time_hours,
+        servings=_clean_servings(meal_data.servings),
         language=meal_data.language,
     )
     session.add(db_meal)
@@ -115,7 +105,9 @@ async def create_meal(meal_data: MealCreate, session: AsyncSession = Depends(get
     result = await session.execute(
         select(Meal).options(selectinload(Meal.ingredients)).where(Meal.id == db_meal.id)
     )
-    return _meal_to_out(result.scalar_one())
+    meal = result.scalar_one()
+    avoid_names = await get_avoid_food_names(session)
+    return format_meal_out(meal, set(), avoid_names)
 
 
 @router.put("/{meal_id}", response_model=MealOut)
@@ -128,6 +120,8 @@ async def update_meal(meal_id: int, meal_data: MealUpdate, session: AsyncSession
         raise HTTPException(status_code=404, detail="Meal not found")
 
     for key, value in meal_data.model_dump(exclude_unset=True, exclude={"ingredients"}).items():
+        if key == "servings":
+            value = _clean_servings(value)
         setattr(db_meal, key, value)
 
     # Replace ingredients if provided
@@ -150,7 +144,13 @@ async def update_meal(meal_id: int, meal_data: MealUpdate, session: AsyncSession
     result = await session.execute(
         select(Meal).options(selectinload(Meal.ingredients)).where(Meal.id == meal_id)
     )
-    return _meal_to_out(result.scalar_one())
+    meal = result.scalar_one()
+    
+    fav_result = await session.execute(select(FavoriteMeal.meal_id).where(FavoriteMeal.meal_id == meal_id))
+    fav_ids = {row[0] for row in fav_result.fetchall()}
+    avoid_names = await get_avoid_food_names(session)
+    
+    return format_meal_out(meal, fav_ids, avoid_names)
 
 
 @router.delete("/{meal_id}", status_code=204)
@@ -161,3 +161,4 @@ async def delete_meal(meal_id: int, session: AsyncSession = Depends(get_session)
         raise HTTPException(status_code=404, detail="Meal not found")
     await session.delete(db_meal)
     await session.commit()
+

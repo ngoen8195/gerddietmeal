@@ -6,6 +6,7 @@ from sqlalchemy import select, func, update
 from app.core.database import get_session
 from app.models.models import Food, Meal, MealIngredient
 from app.schemas.schemas import FoodOut, FoodCreate, FoodUpdate
+from app.api.utils import translate_food_name
 
 router = APIRouter(prefix="/api/foods", tags=["foods"])
 
@@ -41,8 +42,12 @@ async def list_categories(session: AsyncSession = Depends(get_session)):
 @router.post("/", response_model=FoodOut, status_code=201)
 async def create_food(food: FoodCreate, session: AsyncSession = Depends(get_session)):
     """Add a new food item."""
+    # Auto-translate name to Vietnamese
+    name_vi = await translate_food_name(food.name, "vi")
+    
     db_food = Food(
         name=food.name, 
+        name_vi=name_vi,
         reflux=food.reflux, 
         category=food.category, 
         meal_type=food.meal_type,
@@ -114,6 +119,27 @@ async def seed_foods(session: AsyncSession = Depends(get_session)):
 
     await session.commit()
     return {"message": f"Seeded {len(foods_data)} foods", "seeded": True}
+
+
+@router.post("/translate-missing")
+async def translate_missing_names(session: AsyncSession = Depends(get_session)):
+    """Find all foods without a Vietnamese name and translate them."""
+    stmt = select(Food).where(Food.name_vi == None)
+    result = await session.execute(stmt)
+    foods_to_translate = result.scalars().all()
+    
+    count = 0
+    for food in foods_to_translate:
+        translated = await translate_food_name(food.name, "vi")
+        if translated:
+            food.name_vi = translated
+            count += 1
+            # Commit periodically to avoid long-running transactions
+            if count % 20 == 0:
+                await session.commit()
+    
+    await session.commit()
+    return {"message": f"Translated {count} food names", "count": count}
 
 
 async def _flag_meals_with_food(session: AsyncSession, food_name: str):

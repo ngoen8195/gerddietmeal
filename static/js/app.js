@@ -15,6 +15,10 @@ let availableCategories = [];
 let scrapePollInterval = null;
 
 // ─── UI Utilities ────────────────────────────────
+function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+function truncate(s, n) { return s && s.length > n ? s.slice(0, n) + '…' : s || ''; }
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
 function showNotification(title, message) {
     const container = document.getElementById('notification-container');
     if (!container) return;
@@ -26,7 +30,7 @@ function showNotification(title, message) {
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
         <div class="alert-shadcn-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             ${title}
         </div>
         <div class="alert-shadcn-description">${message}</div>
@@ -40,6 +44,102 @@ function showNotification(title, message) {
     closeBtn.onclick = dismiss;
 
     container.appendChild(alert);
+}
+
+function showConfirmDialog(title, message, confirmText = 'Delete') {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirm-modal');
+        const titleEl = document.getElementById('confirm-modal-title');
+        const messageEl = document.getElementById('confirm-modal-message');
+        const confirmBtn = document.getElementById('confirm-modal-confirm');
+        const cancelBtn = document.getElementById('confirm-modal-cancel');
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        confirmBtn.textContent = confirmText;
+
+        const cleanup = () => {
+            modal.classList.remove('visible');
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+        };
+
+        confirmBtn.onclick = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        cancelBtn.onclick = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        modal.classList.add('visible');
+    });
+}
+
+// ─── Quantity Helpers ─────────────────────────────
+function parseQtyJS(qtyStr) {
+    if (!qtyStr) return 0;
+    const unicodeMap = {
+        '½': 0.5, '⅓': 1 / 3, '⅔': 2 / 3, '¼': 0.25, '¾': 0.75,
+        '⅕': 0.2, '⅖': 0.4, '⅗': 0.6, '⅘': 0.8, '⅛': 0.125,
+        '⅜': 0.375, '⅝': 0.625, '⅞': 0.875
+    };
+
+    let total = 0;
+    let normalized = qtyStr;
+    Object.keys(unicodeMap).forEach(u => {
+        normalized = normalized.replace(u, ' ' + unicodeMap[u]);
+    });
+
+    let parts = normalized.split(/\s+/);
+    parts.forEach(p => {
+        if (!p) return;
+        if (p.includes('/')) {
+            let [n, d] = p.split('/');
+            total += (parseFloat(n) / parseFloat(d)) || 0;
+        } else {
+            total += parseFloat(p) || 0;
+        }
+    });
+    return total;
+}
+
+function humanizeQtyJS(val) {
+    if (val === null || val === undefined || isNaN(val)) return '';
+    if (val === 0) return '0';
+    if (Number.isInteger(val)) return val.toString();
+
+    const whole = Math.floor(val);
+    const fraction = val - whole;
+
+    if (fraction < 0.01) return whole.toString();
+
+    const common = [
+        { v: 0.5, s: '½' }, { v: 0.3333, s: '⅓' }, { v: 0.6666, s: '⅔' },
+        { v: 0.25, s: '¼' }, { v: 0.75, s: '¾' }, { v: 0.2, s: '⅕' },
+        { v: 0.4, s: '⅖' }, { v: 0.6, s: '⅗' }, { v: 0.8, s: '⅘' },
+        { v: 0.125, s: '⅛' }, { v: 0.375, s: '⅜' }, { v: 0.625, s: '⅝' },
+        { v: 0.875, s: '⅞' }
+    ];
+
+    let best = common[0];
+    let minDiff = Math.abs(fraction - common[0].v);
+
+    for (let i = 1; i < common.length; i++) {
+        let diff = Math.abs(fraction - common[i].v);
+        if (diff < minDiff) {
+            minDiff = diff;
+            best = common[i];
+        }
+    }
+
+    if (minDiff < 0.02) {
+        return (whole > 0 ? whole + ' ' : '') + best.s;
+    }
+
+    return val.toFixed(1).replace(/\.0$/, '');
 }
 
 // ─── Tab Navigation ────────────────────────────────
@@ -94,6 +194,17 @@ function getDomain(url) {
     try {
         const domain = new URL(url).hostname.replace('www.', '');
         return domain;
+    } catch (e) { return ""; }
+}
+
+function getShortDomain(url) {
+    if (!url) return "";
+    try {
+        let hostname = new URL(url).hostname.replace('www.', '');
+        if (hostname.includes('samsungfood.com')) return 'samsungfood';
+
+        const parts = hostname.split('.');
+        return parts.length >= 2 ? parts[0] : hostname;
     } catch (e) { return ""; }
 }
 
@@ -228,7 +339,7 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
     const isMissing = !meal || !meal.name;
 
     card.className = isCompact ? 'meal-card-compact' : `meal-card-full ${type}`;
-    if (!isMissing && meal.has_avoid_food) card.classList.add('has-avoid');
+    if (!isMissing && meal.avoid_percentage > 20) card.classList.add('has-avoid');
     if (!isMissing) card.dataset.mealId = meal.id;
 
     // Hover tooltip (only if meal exists)
@@ -239,11 +350,11 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
     }
 
     const favIcon = !isMissing && meal.is_favorite
-        ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
-        : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+        ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="1 0 24 24" fill="currentColor"><path d="M 14.8108 4.2207 C 13.9712 2.8257 11.9488 2.8257 11.1093 4.2207 L 9.0712 7.6074 L 5.2205 8.4992 C 3.6343 8.8666 3.0093 10.79 4.0766 12.0195 L 6.6677 15.0044 L 6.326 18.9423 C 6.1852 20.5644 7.8214 21.7532 9.3205 21.118 L 12.96 19.5761 L 16.5996 21.118 C 18.0987 21.7532 19.7348 20.5644 19.5941 18.9423 L 19.2524 15.0044 L 21.8435 12.0195 C 22.9108 10.79 22.2858 8.8666 20.6997 8.4992 L 16.8489 7.6074 L 14.8108 4.2207 Z"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="1 0 24 24" fill="currentcolor"><path d="M 14.8108 4.2207 C 13.9712 2.8257 11.9488 2.8257 11.1093 4.2207 L 9.0712 7.6074 L 5.2205 8.4992 C 3.6343 8.8666 3.0093 10.79 4.0766 12.0195 L 6.6677 15.0044 L 6.326 18.9423 C 6.1852 20.5644 7.8214 21.7532 9.3205 21.118 L 12.96 19.5761 L 16.5996 21.118 C 18.0987 21.7532 19.7348 20.5644 19.5941 18.9423 L 19.2524 15.0044 L 21.8435 12.0195 C 22.9108 10.79 22.2858 8.8666 20.6997 8.4992 L 16.8489 7.6074 L 14.8108 4.2207 Z"/></svg>';
 
-    const refreshIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>';
-    const editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5C3.5 3.5 3.5 3.5 3.5 12S3.5 20.5 12 20.5 20.5 20.5 20.5 12M14.9 5.2S17.9 2.2 19.9 4.2 19 9.2 19 9.2M14.9 5.2 9.9 10.2C9.2 10.9 8.7 11.7 8.6 12.6 8.4 13.5 8.4 14.7 8.6 15.5S10.3 16 11.5 15.8C12.4 15.6 13.2 15.1 13.9 14.5L19 9.2M14.9 5.2 19 9.2" stroke="currentColor" fill="none"/></svg>';
+    const refreshIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="1 0 24 24" fill="currentColor"><path d="M 12.6 2.1 C 6.804 2.1 2.1 6.804 2.1 12.6 C 2.1 18.396 6.804 23.1 12.6 23.1 C 18.396 23.1 23.1 18.396 23.1 12.6 C 23.1 6.804 18.396 2.1 12.6 2.1 Z M 6.93 11.7915 C 7.1085 10.542 7.665 9.4185 8.5365 8.5365 C 10.6365 6.447 13.944 6.3315 16.191 8.1585 V 7.161 C 16.191 6.7305 16.548 6.3735 16.9785 6.3735 C 17.409 6.3735 17.766 6.7305 17.766 7.161 V 9.9645 C 17.766 10.395 17.409 10.752 16.9785 10.752 H 14.175 C 13.7445 10.752 13.3875 10.395 13.3875 9.9645 C 13.3875 9.534 13.7445 9.177 14.175 9.177 H 14.9625 C 13.335 8.043 11.088 8.2005 9.639 9.6495 C 9.009 10.2795 8.61 11.0985 8.4735 12.012 C 8.421 12.4005 8.085 12.684 7.6965 12.684 C 7.6545 12.684 7.623 12.684 7.581 12.6735 C 7.1715 12.621 6.867 12.222 6.93 11.7915 Z M 16.6635 16.6635 C 15.54 17.787 14.07 18.3435 12.6 18.3435 C 11.319 18.3435 10.0485 17.892 8.9985 17.0415 V 18.0285 C 8.9985 18.459 8.6415 18.816 8.211 18.816 C 7.7805 18.816 7.4235 18.459 7.4235 18.0285 V 15.225 C 7.4235 14.7945 7.7805 14.4375 8.211 14.4375 H 11.0145 C 11.445 14.4375 11.802 14.7945 11.802 15.225 C 11.802 15.6555 11.445 16.0125 11.0145 16.0125 H 10.227 C 11.8545 17.1465 14.1015 16.989 15.5505 15.54 C 16.1805 14.91 16.5795 14.091 16.716 13.1775 C 16.779 12.747 17.1675 12.4425 17.6085 12.5055 C 18.039 12.5685 18.333 12.9675 18.2805 13.398 C 18.0915 14.6685 17.535 15.792 16.6635 16.6635 Z"/></svg>';
+    const editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="currentColor"><path d="M15.9087 3.87352C16.4681 3.31421 17.2266 3 18.0176 3C18.4093 3 18.7971 3.07714 19.1589 3.22702C19.5208 3.3769 19.8495 3.59658 20.1265 3.87352C20.4034 4.15046 20.6231 4.47924 20.773 4.84108C20.9229 5.20292 21 5.59074 21 5.98239C21 6.37404 20.9229 6.76186 20.773 7.1237C20.6231 7.48554 20.4034 7.81432 20.1265 8.09126L19.0231 9.19466C18.6326 9.58519 17.9994 9.58519 17.6089 9.19467L14.8053 6.39114C14.4148 6.00062 14.4148 5.36745 14.8053 4.97693L15.9087 3.87352ZM13.3911 7.80536C13.0006 7.41483 12.3674 7.41483 11.9769 7.80536L5.01084 14.7714C4.37004 15.4122 3.91545 16.2151 3.69566 17.0943L3.02986 19.7575C2.94467 20.0982 3.04452 20.4587 3.2929 20.7071C3.54128 20.9555 3.90177 21.0553 4.24254 20.9701L6.90572 20.3043C7.78488 20.0846 8.58778 19.63 9.22857 18.9892L16.1946 12.0231C16.5852 11.6326 16.5852 10.9994 16.1946 10.6089L13.3911 7.80536Z M12 20C12 19.4477 12.4477 19 13 19L20 19C20.5523 19 21 19.4477 21 20C21 20.5523 20.5523 21 20 21L13 21C12.4477 21 12 20.5523 12 20Z"/></svg>';
 
     const formatTime = (h) => {
         if (!h) return '';
@@ -254,7 +365,7 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
 
     const mealName = isMissing ? 'Meal Deleted' : meal.name;
     const infoStatsHTML = `
-        <div class="meal-card-title" onclick="${!isMissing ? `openViewMeal(${meal.id})` : ''}">${esc(mealName)}</div>
+        <div class="meal-card-title" onclick="${!isMissing ? `openViewMeal('${meal.id}')` : ''}">${esc(mealName)}</div>
         <div class="meal-card-stats">
             ${!isMissing && meal.calories ? `<span class="calorie-tag" ${meal.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(meal.calories)} kcal${meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
             ${!isMissing ? (meal.ingredient_count || 0) + ' ingredients' : ''}
@@ -263,7 +374,7 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
     `;
 
     const actionsHTML = `
-        ${!isMissing ? `<button class="btn-icon ${meal.is_favorite ? 'fav-active' : ''}" onclick="event.stopPropagation();toggleFav(${meal.id},this)" title="Favorite">${favIcon}</button>` : ''}
+        ${!isMissing ? `<button class="btn-icon ${meal.is_favorite ? 'fav-active' : ''}" onclick="event.stopPropagation();toggleFav('${meal.id}',this)" title="Favorite">${favIcon}</button>` : ''}
         <button class="btn-icon" onclick="event.stopPropagation();refreshMealSlot('${dateStr}', '${mealTypeStr}')" title="Refresh Meal">${refreshIcon}</button>
     `;
 
@@ -280,12 +391,12 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
         const sourceDomain = !isMissing && meal.source_url ? getDomain(meal.source_url) : '';
 
         card.innerHTML = `
-            <div class="meal-card-img-wrapper" onclick="${!isMissing ? `openViewMeal(${meal.id})` : ''}">
+            <div class="meal-card-img-wrapper" onclick="${!isMissing ? `openViewMeal('${meal.id}')` : ''}">
                 <img class="meal-card-img" src="${esc(imgSrc)}" alt="${esc(mealName)}" onerror="this.src='${DEFAULT_IMG}'">
                 <div class="meal-card-gradient meal-card-gradient-top"></div>
                 <div class="meal-card-gradient meal-card-gradient-bottom"></div>
                 
-                ${!isMissing ? `<button class="meal-card-overlay-edit" onclick="event.stopPropagation();openEditMealFromHome(${meal.id})" title="Edit">${editIcon}</button>` : ''}
+                ${!isMissing ? `<button class="meal-card-overlay-edit" onclick="event.stopPropagation();openEditMealFromHome('${meal.id}')" title="Edit">${editIcon}</button>` : ''}
                 
                 ${!isMissing && sourceDomain ? `
                     <a class="meal-card-overlay-link" href="${esc(meal.source_url)}" target="_blank" onclick="event.stopPropagation()">
@@ -323,6 +434,97 @@ function moveTooltip(e) {
 }
 function hideTooltip() { tooltip.classList.remove('visible'); }
 
+/**
+ * Transforms a native <select> into a Shadcn-style custom dropdown.
+ */
+window.initShadcnSelect = (selectId, options = {}) => {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = `combobox-wrapper ${options.className || ''}`;
+    
+    const trigger = document.createElement('div');
+    trigger.className = 'combobox-trigger';
+    trigger.innerHTML = `
+        <span></span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" class="combobox-chevron">
+            <path d="m6 9 6 6 6-6" />
+        </svg>
+    `;
+    const displayValue = trigger.querySelector('span');
+
+    const content = document.createElement('div');
+    content.className = 'combobox-content';
+    
+    const list = document.createElement('div');
+    list.className = 'command-list';
+    content.appendChild(list);
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(content);
+
+    select.style.display = 'none';
+    select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+    const toggle = (force) => {
+        const isOpen = wrapper.classList.toggle('open', force);
+        if (isOpen) {
+            // Close other open selects
+            document.querySelectorAll('.combobox-wrapper.open').forEach(w => {
+                if (w !== wrapper) w.classList.remove('open');
+            });
+        }
+    };
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggle();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) wrapper.classList.remove('open');
+    });
+
+    const refreshOptions = () => {
+        const currentVal = String(select.value);
+        list.innerHTML = Array.from(select.options).map(opt => `
+            <div class="command-item ${String(opt.value) === currentVal ? 'selected' : ''}" data-value="${esc(opt.value)}">
+                <span>${esc(opt.textContent)}</span>
+                ${String(opt.value) === currentVal ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : ''}
+            </div>
+        `).join('');
+
+        const selectedOpt = select.options[select.selectedIndex];
+        displayValue.textContent = selectedOpt ? selectedOpt.textContent : (options.placeholder || 'Select...');
+
+        list.querySelectorAll('.command-item').forEach(item => {
+            item.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                select.value = item.dataset.value;
+                select.dispatchEvent(new Event('change'));
+                wrapper.classList.remove('open');
+            };
+        });
+    };
+
+    const observer = new MutationObserver((mutations) => {
+        refreshOptions();
+    });
+    observer.observe(select, { childList: true, attributes: true });
+    select.addEventListener('change', refreshOptions);
+
+    // Initial and periodic refresh to ensure sync
+    refreshOptions();
+    // Sometimes values change without events in complex frameworks or scripts
+    setTimeout(refreshOptions, 100); 
+    
+    return { refresh: refreshOptions };
+};
+
 // ─── Combobox Helper ───────────────────────────────
 function initCategoryCombobox() {
     const wrapper = document.getElementById('food-category-combobox');
@@ -336,8 +538,12 @@ function initCategoryCombobox() {
     const displayValue = document.getElementById('combobox-value');
 
     const toggle = (force) => {
-        wrapper.classList.toggle('open', force);
-        if (wrapper.classList.contains('open')) {
+        const isOpen = wrapper.classList.toggle('open', force);
+        if (isOpen) {
+            // Close other open selects/comboboxes
+            document.querySelectorAll('.combobox-wrapper.open').forEach(w => {
+                if (w !== wrapper) w.classList.remove('open');
+            });
             searchInput.value = '';
             renderList('');
             setTimeout(() => searchInput.focus(), 50);
@@ -425,8 +631,8 @@ function renderFoods() {
     const grid = document.getElementById('food-grid');
     if (!allFoods.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>No Foods Found</h3><p>Add foods or seed from the database.</p></div>'; return; }
     grid.innerHTML = allFoods.map(f => {
-        const editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.9087 3.87352C16.4681 3.31421 17.2266 3 18.0176 3C18.4093 3 18.7971 3.07714 19.1589 3.22702C19.5208 3.3769 19.8495 3.59658 20.1265 3.87352C20.4034 4.15046 20.6231 4.47924 20.773 4.84108C20.9229 5.20292 21 5.59074 21 5.98239C21 6.37404 20.9229 6.76186 20.773 7.1237C20.6231 7.48554 20.4034 7.81432 20.1265 8.09126L19.0231 9.19466C18.6326 9.58519 17.9994 9.58519 17.6089 9.19467L14.8053 6.39114C14.4148 6.00062 14.4148 5.36745 14.8053 4.97693L15.9087 3.87352ZM13.3911 7.80536C13.0006 7.41483 12.3674 7.41483 11.9769 7.80536L5.01084 14.7714C4.37004 15.4122 3.91545 16.2151 3.69566 17.0943L3.02986 19.7575C2.94467 20.0982 3.04452 20.4587 3.2929 20.7071C3.54128 20.9555 3.90177 21.0553 4.24254 20.9701L6.90572 20.3043C7.78488 20.0846 8.58778 19.63 9.22857 18.9892L16.1946 12.0231C16.5852 11.6326 16.5852 10.9994 16.1946 10.6089L13.3911 7.80536Z M12 20C12 19.4477 12.4477 19 13 19L20 19C20.5523 19 21 19.4477 21 20C21 20.5523 20.5523 21 20 21L13 21C12.4477 21 12 20.5523 12 20Z" fill="currentColor"/></svg>';
-        const deleteIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.1111 2C9.37473 2 8.77778 2.59695 8.77778 3.33333C8.77778 3.70152 8.4793 4 8.11111 4L8 4L5 4C4.44772 4 4 4.44772 4 5C4 5.55228 4.44772 6 5 6L8 6H8.11111L15.8873 6C15.8878 6 15.8884 6 15.8889 6H16L19 6C19.5523 6 20 5.55228 20 5C20 4.44772 19.5523 4 19 4H15.8881C15.5203 3.99956 15.2222 3.70126 15.2222 3.33333C15.2222 2.59695 14.6253 2 13.8889 2H10.1111Z M6 8C5.72035 8 5.45348 8.1171 5.26412 8.32289C5.07477 8.52868 4.98023 8.80436 5.00346 9.08305L5.77422 18.3322C5.94698 20.4054 7.68005 22 9.7604 22H14.2396C16.32 22 18.053 20.4054 18.2258 18.3322L18.9965 9.08305C19.0198 8.80436 18.9252 8.52868 18.7359 8.32289C18.5465 8.1171 18.2797 8 18 8H6Z" fill="currentColor"/></svg>';
+        const editIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.9087 3.87352C16.4681 3.31421 17.2266 3 18.0176 3C18.4093 3 18.7971 3.07714 19.1589 3.22702C19.5208 3.3769 19.8495 3.59658 20.1265 3.87352C20.4034 4.15046 20.6231 4.47924 20.773 4.84108C20.9229 5.20292 21 5.59074 21 5.98239C21 6.37404 20.9229 6.76186 20.773 7.1237C20.6231 7.48554 20.4034 7.81432 20.1265 8.09126L19.0231 9.19466C18.6326 9.58519 17.9994 9.58519 17.6089 9.19467L14.8053 6.39114C14.4148 6.00062 14.4148 5.36745 14.8053 4.97693L15.9087 3.87352ZM13.3911 7.80536C13.0006 7.41483 12.3674 7.41483 11.9769 7.80536L5.01084 14.7714C4.37004 15.4122 3.91545 16.2151 3.69566 17.0943L3.02986 19.7575C2.94467 20.0982 3.04452 20.4587 3.2929 20.7071C3.54128 20.9555 3.90177 21.0553 4.24254 20.9701L6.90572 20.3043C7.78488 20.0846 8.58778 19.63 9.22857 18.9892L16.1946 12.0231C16.5852 11.6326 16.5852 10.9994 16.1946 10.6089L13.3911 7.80536Z M12 20C12 19.4477 12.4477 19 13 19L20 19C20.5523 19 21 19.4477 21 20C21 20.5523 20.5523 21 20 21L13 21C12.4477 21 12 20.5523 12 20Z"/></svg>';
+        const deleteIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10.1111 2C9.37473 2 8.77778 2.59695 8.77778 3.33333C8.77778 3.70152 8.4793 4 8.11111 4L8 4L5 4C4.44772 4 4 4.44772 4 5C4 5.55228 4.44772 6 5 6L8 6H8.11111L15.8873 6C15.8878 6 15.8884 6 15.8889 6H16L19 6C19.5523 6 20 5.55228 20 5C20 4.44772 19.5523 4 19 4H15.8881C15.5203 3.99956 15.2222 3.70126 15.2222 3.33333C15.2222 2.59695 14.6253 2 13.8889 2H10.1111Z M6 8C5.72035 8 5.45348 8.1171 5.26412 8.32289C5.07477 8.52868 4.98023 8.80436 5.00346 9.08305L5.77422 18.3322C5.94698 20.4054 7.68005 22 9.7604 22H14.2396C16.32 22 18.053 20.4054 18.2258 18.3322L18.9965 9.08305C19.0198 8.80436 18.9252 8.52868 18.7359 8.32289C18.5465 8.1171 18.2797 8 18 8H6Z" fill="currentColor"/></svg>';
 
         const mealIcons = {
             'breakfast': '🍳',
@@ -446,8 +652,8 @@ function renderFoods() {
                 <span class="food-type-tag">${mIcon} ${esc(mType)}</span>
             </div>
             <div class="food-card-actions">
-                <button class="btn-icon" onclick="openEditFood(${f.id})" title="Edit">${editIcon}</button>
-                <button class="btn-icon" onclick="deleteFood(${f.id})" title="Delete">${deleteIcon}</button>
+                <button class="btn-icon" onclick="openEditFood('${f.id}')" title="Edit">${editIcon}</button>
+                <button class="btn-icon" onclick="deleteFood('${f.id}')" title="Delete">${deleteIcon}</button>
             </div>
         </div>
         `;
@@ -464,21 +670,44 @@ document.getElementById('btn-add-food').addEventListener('click', () => {
     editingFoodId = null;
     document.getElementById('food-modal-title').textContent = 'Add Food';
     document.getElementById('food-form-name').value = '';
-    setComboboxValue('');
-    document.getElementById('food-form-reflux').value = 'ok';
-    document.getElementById('food-form-meal-type').value = 'none';
+    
+    if (window.setComboboxValue) setComboboxValue('');
+    
+    const refluxSel = document.getElementById('food-form-reflux');
+    refluxSel.value = 'ok';
+    refluxSel.dispatchEvent(new Event('change'));
+    
+    const mealTypeSel = document.getElementById('food-form-meal-type');
+    mealTypeSel.value = 'none';
+    mealTypeSel.dispatchEvent(new Event('change'));
+    
     document.getElementById('food-modal').classList.add('visible');
 });
 
 window.openEditFood = async (id) => {
-    const food = allFoods.find(f => f.id === id);
-    if (!food) return;
+    // Ensure allFoods is available and populated
+    if (!allFoods || !allFoods.length) {
+        await loadFoods();
+    }
+    const food = allFoods.find(f => String(f.id) === String(id));
+    if (!food) {
+        console.error("Food not found for id:", id);
+        return;
+    }
     editingFoodId = id;
     document.getElementById('food-modal-title').textContent = 'Edit Food';
     document.getElementById('food-form-name').value = food.name;
+    
     setComboboxValue(food.category);
-    document.getElementById('food-form-reflux').value = food.reflux;
-    document.getElementById('food-form-meal-type').value = food.meal_type || 'none';
+    
+    const refluxSel = document.getElementById('food-form-reflux');
+    refluxSel.value = food.reflux;
+    refluxSel.dispatchEvent(new Event('change'));
+    
+    const mealTypeSel = document.getElementById('food-form-meal-type');
+    mealTypeSel.value = food.meal_type || 'none';
+    mealTypeSel.dispatchEvent(new Event('change'));
+    
     document.getElementById('food-modal').classList.add('visible');
 };
 
@@ -500,7 +729,8 @@ document.getElementById('food-modal-close').addEventListener('click', () => docu
 document.getElementById('food-modal-cancel').addEventListener('click', () => document.getElementById('food-modal').classList.remove('visible'));
 
 window.deleteFood = async (id) => {
-    if (!confirm('Delete this food?')) return;
+    const confirmed = await showConfirmDialog('Delete Food', 'Are you sure you want to delete this food item? This action cannot be undone.');
+    if (!confirmed) return;
     await API.del(`/api/foods/${id}`);
     loadFoods();
 };
@@ -519,11 +749,10 @@ function renderMealLibrary() {
     if (!allMeals.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>No Meals Yet</h3><p>Add meals manually or scrape from recipe sites.</p></div>'; return; }
     grid.innerHTML = allMeals.map(m => {
         const favIcon = m.is_favorite
-            ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
-            : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
-        const editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5C3.5 3.5 3.5 3.5 3.5 12S3.5 20.5 12 20.5 20.5 20.5 20.5 12M14.9 5.2S17.9 2.2 19.9 4.2 19 9.2 19 9.2M14.9 5.2 9.9 10.2C9.2 10.9 8.7 11.7 8.6 12.6 8.4 13.5 8.4 14.7 8.6 15.5S10.3 16 11.5 15.8C12.4 15.6 13.2 15.1 13.9 14.5L19 9.2M14.9 5.2 19 9.2" stroke="currentColor" fill="none"/></svg>';
-        const deleteIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
-
+            ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="1 0 24 24" fill="currentColor"><path d="M 14.8108 4.2207 C 13.9712 2.8257 11.9488 2.8257 11.1093 4.2207 L 9.0712 7.6074 L 5.2205 8.4992 C 3.6343 8.8666 3.0093 10.79 4.0766 12.0195 L 6.6677 15.0044 L 6.326 18.9423 C 6.1852 20.5644 7.8214 21.7532 9.3205 21.118 L 12.96 19.5761 L 16.5996 21.118 C 18.0987 21.7532 19.7348 20.5644 19.5941 18.9423 L 19.2524 15.0044 L 21.8435 12.0195 C 22.9108 10.79 22.2858 8.8666 20.6997 8.4992 L 16.8489 7.6074 L 14.8108 4.2207 Z"/></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="1 0 24 24" fill="currentcolor"><path d="M 14.8108 4.2207 C 13.9712 2.8257 11.9488 2.8257 11.1093 4.2207 L 9.0712 7.6074 L 5.2205 8.4992 C 3.6343 8.8666 3.0093 10.79 4.0766 12.0195 L 6.6677 15.0044 L 6.326 18.9423 C 6.1852 20.5644 7.8214 21.7532 9.3205 21.118 L 12.96 19.5761 L 16.5996 21.118 C 18.0987 21.7532 19.7348 20.5644 19.5941 18.9423 L 19.2524 15.0044 L 21.8435 12.0195 C 22.9108 10.79 22.2858 8.8666 20.6997 8.4992 L 16.8489 7.6074 L 14.8108 4.2207 Z"/></svg>';
+        const editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="currentColor"><path d="M15.9087 3.87352C16.4681 3.31421 17.2266 3 18.0176 3C18.4093 3 18.7971 3.07714 19.1589 3.22702C19.5208 3.3769 19.8495 3.59658 20.1265 3.87352C20.4034 4.15046 20.6231 4.47924 20.773 4.84108C20.9229 5.20292 21 5.59074 21 5.98239C21 6.37404 20.9229 6.76186 20.773 7.1237C20.6231 7.48554 20.4034 7.81432 20.1265 8.09126L19.0231 9.19466C18.6326 9.58519 17.9994 9.58519 17.6089 9.19467L14.8053 6.39114C14.4148 6.00062 14.4148 5.36745 14.8053 4.97693L15.9087 3.87352ZM13.3911 7.80536C13.0006 7.41483 12.3674 7.41483 11.9769 7.80536L5.01084 14.7714C4.37004 15.4122 3.91545 16.2151 3.69566 17.0943L3.02986 19.7575C2.94467 20.0982 3.04452 20.4587 3.2929 20.7071C3.54128 20.9555 3.90177 21.0553 4.24254 20.9701L6.90572 20.3043C7.78488 20.0846 8.58778 19.63 9.22857 18.9892L16.1946 12.0231C16.5852 11.6326 16.5852 10.9994 16.1946 10.6089L13.3911 7.80536Z M12 20C12 19.4477 12.4477 19 13 19L20 19C20.5523 19 21 19.4477 21 20C21 20.5523 20.5523 21 20 21L13 21C12.4477 21 12 20.5523 12 20Z"/></svg>';
+        const deleteIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10.1111 2C9.37473 2 8.77778 2.59695 8.77778 3.33333C8.77778 3.70152 8.4793 4 8.11111 4L8 4L5 4C4.44772 4 4 4.44772 4 5C4 5.55228 4.44772 6 5 6L8 6H8.11111L15.8873 6C15.8878 6 15.8884 6 15.8889 6H16L19 6C19.5523 6 20 5.55228 20 5C20 4.44772 19.5523 4 19 4H15.8881C15.5203 3.99956 15.2222 3.70126 15.2222 3.33333C15.2222 2.59695 14.6253 2 13.8889 2H10.1111Z M6 8C5.72035 8 5.45348 8.1171 5.26412 8.32289C5.07477 8.52868 4.98023 8.80436 5.00346 9.08305L5.77422 18.3322C5.94698 20.4054 7.68005 22 9.7604 22H14.2396C16.32 22 18.053 20.4054 18.2258 18.3322L18.9965 9.08305C19.0198 8.80436 18.9252 8.52868 18.7359 8.32289C18.5465 8.1171 18.2797 8 18 8H6Z" fill="currentColor"/></svg>';
         const sourceDomain = m.source_url ? getDomain(m.source_url) : '';
         const formatTime = (h) => {
             if (!h) return '';
@@ -533,8 +762,8 @@ function renderMealLibrary() {
         };
 
         return `
-        <div class="meal-lib-card ${m.has_avoid_food ? 'has-avoid' : ''}">
-            <div class="meal-lib-card-img-wrapper" onclick="openViewMeal(${m.id})">
+        <div class="meal-lib-card ${m.avoid_percentage > 20 ? 'has-avoid' : ''}">
+            <div class="meal-lib-card-img-wrapper" onclick="openViewMeal('${m.id}')">
                 <img class="meal-lib-card-img" src="${esc(m.image_url || DEFAULT_IMG)}" alt="${esc(m.name)}" onerror="this.src='${DEFAULT_IMG}'">
                 ${sourceDomain ? `
                     <a class="meal-lib-card-overlay-link" href="${esc(m.source_url)}" target="_blank" onclick="event.stopPropagation()">
@@ -543,7 +772,7 @@ function renderMealLibrary() {
                 ` : ''}
             </div>
             <div class="meal-lib-card-body">
-                <div class="meal-lib-card-title" onclick="openViewMeal(${m.id})">${esc(m.name)}</div>
+                <div class="meal-lib-card-title" onclick="openViewMeal('${m.id}')">${esc(m.name)}</div>
                 <div class="meal-lib-card-stats">
                     ${m.calories ? `<span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(m.calories)} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
                     ${(m.ingredient_count || 0)} ingredients
@@ -551,9 +780,9 @@ function renderMealLibrary() {
                     ${m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>'}
                 </div>
                 <div class="meal-lib-card-actions">
-                    <button class="btn-icon" onclick="openEditMeal(${m.id})" title="Edit">${editIcon}</button>
-                    <button class="btn-icon ${m.is_favorite ? 'fav-active' : ''}" onclick="toggleFav(${m.id},this)" title="Favorite">${favIcon}</button>
-                    <button class="btn-icon" onclick="deleteMeal(${m.id})" title="Delete">${deleteIcon}</button>
+                    <button class="btn-icon" onclick="openEditMeal('${m.id}')" title="Edit">${editIcon}</button>
+                    <button class="btn-icon ${m.is_favorite ? 'fav-active' : ''}" onclick="toggleFav('${m.id}',this)" title="Favorite">${favIcon}</button>
+                    <button class="btn-icon" onclick="deleteMeal('${m.id}')" title="Delete">${deleteIcon}</button>
                 </div>
             </div>
         </div>
@@ -664,7 +893,54 @@ window.addEventListener('beforeunload', () => {
 let mealModalMode = 'add'; // add, edit, view
 let editingMealId = null;
 
-document.getElementById('btn-add-meal').addEventListener('click', () => openMealModal('add'));
+// New Add Meal Workflow
+document.getElementById('btn-add-meal').addEventListener('click', () => {
+    document.getElementById('meal-choice-modal').classList.add('visible');
+});
+
+document.getElementById('btn-choice-manual').addEventListener('click', () => {
+    document.getElementById('meal-choice-modal').classList.remove('visible');
+    openMealModal('add');
+});
+
+document.getElementById('btn-choice-url').addEventListener('click', () => {
+    document.getElementById('meal-choice-modal').classList.remove('visible');
+    document.getElementById('scrape-url-input').value = '';
+    document.getElementById('scrape-url-modal').classList.add('visible');
+});
+
+document.getElementById('scrape-url-cancel').addEventListener('click', () => {
+    document.getElementById('scrape-url-modal').classList.remove('visible');
+});
+
+document.getElementById('scrape-url-confirm').addEventListener('click', async function () {
+    const url = document.getElementById('scrape-url-input').value.trim();
+    if (!url) return;
+
+    this.disabled = true;
+    const originalText = this.innerHTML;
+    this.innerHTML = '<span class="loading-spinner"></span> Scraping...';
+
+    try {
+        const response = await fetch(`/api/scrape/url?url=${encodeURIComponent(url)}`, { method: 'POST' });
+        const result = await response.json();
+
+        if (response.ok && result.status === 'success') {
+            document.getElementById('scrape-url-modal').classList.remove('visible');
+            openMealModal('add', null, result.meal);
+            showNotification('Scrape Successful', `Loaded "${result.meal.name}"`);
+        } else {
+            alert(result.detail || 'Failed to scrape recipe. Please check the URL and try again.');
+        }
+    } catch (e) {
+        console.error("Scrape error:", e);
+        alert('An error occurred while scraping the recipe.');
+    } finally {
+        this.disabled = false;
+        this.innerHTML = originalText;
+    }
+});
+
 window.openEditMeal = (id) => openMealModal('edit', id);
 window.openEditMealFromHome = (id) => openMealModal('edit', id);
 window.openViewMeal = (id) => openMealModal('view', id);
@@ -677,47 +953,62 @@ document.getElementById('btn-open-source').addEventListener('click', () => {
     }
 });
 
-async function openMealModal(mode, mealId) {
+async function openMealModal(mode, mealId = null, prefillData = null) {
+    editingMealId = mealId;
     mealModalMode = mode;
-    editingMealId = mealId || null;
-    const title = document.getElementById('meal-modal-title');
-    const footer = document.getElementById('meal-modal-footer');
-    const formFields = document.querySelectorAll('#meal-modal .form-group input, #meal-modal .form-group textarea');
 
-    if (mode === 'view') {
-        title.textContent = 'View Meal';
-        footer.innerHTML = '<button class="btn btn-secondary" onclick="document.getElementById(\'meal-modal\').classList.remove(\'visible\')">Close</button><button class="btn btn-primary" onclick="openMealModal(\'edit\',' + mealId + ')">Edit</button>';
-        formFields.forEach(f => f.setAttribute('readonly', true));
-    } else if (mode === 'edit') {
-        title.textContent = 'Edit Meal';
-        footer.innerHTML = '<button class="btn btn-secondary" id="meal-modal-cancel-2">Cancel</button><button class="btn btn-primary" id="meal-modal-save-2">Save</button>';
-        formFields.forEach(f => f.removeAttribute('readonly'));
-    } else {
-        title.textContent = 'Add Meal';
-        footer.innerHTML = '<button class="btn btn-secondary" id="meal-modal-cancel-2">Cancel</button><button class="btn btn-primary" id="meal-modal-save-2">Save</button>';
-        formFields.forEach(f => f.removeAttribute('readonly'));
-    }
-
-    // Clear form
-    document.getElementById('meal-form-name').value = '';
-    document.getElementById('meal-form-desc').value = '';
-    document.getElementById('meal-form-image').value = '';
-    document.getElementById('meal-form-time').value = '';
-    document.getElementById('meal-form-calories').value = '';
-    document.getElementById('meal-form-link').value = '';
+    // Reset components
+    document.getElementById('meal-form').reset();
     document.getElementById('meal-form-ingredients').innerHTML = '';
-    document.getElementById('meal-form-calories-incomplete').style.display = 'none';
+    document.getElementById('view-ingredients-list').innerHTML = '';
     document.getElementById('meal-modal-img').src = DEFAULT_IMG;
 
-    // Load data if editing/viewing
+    const viewContent = document.getElementById('meal-modal-view-content');
+    const editContent = document.getElementById('meal-modal-edit-content');
+    const saveBtn = document.getElementById('meal-modal-save');
+    const cancelBtn = document.getElementById('meal-modal-cancel');
+    const editBtn = document.getElementById('meal-modal-edit-btn');
+    const title = document.getElementById('meal-modal-title');
+    const recalcBtn = document.getElementById('view-meal-recalculate');
+
+
+    // Toggle mode visibility
+    const mealForm = document.getElementById('meal-form');
+    if (mode === 'view') {
+        viewContent.style.display = 'flex';
+        mealForm.style.display = 'none';
+        saveBtn.style.display = 'none';
+        cancelBtn.innerText = 'Close';
+        editBtn.style.display = 'inline-block';
+        recalcBtn.style.display = 'inline-block';
+        title.innerText = 'Meal Details';
+
+    } else {
+        viewContent.style.display = 'none';
+        mealForm.style.display = 'block';
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.innerText = 'Cancel';
+        editBtn.style.display = 'none';
+        recalcBtn.style.display = 'none';
+        title.innerText = mode === 'add' ? 'Add New Meal' : 'Edit Meal';
+
+        saveBtn.innerText = mode === 'add' ? 'Save Meal' : 'Update Meal';
+    }
+
+    // Populate data
     if (mealId) {
         try {
             const meal = await API.get(`/api/meals/${mealId}`);
+
+            // Populate Edit Form
             document.getElementById('meal-form-name').value = meal.name || '';
             document.getElementById('meal-form-desc').value = meal.description || '';
             document.getElementById('meal-form-image').value = meal.image_url || '';
             document.getElementById('meal-form-time').value = meal.cook_time_hours || '';
+            document.getElementById('meal-form-servings').value = meal.servings || '';
             document.getElementById('meal-form-calories').value = meal.calories || '';
+            document.getElementById('meal-form-link').value = meal.source_url || '';
+
             const incIndicator = document.getElementById('meal-form-calories-incomplete');
             if (meal.calories_incomplete) {
                 incIndicator.style.display = 'inline-flex';
@@ -726,21 +1017,166 @@ async function openMealModal(mode, mealId) {
             } else {
                 incIndicator.style.display = 'none';
             }
-            document.getElementById('meal-form-link').value = meal.source_url || '';
+
+            // Update Modal Image
+            const modalImg = document.getElementById('meal-modal-img');
+            modalImg.src = meal.image_url || DEFAULT_IMG;
+
+            // Populate View Content
+            document.getElementById('view-meal-name').innerText = meal.name || 'Unnamed Recipe';
+
+            const shortDomain = getShortDomain(meal.source_url);
+            document.getElementById('view-meal-source').innerHTML = meal.source_url
+                ? `From <a href="${esc(meal.source_url)}" target="_blank" class="view-source-link">${esc(shortDomain)}</a>`
+                : 'Custom Recipe';
+
+            const formatTime = (h) => {
+                if (!h) return 'N/A';
+                if (h < 1) return Math.round(h * 60) + 'm';
+                return h + 'h';
+            };
+
+            const kcalText = meal.calories ? `${Math.round(meal.calories)} kcal` : '--- kcal';
+            const kcalWarning = meal.calories_incomplete ? ' <span class="incomplete-tag" title="Some ingredients missing kcal data">(!)</span>' : '';
+
+            const hasServings = !!meal.servings && !isNaN(parseInt(meal.servings));
+            let originalServings = hasServings ? parseInt(meal.servings) : 1;
+            let currentServings = originalServings;
+
+            document.getElementById('view-meal-stats').innerHTML = `
+                <span>🕒 ${formatTime(meal.cook_time_hours)}</span>
+                <span class="stats-divider"></span>
+                <span id="view-servings-display">🍚 ${meal.servings ? meal.servings + ' servings' : 'N/A'}</span>
+                <span class="stats-divider"></span>
+                <span>⚡ ${kcalText}${kcalWarning}</span>
+            `;
+
+            // Servings Adjuster Logic
+            const adjContainer = document.getElementById('view-servings-adj');
+            const minusBtn = document.getElementById('adj-servings-minus');
+            const plusBtn = document.getElementById('adj-servings-plus');
+            const adjValEl = document.getElementById('adj-servings-val');
+
+            if (!hasServings) {
+                adjContainer.style.opacity = '0.5';
+                minusBtn.disabled = true;
+                plusBtn.disabled = true;
+                adjValEl.innerText = '-';
+            } else {
+                adjContainer.style.opacity = '1';
+                minusBtn.disabled = false;
+                plusBtn.disabled = false;
+                adjValEl.innerText = currentServings;
+            }
+
+            const renderScaledIngredients = (servings) => {
+                const tbody = document.getElementById('view-ingredients-list');
+                tbody.innerHTML = '';
+                const multiplier = servings / originalServings;
+
+                meal.ingredients.forEach(ing => {
+                    const baseQty = parseQtyJS(ing.quantity);
+                    const scaledQty = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="view-ingredient-name-cell">
+                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}">
+                                ${esc(ing.name)}${!ing.fdc_id ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
+                            </div>
+                            ${ing.comment ? `<div class="view-ingredient-comment" title="${esc(ing.comment)}">${esc(ing.comment)}</div>` : ''}
+                        </td>
+                        <td class="view-ingredient-qty">${esc(scaledQty)}</td>
+                        <td class="view-ingredient-unit">${esc(ing.unit)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Update the stats display as well
+                const servingsText = hasServings ? `${servings} servings` : 'N/A';
+                document.getElementById('view-servings-display').innerText = `🍚 ${servingsText}`;
+            };
+
+            minusBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (currentServings > 1) {
+                    currentServings--;
+                    adjValEl.innerText = currentServings;
+                    renderScaledIngredients(currentServings);
+                }
+            };
+
+            plusBtn.onclick = (e) => {
+                e.stopPropagation();
+                currentServings++;
+                adjValEl.innerText = currentServings;
+                renderScaledIngredients(currentServings);
+            };
+
+            document.getElementById('view-meal-desc').innerText = meal.description || 'No description provided.';
+
+            const ingredients = meal.ingredients || [];
+            document.getElementById('view-ingredient-count').innerText = `${ingredients.length} items`;
+
+            renderScaledIngredients(currentServings);
+
+            // Also add to edit form for edit mode preparation
+            meal.ingredients.forEach(ing => {
+                addIngredientRow(ing.name, ing.quantity, ing.unit, ing.comment);
+            });
+
             document.getElementById('meal-modal-img').src = meal.image_url || DEFAULT_IMG;
-            (meal.ingredients || []).forEach(ing => addIngredientRow(ing.name, ing.quantity, ing.unit, ing.comment, mode === 'view'));
-        } catch (e) { }
+
+            // Edit button logic within view mode
+            editBtn.onclick = () => openMealModal('edit', mealId);
+
+            // Recalculate button logic
+            recalcBtn.onclick = async () => {
+                const originalText = recalcBtn.innerHTML;
+                recalcBtn.disabled = true;
+                recalcBtn.innerHTML = '<span class="loading-spinner"></span> Calculating...';
+                try {
+                    await API.post(`/api/fdc/calculate/${mealId}?use_api=true`);
+                    showNotification('Calculation Done', 'Calories and ingredients updated from FDC.');
+                    // Refresh modal
+                    openMealModal('view', mealId);
+                    // Refresh main list
+                    loadMeals();
+                } catch (e) {
+                    console.error("Recalculation error:", e);
+                    showNotification('Error', 'Failed to recalculate calories.');
+                } finally {
+                    recalcBtn.disabled = false;
+                    recalcBtn.innerHTML = originalText;
+                }
+            };
+
+
+        } catch (e) {
+            console.error("Error loading meal details:", e);
+        }
+    } else if (prefillData) {
+        document.getElementById('meal-form-name').value = prefillData.name || '';
+        document.getElementById('meal-form-desc').value = prefillData.description || '';
+        document.getElementById('meal-form-image').value = prefillData.image_url || '';
+        document.getElementById('meal-form-time').value = prefillData.cook_time_hours || '';
+        document.getElementById('meal-form-servings').value = prefillData.servings || '';
+        document.getElementById('meal-form-link').value = prefillData.source_url || '';
+        document.getElementById('meal-modal-img').src = prefillData.image_url || DEFAULT_IMG;
+        (prefillData.ingredients || []).forEach(ing => addIngredientRow(ing.name, ing.quantity, ing.unit, ing.comment, false));
     }
 
-    if (!mealId || mode === 'add') addIngredientRow('', '', '', '');
+    if ((!mealId && !prefillData) || mode === 'add') {
+        if (!prefillData || !prefillData.ingredients || prefillData.ingredients.length === 0) {
+            addIngredientRow('', '', '', '');
+        }
+    }
 
     document.getElementById('meal-modal').classList.add('visible');
 
     // Rebind footer buttons
-    const save2 = document.getElementById('meal-modal-save-2');
-    const cancel2 = document.getElementById('meal-modal-cancel-2');
-    if (save2) save2.addEventListener('click', saveMeal);
-    if (cancel2) cancel2.addEventListener('click', () => document.getElementById('meal-modal').classList.remove('visible'));
+    saveBtn.onclick = saveMeal;
+    cancelBtn.onclick = () => document.getElementById('meal-modal').classList.remove('visible');
 }
 
 function addIngredientRow(name = '', qty = '', unit = '', comment = '', isReadonly = false) {
@@ -790,6 +1226,7 @@ async function saveMeal() {
         source_url: document.getElementById('meal-form-link').value.trim(),
         calories: parseFloat(document.getElementById('meal-form-calories').value) || 0,
         cook_time_hours: parseFloat(document.getElementById('meal-form-time').value) || 0,
+        servings: document.getElementById('meal-form-servings').value.trim(),
         ingredients,
     };
     if (!data.name) return alert('Meal name is required');
@@ -802,7 +1239,8 @@ async function saveMeal() {
 }
 
 window.deleteMeal = async (id) => {
-    if (!confirm('Delete this meal?')) return;
+    const confirmed = await showConfirmDialog('Delete Meal', 'Are you sure you want to delete this meal? This action cannot be undone.');
+    if (!confirmed) return;
     await API.del(`/api/meals/${id}`);
     loadMeals();
 };
@@ -817,7 +1255,7 @@ function renderFavorites() {
     const grid = document.getElementById('fav-grid');
     if (!allFavorites.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>No Favorites Yet</h3><p>Heart a meal to add it here.</p></div>'; return; }
     grid.innerHTML = allFavorites.map(m => {
-        const favStarIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+        const favStarIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M 14.8108 4.2207 C 13.9712 2.8257 11.9488 2.8257 11.1093 4.2207 L 9.0712 7.6074 L 5.2205 8.4992 C 3.6343 8.8666 3.0093 10.79 4.0766 12.0195 L 6.6677 15.0044 L 6.326 18.9423 C 6.1852 20.5644 7.8214 21.7532 9.3205 21.118 L 12.96 19.5761 L 16.5996 21.118 C 18.0987 21.7532 19.7348 20.5644 19.5941 18.9423 L 19.2524 15.0044 L 21.8435 12.0195 C 22.9108 10.79 22.2858 8.8666 20.6997 8.4992 L 16.8489 7.6074 L 14.8108 4.2207 Z"/></svg>`;
 
         const sourceDomain = m.source_url ? getDomain(m.source_url) : '';
         const formatTime = (h) => {
@@ -828,8 +1266,8 @@ function renderFavorites() {
         };
 
         return `
-        <div class="meal-lib-card ${m.has_avoid_food ? 'has-avoid' : ''}">
-            <div class="meal-lib-card-img-wrapper" onclick="openViewMeal(${m.id})">
+        <div class="meal-lib-card ${m.avoid_percentage > 20 ? 'has-avoid' : ''}">
+            <div class="meal-lib-card-img-wrapper" onclick="openViewMeal('${m.id}')">
                 <img class="meal-lib-card-img" src="${esc(m.image_url || DEFAULT_IMG)}" alt="${esc(m.name)}" onerror="this.src='${DEFAULT_IMG}'">
                 ${sourceDomain ? `
                     <a class="meal-lib-card-overlay-link" href="${esc(m.source_url)}" target="_blank" onclick="event.stopPropagation()">
@@ -838,7 +1276,7 @@ function renderFavorites() {
                 ` : ''}
             </div>
             <div class="meal-lib-card-body">
-                <div class="meal-lib-card-title" onclick="openViewMeal(${m.id})">${esc(m.name)}</div>
+                <div class="meal-lib-card-title" onclick="openViewMeal('${m.id}')">${esc(m.name)}</div>
                 <div class="meal-lib-card-stats">
                     ${m.calories ? `<span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(m.calories)} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
                     ${(m.ingredient_count || 0)} ingredients
@@ -846,7 +1284,7 @@ function renderFavorites() {
                     ${m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>'}
                 </div>
                 <div class="meal-lib-card-actions">
-                    <button class="btn btn-secondary" onclick="removeFav(${m.id})" style="font-size:.75rem; padding: 4px 10px; height: auto; display: flex; align-items: center; gap: 6px;">
+                    <button class="btn btn-secondary" onclick="removeFav('${m.id}')" style="font-size:.75rem; padding: 4px 10px; height: auto; display: flex; align-items: center; gap: 6px;">
                         Remove ${favStarIcon}
                     </button>
                 </div>
@@ -872,11 +1310,6 @@ window.removeFav = async (mealId) => {
     loadFavorites();
 };
 
-// ─── Utilities ─────────────────────────────────────
-function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
-function truncate(s, n) { return s && s.length > n ? s.slice(0, n) + '…' : s || ''; }
-function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
-
 // ─── Init: Seed data on first load ─────────────────
 async function init() {
     try {
@@ -887,6 +1320,11 @@ async function init() {
 
     // Initialize Weekly Plan dropdown regardless of tab
     updateWeekDropdown();
+
+    // Initialize Custom Shadcn Selects
+    document.querySelectorAll('.select-shadcn, .week-dropdown').forEach(s => {
+        if (s.id) initShadcnSelect(s.id);
+    });
 
     // Restore previously selected tab or default to home
     const savedTab = sessionStorage.getItem('selectedTab') || 'home';

@@ -15,6 +15,8 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_session
 from app.models.models import Meal, FavoriteMeal, Food, PlannedMeal
 
+from app.api.utils import get_avoid_food_names, format_meal_out, check_ingredient_avoid
+
 router = APIRouter(prefix="/api/meal-plan", tags=["meal-plan"])
 
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -26,13 +28,17 @@ async def _get_meal_pools(session: AsyncSession):
     )
     avoid_names = {row[0].lower() for row in avoid_result.fetchall()}
 
-    # 2. Get all meals with ingredients
+    # 2. Get favorite meal IDs for bypass and boost
+    fav_result = await session.execute(select(FavoriteMeal.meal_id))
+    fav_ids = {row[0] for row in fav_result.fetchall()}
+
+    # 3. Get all meals with ingredients
     meals_result = await session.execute(
         select(Meal).options(selectinload(Meal.ingredients))
     )
     all_meals = meals_result.unique().scalars().all()
 
-    # 3. Filter safe meals and split into pools
+    # 4. Filter safe meals and split into pools
     breakfast_keywords = ["breakfast", "smoothie", "yogurt", "scrambled egg", "gluten-free bread", "egg", "toast", "oatmeal", "pancake", "omelet", "bagel", "croissant", "granola", "fruit", "ham", "syrup", "pastry", "bữa sáng", "sữa chua", "sinh tố", "trứng", "bánh mì", "phở", "bún", "miến", "cháo", "xôi", "mì", "bơ", "bánh bao", "bánh cuốn", "bánh giầy", "bánh giò", "trứng", "ngũ cốc", "mứt", "mật ong"]
     meat_fish_keywords = ["meat", "beef", "pork", "chicken", "fish", "shrimp", "tofu", "egg", "steak", "ham", "sườn", "thịt", "cá", "tôm", "gà", "heo", "bò", "vịt", "đậu hũ", "trứng", "thịt kho", "cá kho", "thịt luộc", "thịt nướng"]
     soup_keywords = ["soup", "stew", "chowder", "bisque", "bouillon", "consommé", "minestrone", "borscht", "gazpacho", "canh", "phở", "bún", "miến", "lẩu", "súp", "canh chua", "canh cá", "canh rau", "canh cải", "canh bí", "canh mướp", "canh bầu", "canh trứng"]
@@ -54,15 +60,16 @@ async def _get_meal_pools(session: AsyncSession):
         if total_ingredients == 0:
             continue
 
-        # Count how many ingredients contain a word from avoid_names
+        # Count how many ingredients match a word from avoid_names
         avoid_count = sum(
             1 for ing_name in ingredient_names
-            if any(avoid in ing_name for avoid in avoid_names)
+            if check_ingredient_avoid(ing_name, avoid_names)
         )
 
         avoid_proportion = avoid_count / total_ingredients
 
-        if avoid_proportion > 0.20:
+        # Rule: Only allow meals with <= 20% avoid ingredients, UNLESS it is a favorite
+        if avoid_proportion > 0.20 and meal.id not in fav_ids:
             continue   
             
         safe_meals_count += 1
@@ -91,11 +98,7 @@ async def _get_meal_pools(session: AsyncSession):
                 if meal.language == "vi": pools["meat_vi"].append(meal)
                 else: pools["meat_en"].append(meal)
 
-    # 4. Get favorite meal IDs for boost
-    fav_result = await session.execute(select(FavoriteMeal.meal_id))
-    fav_ids = {row[0] for row in fav_result.fetchall()}
-
-    # Boost logic: favorites get 1.3x weight (represented by adding more copies)
+    # 5. Boost logic: favorites get 1.3x weight (represented by adding more copies)
     def _apply_weights(pool):
         weighted = []
         for meal in pool:
@@ -128,27 +131,6 @@ def _get_pool(vi_pool, en_pool, bias=0.8):
     if random.random() < bias and vi_pool:
         return vi_pool
     return en_pool if en_pool else vi_pool
-
-
-def _meal_dict(meal, fav_ids: set) -> dict:
-    if not meal:
-        return None
-    return {
-        "id": meal.id,
-        "name": meal.name,
-        "description": meal.description or "",
-        "image_url": meal.image_url or "",
-        "source_url": meal.source_url or "",
-        "source_site": meal.source_site or "",
-        "calories": meal.calories or 0,
-        "calories_incomplete": meal.calories_incomplete or False,
-        "cook_time_hours": meal.cook_time_hours or 0,
-        "ingredient_count": len(meal.ingredients) if meal.ingredients else 0,
-        "language": meal.language or "en",
-        "has_avoid_food": meal.has_avoid_food or False,
-        "is_favorite": meal.id in fav_ids,
-        "ingredients": [{"id": i.id, "name": i.name, "quantity": i.quantity} for i in (meal.ingredients or [])],
-    }
 
 
 @router.post("/generate")
@@ -225,6 +207,7 @@ async def get_weekly_plan(start_date: str, session: AsyncSession = Depends(get_s
     
     fav_result = await session.execute(select(FavoriteMeal.meal_id))
     fav_ids = {row[0] for row in fav_result.fetchall()}
+    avoid_names = await get_avoid_food_names(session)
     
     slots = []
     
@@ -246,7 +229,7 @@ async def get_weekly_plan(start_date: str, session: AsyncSession = Depends(get_s
                 "date": current_date,
                 "meal_type": base_type,
                 "slot_index": slot_idx,
-                "meal": _meal_dict(pm.meal, fav_ids) if pm else None
+                "meal": format_meal_out(pm.meal, fav_ids, avoid_names) if pm and pm.meal else None
             })
             
     return {"slots": slots}
@@ -308,8 +291,8 @@ async def refresh_single_meal(date: str, meal_type: str, session: AsyncSession =
         select(Meal).where(Meal.id == new_meal.id).options(selectinload(Meal.ingredients))
     )
     updated_meal = updated_result.scalar_one_or_none()
-    
-    return {"status": "success", "meal": _meal_dict(updated_meal, fav_ids)}
+    avoid_names = await get_avoid_food_names(session)
+    return {"status": "success", "meal": format_meal_out(updated_meal, fav_ids, avoid_names)}
     
 
 @router.post("/cleanup")

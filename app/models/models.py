@@ -11,6 +11,7 @@ class Food(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(200), nullable=False, index=True)
+    name_vi = Column(String(200), nullable=True, index=True)
     reflux = Column(String(20), nullable=False, default="ok")
     category = Column(String(100), nullable=False, default="Uncategorized")
     is_user_added = Column(Boolean, default=False)
@@ -28,8 +29,9 @@ class Meal(Base):
     image_url = Column(Text, default="")
     source_url = Column(Text, default="")
     source_site = Column(String(100), default="")
-    calories = Column(Float, default=0)
-    cook_time_hours = Column(Float, default=0)
+    calories = Column(Float, default=0.0)
+    cook_time_hours = Column(Float, default=0.0)
+    servings = Column(String(50), default="")
     language = Column(String(10), default="en")
     has_avoid_food = Column(Boolean, default=False)
     calories_incomplete = Column(Boolean, default=False)
@@ -74,6 +76,7 @@ class CalorieEntry(Base):
     description = Column(String(500), nullable=False, index=True)
     calories = Column(Float, default=0)
     data_type = Column(String(50), default="")
+    portions_json = Column(Text, nullable=True)  # Store list of {amount, unit, grams}
     fetched_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 

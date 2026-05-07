@@ -30,26 +30,10 @@ SCRAPERS = [
 ]
 
 async def translate_to_vi(text: str) -> str:
-    """Mock translation for local scrapers (actual implementation would use deep_translator)."""
-    # Simple mapping for common terms used in testing
-    mapping = {
-        "Chicken": "Thịt gà",
-        "Beef": "Thịt bò",
-        "Salmon": "Cá hồi",
-        "Tofu": "Đậu phụ",
-        "Spinach": "Cải bó xôi",
-        "Potatoes": "Khoai tây",
-        "Coconuts": "Dừa",
-        "Sardines": "Cá mồi",
-        "Ginger": "Gừng",
-        "Porridge": "Cháo",
-        "Watercress": "Xà lách xoong"
-    }
-    try:
-        return mapping.get(text, text)
-    except Exception as e:
-        logger.error(f"Translation error for '{text}': {e}")
-        return text
+    """Translate search query to Vietnamese using the centralized translation utility."""
+    from app.api.utils import translate_food_name
+    translated = await translate_food_name(text, "vi")
+    return translated if translated else text
 
 # State management for long-running scrape operations
 class ScrapeManager:
@@ -203,8 +187,8 @@ async def save_scraped_results(
     
     scrape_manager.message = f"{step_info} '{clean_query}': Saving results..."
 
-    avoid_result = await session.execute(select(Food.name).where(Food.reflux == "avoid"))
-    avoid_names = {row[0].lower() for row in avoid_result.fetchall()}
+    from app.api.utils import get_avoid_food_names, check_ingredient_avoid
+    avoid_names = await get_avoid_food_names(session)
 
     saved_count = 0
     skipped_count = 0
@@ -241,7 +225,7 @@ async def save_scraped_results(
 
         # Avoid-list check
         ingredient_names = [ing.get("name", "").lower() for ing in meal_data.ingredients]
-        avoid_count = sum(1 for ing_name in ingredient_names if any(avoid in ing_name for avoid in avoid_names))
+        avoid_count = sum(1 for ing_name in ingredient_names if check_ingredient_avoid(ing_name, avoid_names))
         
         if avoid_count >= 3:
             skipped_count += 1
@@ -252,7 +236,8 @@ async def save_scraped_results(
             name=meal_data.name, description=meal_data.description,
             image_url=meal_data.image_url, source_url=meal_data.source_url,
             source_site=meal_data.source_site, calories=meal_data.calories,
-            cook_time_hours=meal_data.cook_time_hours, language=meal_data.language,
+            cook_time_hours=meal_data.cook_time_hours, servings=meal_data.servings,
+            language=meal_data.language,
         )
         session.add(db_meal)
         await session.flush()
@@ -265,6 +250,7 @@ async def save_scraped_results(
                 unit=ing.get("unit", ""),
                 comment=ing.get("comment", "")
             ))
+        await session.flush()
 
         # Calculate calories for the new meal using the improved FDC logic
         from app.api.fdc import calculate_meal_calories
@@ -328,6 +314,121 @@ async def scrape_search(
         scrape_manager.is_running = False
         scrape_manager.progress = 100
         scrape_manager.message = "Scraping complete."
+
+@router.post("/url")
+async def scrape_from_url(
+    url: str
+):
+    """Scrape a single recipe from a specific URL."""
+    try:
+        from recipe_scrapers import scrape_html
+        from curl_cffi.requests import AsyncSession
+        import re
+
+        # Basic URL validation
+        if not re.match(r'^https?://', url):
+            raise HTTPException(status_code=400, detail="Invalid URL format. Must start with http:// or https://")
+
+        logger.info(f"Manual scrape requested for URL: {url}")
+        
+        # Use a scraper instance to leverage existing logic
+        # We can use any scraper since _scrape_recipe_details is mostly generic
+        base = SCRAPERS[0] 
+        
+        async with AsyncSession() as s:
+            try:
+                resp = await s.get(url, impersonate="chrome120", timeout=15)
+                if resp.status_code != 200:
+                    raise HTTPException(status_code=400, detail=f"Failed to fetch URL. Status: {resp.status_code}")
+                html = resp.text
+            except Exception as e:
+                logger.error(f"Fetch error for {url}: {e}")
+                raise HTTPException(status_code=400, detail=f"Could not connect to the URL: {str(e)}")
+
+        try:
+            # We use recipe-scrapers to see if it's supported
+            # scraper = scrape_html(html=html, org_url=url) # Default mode
+            # But we want to know if it's SPECIFICALLY supported
+            from recipe_scrapers import scraper_exists_for
+            from urllib.parse import urlparse
+            
+            domain = urlparse(url).netloc
+            if not scraper_exists_for(url):
+                # Check if it's one of our custom scrapers that might not be in recipe-scrapers
+                custom_sites = [s.BASE_URL for s in SCRAPERS]
+                is_custom = any(site in url for site in custom_sites if site)
+                if not is_custom:
+                    raise HTTPException(status_code=400, detail=f"The site '{domain}' is not supported for automatic scraping. Please add it manually.")
+
+            scraper = scrape_html(html=html, org_url=url, wild_mode=True)
+            
+            # Extract data
+            name = ""
+            try: name = scraper.title()
+            except: pass
+            
+            if not name:
+                raise HTTPException(status_code=400, detail="Could not extract recipe name from this URL. The site might be protected or unsupported.")
+
+            image_url = ""
+            try: image_url = scraper.image()
+            except: pass
+
+            ingredients = []
+            try:
+                ing_list = scraper.ingredients()
+                for item in ing_list:
+                    if item:
+                        ingredients.append(base._parse_ingredient(item))
+            except: pass
+
+            cook_time_hours = 0.0
+            try:
+                total_time = scraper.total_time()
+                if total_time:
+                    cook_time_hours = round(total_time / 60.0, 2)
+            except: pass
+            
+            description = ""
+            try: description = scraper.description()
+            except: pass
+
+            servings = ""
+            try:
+                raw_servings = scraper.servings()
+                servings = base._clean_servings(raw_servings)
+            except:
+                try:
+                    raw_yields = scraper.yields()
+                    servings = base._clean_servings(raw_yields)
+                except:
+                    pass
+
+            return {
+                "status": "success",
+                "meal": {
+                    "name": name,
+                    "description": description,
+                    "image_url": image_url,
+                    "source_url": url,
+                    "source_site": domain,
+                    "cook_time_hours": cook_time_hours,
+                    "servings": servings,
+                    "ingredients": ingredients
+                }
+            }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Scrape error for {url}: {e}")
+            raise HTTPException(status_code=400, detail=f"Error parsing recipe data: {str(e)}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Global scrape error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/populate")
 async def populate_meals():

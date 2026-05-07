@@ -17,8 +17,6 @@ logs/
 *.log
 
 # Project specific
-.agents/
-.claude/
 scratch/
 .gemini/
 .tempmediaStorage/

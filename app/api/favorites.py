@@ -7,6 +7,8 @@ from app.core.database import get_session
 from app.models.models import FavoriteMeal, Meal
 from app.schemas.schemas import MealOut
 
+from app.api.utils import get_avoid_food_names, format_meal_out
+
 router = APIRouter(prefix="/api/favorites", tags=["favorites"])
 
 
@@ -20,26 +22,12 @@ async def list_favorites(session: AsyncSession = Depends(get_session)):
     )
     favs = result.scalars().all()
     fav_ids = {f.meal_id for f in favs}
+    avoid_names = await get_avoid_food_names(session)
+    
     out = []
     for f in favs:
         if f.meal:
-            out.append({
-                "id": f.meal.id,
-                "name": f.meal.name,
-                "description": f.meal.description or "",
-                "image_url": f.meal.image_url or "",
-                "source_url": f.meal.source_url or "",
-                "source_site": f.meal.source_site or "",
-                "calories": f.meal.calories or 0,
-                "cook_time_hours": f.meal.cook_time_hours or 0,
-                "ingredient_count": len(f.meal.ingredients) if f.meal.ingredients else 0,
-                "language": f.meal.language or "en",
-                "has_avoid_food": f.meal.has_avoid_food or False,
-                "is_favorite": True,
-                "calories_incomplete": f.meal.calories_incomplete or False,
-                "ingredients": [{"id": i.id, "name": i.name, "quantity": i.quantity} for i in (f.meal.ingredients or [])],
-                "created_at": f.meal.created_at,
-            })
+            out.append(format_meal_out(f.meal, fav_ids, avoid_names))
     return out
 
 
