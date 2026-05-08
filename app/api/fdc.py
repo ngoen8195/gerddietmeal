@@ -192,48 +192,47 @@ async def seed_fdc(session: AsyncSession = Depends(get_session)):
                 errors.append(f"{query}: {str(e)}")
                 continue
 
-async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool = True, cached_entries: list = None) -> tuple[float, int, str, list]:
-    # Custom scorer to prioritize FDC naming conventions
-    def fdc_scorer(q, choices, **kwargs):
-        # We need to return a score for each choice
-        # But rapidfuzz process.extract uses a scorer that takes (s1, s2)
-        # So we define it as a pairwise scorer
-        s1 = q.lower().strip()
-        s2 = choices.lower().strip()
+# Custom scorer to prioritize FDC naming conventions
+def fdc_scorer(q, choices, **kwargs):
+    # We need to return a score for each choice
+    # But rapidfuzz process.extract uses a scorer that takes (s1, s2)
+    # So we define it as a pairwise scorer
+    s1 = q.lower().strip()
+    s2 = choices.lower().strip()
+    
+    parts = [p.strip() for p in s2.split(',')]
+    
+    # Base fuzzy score
+    base_score = fuzz.token_set_ratio(s1, s2)
+    
+    bonus = 0
+    # 1. Word matching priority with aliases
+    query_words = set(s1.split())
+    if "drink" in query_words: query_words.update(["beverage", "beverages"])
+    if "yogurt" in query_words: query_words.update(["yoghurt", "yogurts"])
+    
+    match_count = sum(1 for w in query_words if w in s2)
+    if len(query_words) > 1:
+        bonus += match_count * 20
+    
+    # 2. Segment priority (FDC standard: Name, Form, State)
+    # We check if ANY query word matches the first segment for a boost
+    first_segment = parts[0] if parts else ""
+    if any(w in first_segment for w in query_words):
+        if s1 == first_segment: bonus += 80  # Even higher for exact match
+        else: bonus += 50
+    elif len(parts) > 1 and any(w in parts[1] for w in query_words):
+        bonus += 25
         
-        parts = [p.strip() for p in s2.split(',')]
+    # 3. Keyword priorities
+    if "raw" in s2:
+        bonus += 20  # Increased from 15
+    if "whole" in s2:
+        bonus += 15
+    if "plain" in s2:
+        bonus += 15
         
-        # Base fuzzy score
-        base_score = fuzz.token_set_ratio(s1, s2)
-        
-        bonus = 0
-        # 1. Word matching priority with aliases
-        query_words = set(s1.split())
-        if "drink" in query_words: query_words.update(["beverage", "beverages"])
-        if "yogurt" in query_words: query_words.update(["yoghurt", "yogurts"])
-        
-        match_count = sum(1 for w in query_words if w in s2)
-        if len(query_words) > 1:
-            bonus += match_count * 20
-        
-        # 2. Segment priority (FDC standard: Name, Form, State)
-        # We check if ANY query word matches the first segment for a boost
-        first_segment = parts[0] if parts else ""
-        if any(w in first_segment for w in query_words):
-            if s1 == first_segment: bonus += 80  # Even higher for exact match
-            else: bonus += 50
-        elif len(parts) > 1 and any(w in parts[1] for w in query_words):
-            bonus += 25
-            
-        # 3. Keyword priorities
-        if "raw" in s2:
-            bonus += 20  # Increased from 15
-        if "whole" in s2:
-            bonus += 15
-        if "plain" in s2:
-            bonus += 15
-            
-        return base_score + bonus
+    return base_score + bonus
 
 async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool = True, cached_entries=None, language: str = "en") -> tuple:
     """
