@@ -14,6 +14,12 @@ let allFavorites = [];
 let availableCategories = [];
 let scrapePollInterval = null;
 
+// Pagination state
+let foodPage = 1;
+let mealPage = 1;
+let favPage = 1;
+const PAGE_SIZE = 50;
+
 // ─── UI Utilities ────────────────────────────────
 function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 function truncate(s, n) { return s && s.length > n ? s.slice(0, n) + '…' : s || ''; }
@@ -140,6 +146,59 @@ function humanizeQtyJS(val) {
     }
 
     return val.toFixed(1).replace(/\.0$/, '');
+}
+
+function renderPagination(containerId, totalPages, currentPage, onPageChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = `
+        <div class="pagination-container">
+            <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="${onPageChange}(${currentPage - 1})">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                Previous
+            </button>
+            <div class="pagination-pages">
+    `;
+
+    const range = (start, end) => Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+    let pages = [];
+    if (totalPages <= 7) {
+        pages = range(1, totalPages);
+    } else {
+        if (currentPage <= 4) {
+            pages = [...range(1, 5), '...', totalPages];
+        } else if (currentPage >= totalPages - 3) {
+            pages = [1, '...', ...range(totalPages - 4, totalPages)];
+        } else {
+            pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+        }
+    }
+
+    pages.forEach(p => {
+        if (p === '...') {
+            html += `<span class="pagination-ellipsis">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            </span>`;
+        } else {
+            html += `<button class="pagination-btn ${p === currentPage ? 'active' : ''}" onclick="${onPageChange}(${p})">${p}</button>`;
+        }
+    });
+
+    html += `
+            </div>
+            <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="${onPageChange}(${currentPage + 1})">
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+        </div>
+    `;
+    container.innerHTML = html;
 }
 
 // ─── Tab Navigation ────────────────────────────────
@@ -443,7 +502,7 @@ window.initShadcnSelect = (selectId, options = {}) => {
 
     const wrapper = document.createElement('div');
     wrapper.className = `combobox-wrapper ${options.className || ''}`;
-    
+
     const trigger = document.createElement('div');
     trigger.className = 'combobox-trigger';
     trigger.innerHTML = `
@@ -458,7 +517,7 @@ window.initShadcnSelect = (selectId, options = {}) => {
 
     const content = document.createElement('div');
     content.className = 'combobox-content';
-    
+
     const list = document.createElement('div');
     list.className = 'command-list';
     content.appendChild(list);
@@ -520,8 +579,8 @@ window.initShadcnSelect = (selectId, options = {}) => {
     // Initial and periodic refresh to ensure sync
     refreshOptions();
     // Sometimes values change without events in complex frameworks or scripts
-    setTimeout(refreshOptions, 100); 
-    
+    setTimeout(refreshOptions, 100);
+
     return { refresh: refreshOptions };
 };
 
@@ -609,16 +668,21 @@ initCategoryCombobox();
 
 
 // ─── FOOD LIBRARY ──────────────────────────────────
-async function loadFoods() {
+async function loadFoods(page = 1) {
+    foodPage = page;
     const cat = document.getElementById('food-category-filter').value;
     const reflux = document.getElementById('food-reflux-filter').value;
     const search = document.getElementById('food-search').value;
-    let url = '/api/foods/?';
+    let url = `/api/foods/?page=${foodPage}&page_size=${PAGE_SIZE}&`;
     if (cat) url += `category=${encodeURIComponent(cat)}&`;
     if (reflux) url += `reflux=${reflux}&`;
     if (search) url += `search=${encodeURIComponent(search)}&`;
-    allFoods = await API.get(url);
+
+    const data = await API.get(url);
+    allFoods = data.items;
     renderFoods();
+    renderPagination('food-pagination', data.total_pages, data.page, 'loadFoods');
+
     // Load categories
     availableCategories = await API.get('/api/foods/categories');
     const sel = document.getElementById('food-category-filter');
@@ -660,9 +724,9 @@ function renderFoods() {
     }).join('');
 }
 
-document.getElementById('food-search').addEventListener('input', debounce(loadFoods, 300));
-document.getElementById('food-category-filter').addEventListener('change', loadFoods);
-document.getElementById('food-reflux-filter').addEventListener('change', loadFoods);
+document.getElementById('food-search').addEventListener('input', debounce(() => loadFoods(1), 300));
+document.getElementById('food-category-filter').addEventListener('change', () => loadFoods(1));
+document.getElementById('food-reflux-filter').addEventListener('change', () => loadFoods(1));
 
 // Food Modal
 let editingFoodId = null;
@@ -670,17 +734,17 @@ document.getElementById('btn-add-food').addEventListener('click', () => {
     editingFoodId = null;
     document.getElementById('food-modal-title').textContent = 'Add Food';
     document.getElementById('food-form-name').value = '';
-    
+
     if (window.setComboboxValue) setComboboxValue('');
-    
+
     const refluxSel = document.getElementById('food-form-reflux');
     refluxSel.value = 'ok';
     refluxSel.dispatchEvent(new Event('change'));
-    
+
     const mealTypeSel = document.getElementById('food-form-meal-type');
     mealTypeSel.value = 'none';
     mealTypeSel.dispatchEvent(new Event('change'));
-    
+
     document.getElementById('food-modal').classList.add('visible');
 });
 
@@ -697,17 +761,17 @@ window.openEditFood = async (id) => {
     editingFoodId = id;
     document.getElementById('food-modal-title').textContent = 'Edit Food';
     document.getElementById('food-form-name').value = food.name;
-    
+
     setComboboxValue(food.category);
-    
+
     const refluxSel = document.getElementById('food-form-reflux');
     refluxSel.value = food.reflux;
     refluxSel.dispatchEvent(new Event('change'));
-    
+
     const mealTypeSel = document.getElementById('food-form-meal-type');
     mealTypeSel.value = food.meal_type || 'none';
     mealTypeSel.dispatchEvent(new Event('change'));
-    
+
     document.getElementById('food-modal').classList.add('visible');
 };
 
@@ -736,12 +800,16 @@ window.deleteFood = async (id) => {
 };
 
 // ─── MEAL LIBRARY ──────────────────────────────────
-async function loadMeals() {
+async function loadMeals(page = 1) {
+    mealPage = page;
     const search = document.getElementById('meal-search').value;
-    let url = '/api/meals/?limit=200';
+    let url = `/api/meals/?page=${mealPage}&page_size=${PAGE_SIZE}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
-    allMeals = await API.get(url);
+
+    const data = await API.get(url);
+    allMeals = data.items;
     renderMealLibrary();
+    renderPagination('meal-pagination', data.total_pages, data.page, 'loadMeals');
 }
 
 function renderMealLibrary() {
@@ -790,8 +858,8 @@ function renderMealLibrary() {
     }).join('');
 }
 
-document.getElementById('btn-search-meals').addEventListener('click', loadMeals);
-document.getElementById('meal-search').addEventListener('keydown', e => { if (e.key === 'Enter') loadMeals(); });
+document.getElementById('btn-search-meals').addEventListener('click', () => loadMeals(1));
+document.getElementById('meal-search').addEventListener('keydown', e => { if (e.key === 'Enter') loadMeals(1); });
 
 // Scrape button
 document.getElementById('btn-scrape-meals').addEventListener('click', async function () {
@@ -1246,9 +1314,13 @@ window.deleteMeal = async (id) => {
 };
 
 // ─── FAVORITES ─────────────────────────────────────
-async function loadFavorites() {
-    allFavorites = await API.get('/api/favorites/');
+async function loadFavorites(page = 1) {
+    favPage = page;
+    const url = `/api/favorites/?page=${favPage}&page_size=${PAGE_SIZE}`;
+    const data = await API.get(url);
+    allFavorites = data.items;
     renderFavorites();
+    renderPagination('fav-pagination', data.total_pages, data.page, 'loadFavorites');
 }
 
 function renderFavorites() {
@@ -1266,7 +1338,7 @@ function renderFavorites() {
         };
 
         return `
-        <div class="meal-lib-card ${m.avoid_percentage > 20 ? 'has-avoid' : ''}">
+        <div class="meal-lib-card ${m.avoid_percentage > 25 ? 'has-avoid' : ''}">
             <div class="meal-lib-card-img-wrapper" onclick="openViewMeal('${m.id}')">
                 <img class="meal-lib-card-img" src="${esc(m.image_url || DEFAULT_IMG)}" alt="${esc(m.name)}" onerror="this.src='${DEFAULT_IMG}'">
                 ${sourceDomain ? `
@@ -1330,4 +1402,10 @@ async function init() {
     const savedTab = sessionStorage.getItem('selectedTab') || 'home';
     switchTab(savedTab);
 }
+
+// Export to window for onclick handlers (module scope fix)
+window.loadFoods = loadFoods;
+window.loadMeals = loadMeals;
+window.loadFavorites = loadFavorites;
+
 init();

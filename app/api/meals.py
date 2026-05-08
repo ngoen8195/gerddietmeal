@@ -26,29 +26,50 @@ def _clean_servings(servings: str) -> str:
     return s
 
 
-@router.get("/", response_model=list[MealOut])
+@router.get("/", response_model=schemas.PaginatedResponse[MealOut])
 async def list_meals(
+    page: int = 1,
+    page_size: int = 50,
     search: str = None,
-    limit: int = 100,
-    offset: int = 0,
     session: AsyncSession = Depends(get_session),
 ):
-    """List meals with optional search by name/ingredient."""
-    # Get favorite IDs and avoid foods
-    fav_result = await session.execute(select(FavoriteMeal.meal_id))
-    fav_ids = {row[0] for row in fav_result.fetchall()}
-    avoid_names = await get_avoid_food_names(session)
-
-    stmt = select(Meal).options(selectinload(Meal.ingredients)).order_by(Meal.created_at.desc())
+    """List meals with pagination and optional search by name/ingredient."""
+    # Base query for meals
+    stmt = select(Meal).options(selectinload(Meal.ingredients))
+    
     if search:
         # Search by meal name or ingredient name
         stmt = stmt.outerjoin(MealIngredient).where(
             Meal.name.ilike(f"%{search}%") | MealIngredient.name.ilike(f"%{search}%")
         ).distinct()
-    stmt = stmt.limit(limit).offset(offset)
+
+    # Get total count for pagination
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total_result = await session.execute(count_stmt)
+    total = total_result.scalar() or 0
+
+    # Apply pagination and sorting
+    stmt = stmt.order_by(Meal.created_at.desc())
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+    
     result = await session.execute(stmt)
     meals = result.unique().scalars().all()
-    return [format_meal_out(m, fav_ids, avoid_names) for m in meals]
+    
+    # Format for output
+    fav_result = await session.execute(select(FavoriteMeal.meal_id))
+    fav_ids = {row[0] for row in fav_result.fetchall()}
+    avoid_names = await get_avoid_food_names(session)
+    
+    items = [format_meal_out(m, fav_ids, avoid_names) for m in meals]
+    
+    import math
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": math.ceil(total / page_size) if total > 0 else 1
+    }
 
 
 @router.get("/count")

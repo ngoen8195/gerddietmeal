@@ -69,7 +69,7 @@ async def _get_meal_pools(session: AsyncSession):
         avoid_proportion = avoid_count / total_ingredients
 
         # Rule: Only allow meals with <= 20% avoid ingredients, UNLESS it is a favorite
-        if avoid_proportion > 0.20 and meal.id not in fav_ids:
+        if avoid_proportion > 0.25 and meal.id not in fav_ids:
             continue   
             
         safe_meals_count += 1

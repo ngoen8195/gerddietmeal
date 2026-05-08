@@ -43,6 +43,7 @@ CROSS_LANG_MAPPING = {
     "alcohol": ["rượu"],
     "wine": ["rượu"],
     "hot sauce": ["tương ớt", "ớt"],
+    "ice": ["đá viên", "nước đá"],
     # Reverse mapping
     "tỏi": ["garlic"],
     "hành": ["onion"],
@@ -56,7 +57,9 @@ CROSS_LANG_MAPPING = {
     "bạc hà": ["mint"],
     "bia": ["beer"],
     "rượu": ["alcohol", "wine"],
-    "tương ớt": ["chili", "hot sauce"]
+    "tương ớt": ["chili", "hot sauce"],
+    "đá viên": ["ice"],
+    "nước đá": ["ice"]
 }
 
 def stem(s):

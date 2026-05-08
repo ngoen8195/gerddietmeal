@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
 from app.core.database import get_session
 from app.models.models import Food, Meal, MealIngredient
-from app.schemas.schemas import FoodOut, FoodCreate, FoodUpdate
+from app.schemas.schemas import FoodOut, FoodCreate, FoodUpdate, PaginatedResponse
+import app.schemas.schemas as schemas
 from app.api.utils import translate_food_name
 
 router = APIRouter(prefix="/api/foods", tags=["foods"])
@@ -13,23 +14,44 @@ router = APIRouter(prefix="/api/foods", tags=["foods"])
 RESOURCES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "resources")
 
 
-@router.get("/", response_model=list[FoodOut])
+@router.get("/", response_model=schemas.PaginatedResponse[FoodOut])
 async def list_foods(
+    page: int = 1,
+    page_size: int = 50,
     category: str = None,
     reflux: str = None,
     search: str = None,
     session: AsyncSession = Depends(get_session),
 ):
-    """List all foods, optionally filtered by category, reflux status, or search term."""
-    stmt = select(Food).order_by(Food.category, Food.name)
+    """List foods with pagination, optionally filtered by category, reflux status, or search term."""
+    stmt = select(Food)
     if category:
         stmt = stmt.where(Food.category == category)
     if reflux:
         stmt = stmt.where(Food.reflux == reflux)
     if search:
         stmt = stmt.where(Food.name.ilike(f"%{search}%") | Food.name_vi.ilike(f"%{search}%"))
+
+    # Get total count for pagination
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total_result = await session.execute(count_stmt)
+    total = total_result.scalar() or 0
+
+    # Apply pagination and sorting
+    stmt = stmt.order_by(Food.category, Food.name)
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+    
     result = await session.execute(stmt)
-    return result.scalars().all()
+    items = result.scalars().all()
+    
+    import math
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": math.ceil(total / page_size) if total > 0 else 1
+    }
 
 
 @router.get("/categories")

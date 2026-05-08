@@ -1,7 +1,6 @@
 """Scraper orchestration logic with atomic termination and multi-process safety."""
 import asyncio
 import time
-import os
 from pathlib import Path
 from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
@@ -95,7 +94,7 @@ async def terminate_scrape():
 
 async def search_for_query(
     query: str, 
-    max_per_source: int = 3,
+    max_per_source: int = 2,
     query_index: int = 1,
     total_queries: int = 1
 ) -> dict:
@@ -195,7 +194,7 @@ async def save_scraped_results(
     duplicate_count = 0
     saved_list = []
     
-    confectionery_keywords = ["kẹo", "candy", "dessert", "confectionery", "marshmallow"]
+    confectionery_keywords = ["kẹo", "candy", "dessert", "confectionery", "marshmallow", "bánh ngọt", "ice cream", "bánh kem"]
 
     for meal_data in results:
         if scrape_manager.should_terminate:
@@ -223,14 +222,16 @@ async def save_scraped_results(
             logger.info(f"Skipping confectionery: '{meal_data.name}'")
             continue
 
-        # Avoid-list check
-        ingredient_names = [ing.get("name", "").lower() for ing in meal_data.ingredients]
-        avoid_count = sum(1 for ing_name in ingredient_names if check_ingredient_avoid(ing_name, avoid_names))
-        
-        if avoid_count >= 3:
-            skipped_count += 1
-            scrape_manager.skipped_count += 1
-            continue
+        # Avoid-list check: Skip if more than 25% of ingredients are on the avoid list
+        num_ingredients = len(ingredient_names)
+        if num_ingredients > 0:
+            avoid_count = sum(1 for ing_name in ingredient_names if check_ingredient_avoid(ing_name, avoid_names))
+            avoid_ratio = avoid_count / num_ingredients
+            if avoid_ratio > 0.25:
+                skipped_count += 1
+                scrape_manager.skipped_count += 1
+                logger.info(f"Skipping '{meal_data.name}': {avoid_ratio:.1%} avoid ingredients (Threshold: 25%)")
+                continue
 
         db_meal = Meal(
             name=meal_data.name, description=meal_data.description,
