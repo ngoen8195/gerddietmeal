@@ -230,7 +230,39 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ─── HOME: Weekly Meal Plan ────────────────────────
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+// ─── Global State for Overlays ──────────────────────
+let activePopover = null;
+let activeCommand = null;
+
+// Global listeners for closing overlays
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closePopover();
+        closeCommand();
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (activePopover && !activePopover.contains(e.target)) {
+        closePopover();
+    }
+});
+
+function closePopover() {
+    if (activePopover) {
+        activePopover.remove();
+        activePopover = null;
+    }
+}
+
+function closeCommand() {
+    if (activeCommand) {
+        activeCommand.remove();
+        activeCommand = null;
+    }
+}
 
 let currentWeekStart = new Date();
 // Adjust to previous Monday
@@ -455,7 +487,7 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
                 <div class="meal-card-gradient meal-card-gradient-top"></div>
                 <div class="meal-card-gradient meal-card-gradient-bottom"></div>
                 
-                ${!isMissing ? `<button class="meal-card-overlay-edit" onclick="event.stopPropagation();openEditMealFromHome('${meal.id}')" title="Edit">${editIcon}</button>` : ''}
+                ${!isMissing ? `<button class="meal-card-overlay-edit" onclick="event.stopPropagation();openEditMealFromHome(event, '${meal.id}', '${dateStr}', '${mealTypeStr}')" title="Edit">${editIcon}</button>` : ''}
                 
                 ${!isMissing && sourceDomain ? `
                     <a class="meal-card-overlay-link" href="${esc(meal.source_url)}" target="_blank" onclick="event.stopPropagation()">
@@ -473,6 +505,173 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
             </div>`;
     }
     return card;
+}
+
+// ─── Meal Plan Interactions ────────────────────────
+window.openEditMealFromHome = (event, mealId, dateStr, mealTypeStr) => {
+    toggleMealEditPopover(event, mealId, dateStr, mealTypeStr);
+};
+
+function toggleMealEditPopover(event, mealId, dateStr, mealTypeStr) {
+    if (activePopover) {
+        closePopover();
+        return;
+    }
+
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
+
+    const popover = document.createElement('div');
+    popover.className = 'popover-menu';
+    popover.innerHTML = `
+        <div class="popover-item" id="btn-select-another">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19.9381 13C19.979 12.6724 20 12.3387 20 12C20 7.58172 16.4183 4 12 4C9.49942 4 7.26681 5.14727 5.7998 6.94416M4.06189 11C4.02104 11.3276 4 11.6613 4 12C4 16.4183 7.58172 20 12 20C14.3894 20 16.5341 18.9525 18 17.2916M15 17H18V17.2916M5.7998 4V6.94416M5.7998 6.94416V6.99993L8.7998 7M18 20V17.2916"/></svg>
+            Select another meal
+        </div>
+        <div class="popover-item" id="btn-edit-details">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M 15.9087 3.8735 C 16.4681 3.3142 17.2266 3 18.0176 3 C 18.4093 3 18.7971 3.0771 19.1589 3.227 C 19.5208 3.3769 19.8495 3.5966 20.1265 3.8735 C 20.4034 4.1505 20.6231 4.4792 20.773 4.8411 C 20.9229 5.2029 21 5.5907 21 5.9824 C 21 6.374 20.9229 6.7619 20.773 7.1237 C 20.6231 7.4855 20.4034 7.8143 20.1265 8.0913 L 19.0231 9.1947 C 18.6326 9.5852 17.9994 9.5852 17.6089 9.1947 L 14.8053 6.3911 C 14.4148 6.0006 14.4148 5.3674 14.8053 4.9769 L 15.9087 3.8735 Z M 13.3911 7.8054 C 13.0006 7.4148 12.3674 7.4148 11.9769 7.8054 L 5.0108 14.7714 C 4.37 15.4122 3.9154 16.2151 3.6957 17.0943 L 3.0299 19.7575 C 2.9447 20.0982 3.0445 20.4587 3.2929 20.7071 C 3.5413 20.9555 3.9018 21.0553 4.2425 20.9701 L 6.9057 20.3043 C 7.7849 20.0846 8.5878 19.63 9.2286 18.9892 L 16.1946 12.0231 C 16.5852 11.6326 16.5852 10.9994 16.1946 10.6089 L 13.3911 7.8054Z"/></svg>
+            Edit meal details
+        </div>
+    `;
+
+    document.body.appendChild(popover);
+    activePopover = popover;
+
+    // Position logic
+    const popoverWidth = 180; // Estimated
+    popover.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+    popover.style.left = (rect.right + window.scrollX - popoverWidth) + 'px';
+
+    // Handlers
+    popover.querySelector('#btn-select-another').onclick = () => openMealLibraryCommand(mealId, dateStr, mealTypeStr);
+    popover.querySelector('#btn-edit-details').onclick = () => {
+        closePopover();
+        openMealModal('edit', mealId);
+    };
+
+    event.stopPropagation();
+}
+
+async function openMealLibraryCommand(currentMealId, dateStr, mealTypeStr) {
+    closePopover();
+    if (activeCommand) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'command-overlay';
+    overlay.innerHTML = `
+        <div class="command-container glass-panel">
+            <div class="command-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" class="command-search-input" placeholder="Search recipe name..." id="command-search-input">
+            </div>
+            <div class="command-list" id="command-results-list">
+                <div class="command-loading">Loading meals...</div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    activeCommand = overlay;
+
+    const searchInput = document.getElementById('command-search-input');
+    const listContainer = document.getElementById('command-results-list');
+
+    searchInput.focus();
+
+    let currentPage = 1;
+    let currentSearch = '';
+    let isLoading = false;
+    let hasMore = true;
+
+    const loadItems = async (reset = false) => {
+        if (isLoading || (!hasMore && !reset)) return;
+        isLoading = true;
+
+        if (reset) {
+            currentPage = 1;
+            listContainer.innerHTML = '<div class="command-loading">Searching...</div>';
+            hasMore = true;
+            listContainer.scrollTop = 0; // Reset scroll on search
+        }
+
+        try {
+            console.log(`[LazyLoad] Fetching page ${currentPage} (search: "${currentSearch}")`);
+            const data = await API.get(`/api/meals/?page=${currentPage}&page_size=10&search=${encodeURIComponent(currentSearch)}`);
+            if (reset) listContainer.innerHTML = '';
+
+            const loaders = listContainer.querySelectorAll('.command-loading');
+            loaders.forEach(l => l.remove());
+
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(meal => {
+                    const item = document.createElement('div');
+                    item.className = 'command-item';
+                    if (meal.id == currentMealId) item.classList.add('active');
+
+                    item.innerHTML = `
+                        <div class="command-item-name">${esc(meal.name)}</div>
+                    `;
+
+                    item.onclick = async () => {
+                        await replaceSpecificMealSlot(dateStr, mealTypeStr, meal.id);
+                        closeCommand();
+                    };
+
+                    listContainer.appendChild(item);
+                });
+
+                currentPage++;
+                hasMore = data.items.length === 10;
+            } else {
+                if (reset) listContainer.innerHTML = '<div class="command-empty">No meals found.</div>';
+                hasMore = false;
+            }
+        } catch (e) {
+            console.error("Error loading meals:", e);
+            listContainer.innerHTML = '<div class="command-empty">Error loading meals. Please try again.</div>';
+        } finally {
+            isLoading = false;
+        }
+
+        // AUTO-FILL: If the list is too short to scroll, load more automatically
+        // This ensures the scrollbar appears if there are more items to fetch.
+        if (hasMore && listContainer.scrollHeight <= listContainer.clientHeight && listContainer.clientHeight > 0) {
+            console.log("[LazyLoad] Auto-filling container...");
+            await loadItems();
+        }
+    };
+
+    await loadItems();
+
+    let debounceTimer;
+    searchInput.oninput = (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            currentSearch = e.target.value;
+            loadItems(true);
+        }, 300);
+    };
+
+    listContainer.onscroll = () => {
+        if (listContainer.scrollTop + listContainer.clientHeight >= listContainer.scrollHeight - 50) {
+            loadItems();
+        }
+    };
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeCommand();
+    };
+}
+
+async function replaceSpecificMealSlot(date, mealType, mealId) {
+    try {
+        const data = await API.post(`/api/meal-plan/replace-specific?date=${date}&meal_type=${mealType}&meal_id=${mealId}`);
+        if (data.status === 'success') {
+            await loadWeeklyPlan();
+        }
+    } catch (e) {
+        alert("Failed to replace meal.");
+    }
 }
 
 // ─── Tooltip ───────────────────────────────────────
@@ -550,7 +749,7 @@ window.initShadcnSelect = (selectId, options = {}) => {
     const refreshOptions = () => {
         const currentVal = String(select.value);
         list.innerHTML = Array.from(select.options).map(opt => `
-            <div class="command-item ${String(opt.value) === currentVal ? 'selected' : ''}" data-value="${esc(opt.value)}">
+            <div class="cb-item ${String(opt.value) === currentVal ? 'selected' : ''}" data-value="${esc(opt.value)}">
                 <span>${esc(opt.textContent)}</span>
                 ${String(opt.value) === currentVal ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : ''}
             </div>
@@ -559,7 +758,7 @@ window.initShadcnSelect = (selectId, options = {}) => {
         const selectedOpt = select.options[select.selectedIndex];
         displayValue.textContent = selectedOpt ? selectedOpt.textContent : (options.placeholder || 'Select...');
 
-        list.querySelectorAll('.command-item').forEach(item => {
+        list.querySelectorAll('.cb-item').forEach(item => {
             item.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -629,7 +828,7 @@ function initCategoryCombobox() {
         const filtered = availableCategories.filter(c => c.toLowerCase().includes(normalizedFilter));
 
         list.innerHTML = filtered.map(c => `
-            <div class="command-item ${c === hiddenInput.value ? 'selected' : ''}" data-value="${esc(c)}">
+            <div class="cb-item ${c === hiddenInput.value ? 'selected' : ''}" data-value="${esc(c)}">
                 ${esc(c)}
                 ${c === hiddenInput.value ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : ''}
             </div>
@@ -644,7 +843,7 @@ function initCategoryCombobox() {
             empty.style.display = 'none';
         }
 
-        list.querySelectorAll('.command-item').forEach(item => {
+        list.querySelectorAll('.cb-item').forEach(item => {
             item.addEventListener('click', () => select(item.dataset.value));
         });
     };
@@ -1010,7 +1209,7 @@ document.getElementById('scrape-url-confirm').addEventListener('click', async fu
 });
 
 window.openEditMeal = (id) => openMealModal('edit', id);
-window.openEditMealFromHome = (id) => openMealModal('edit', id);
+// Removed redundant window.openEditMealFromHome definition as it's now handled by the popover logic above
 window.openViewMeal = (id) => openMealModal('view', id);
 window.openMealModal = openMealModal;
 

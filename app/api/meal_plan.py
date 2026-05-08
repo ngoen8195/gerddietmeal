@@ -322,3 +322,28 @@ async def cleanup_old_plans(session: AsyncSession = Depends(get_session)):
     await session.commit()
     return {"status": "success", "message": "Cleaned up planned meals outside range."}
 
+
+@router.post("/replace-specific")
+async def replace_specific_meal(date: str, meal_type: str, meal_id: int, session: AsyncSession = Depends(get_session)):
+    """Replace a single specific meal slot with a chosen meal ID."""
+    # Check if meal exists
+    meal_result = await session.execute(select(Meal).where(Meal.id == meal_id))
+    meal = meal_result.scalar_one_or_none()
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal not found.")
+        
+    # Get current planned meal
+    result = await session.execute(
+        select(PlannedMeal).where(PlannedMeal.date == date, PlannedMeal.meal_type == meal_type)
+    )
+    current_pm = result.scalar_one_or_none()
+    
+    if current_pm:
+        current_pm.meal_id = meal_id
+    else:
+        current_pm = PlannedMeal(date=date, meal_type=meal_type, meal_id=meal_id)
+        session.add(current_pm)
+        
+    await session.commit()
+    return {"status": "success"}
+

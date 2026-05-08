@@ -145,112 +145,114 @@
                 <h3 id="meal-modal-title">Add Meal</h3>
                 <button class="modal-close" id="meal-modal-close">✕</button>
             </div>
-            <div class="modal-body">
-                <img id="meal-modal-img" class="modal-img-preview" src="/resources/default_meal_img.jpg" alt="Meal">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <img id="meal-modal-img" class="modal-img-preview" src="/resources/default_meal_img.jpg" alt="Meal">
 
-                <!-- ═══ VIEW MODE CONTENT ═══ -->
-                <div id="meal-modal-view-content" class="meal-view-container" style="display: none;">
-                    <div class="view-header-row">
-                        <div id="view-meal-name" class="view-recipe-name"></div>
-                        <div id="view-servings-adj" class="servings-adjuster">
-                            <button id="adj-servings-minus" class="adj-btn minus" title="Decrease servings">−</button>
-                            <span id="adj-servings-val" class="adj-val">1</span>
-                            <button id="adj-servings-plus" class="adj-btn plus" title="Increase servings">+</button>
+                    <!-- ═══ VIEW MODE CONTENT ═══ -->
+                    <div id="meal-modal-view-content" class="meal-view-container" style="display: none;">
+                        <div class="view-header-row">
+                            <div id="view-meal-name" class="view-recipe-name"></div>
+                            <div id="view-servings-adj" class="servings-adjuster">
+                                <button id="adj-servings-minus" class="adj-btn minus" title="Decrease servings">−</button>
+                                <span id="adj-servings-val" class="adj-val">1</span>
+                                <button id="adj-servings-plus" class="adj-btn plus" title="Increase servings">+</button>
+                            </div>
+                        </div>
+                        <div id="view-meal-source" class="view-source-row"></div>
+                        <div id="view-meal-stats" class="view-stats-row"></div>
+
+
+                        <div class="view-section">
+                            <div class="view-section-title">Description</div>
+                            <div id="view-meal-desc" class="view-description-text"></div>
+                        </div>
+
+                        <div class="view-section">
+                            <div class="view-section-header">
+                                <div class="view-section-title">Ingredients</div>
+                                <div id="view-ingredient-count" class="view-ingredients-count">0</div>
+                            </div>
+                            <table class="view-ingredients-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Qty</th>
+                                        <th>Unit</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="view-ingredients-list">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div id="view-meal-source" class="view-source-row"></div>
-                    <div id="view-meal-stats" class="view-stats-row"></div>
 
-
-                    <div class="view-section">
-                        <div class="view-section-title">Description</div>
-                        <div id="view-meal-desc" class="view-description-text"></div>
-                    </div>
-
-                    <div class="view-section">
-                        <div class="view-section-header">
-                            <div class="view-section-title">Ingredients</div>
-                            <div id="view-ingredient-count" class="view-ingredients-count">0</div>
+                    <!-- ═══ EDIT MODE CONTENT ═══ -->
+                    <form id="meal-form" onsubmit="return false;">
+                        <div id="meal-modal-edit-content">
+                            <div class="form-group">
+                                <label for="meal-form-image">Image URL</label>
+                                <input type="text" id="meal-form-image" placeholder="https://...">
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-form-link">Link to Original Recipe</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" id="meal-form-link" placeholder="https://..." style="flex: 1;">
+                                    <button class="btn-icon" id="btn-open-source" title="Open Original Recipe"
+                                        style="display: flex; align-items: center; justify-content: center;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path
+                                                d="M21 9L21 3M21 3H15M21 3L13 11M10 5H7.8C6.11984 5 5.27976 5 4.63803 5.32698C4.07354 5.6146 3.6146 6.07354 3.32698 6.63803C3 7.27976 3 8.11984 3 9.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21H14.2C15.8802 21 16.7202 21 17.362 20.673C17.9265 20.3854 18.3854 19.9265 18.673 19.362C19 18.7202 19 17.8802 19 16.2V14" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-form-name">Meal Name</label>
+                                <input type="text" id="meal-form-name" placeholder="e.g. Grilled Chicken with Rice">
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-form-desc">Description</label>
+                                <textarea id="meal-form-desc" placeholder="Describe this meal..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Ingredients</label>
+                                <div class="ingredient-header"
+                                    style="display: flex; gap: 12px; margin-bottom: 8px; padding-right: 40px; font-size: 0.75rem; font-weight: 400; color: var(--text-muted);">
+                                    <div style="flex: 2;">Name</div>
+                                    <div style="width: 60px;">Qty</div>
+                                    <div style="width: 80px;">Unit</div>
+                                    <div style="flex: 1;">Comment</div>
+                                </div>
+                                <div id="meal-form-ingredients" class="ingredient-list"></div>
+                                <button class="btn btn-secondary" id="btn-add-ingredient" style="margin-top:8px">+ Add
+                                    Ingredient</button>
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-form-time">Cook Time (hours)</label>
+                                <input type="number" id="meal-form-time" step="0.25" min="0" placeholder="1.5">
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-form-servings">Number of Servings</label>
+                                <input type="text" id="meal-form-servings" placeholder="e.g. 4">
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-form-calories">Calories (kcal) <span id="meal-form-calories-incomplete"
+                                        class="calorie-tag" style="display:none; margin-left: 5px;"></span></label>
+                                <input type="number" id="meal-form-calories" min="0" placeholder="350">
+                            </div>
                         </div>
-                        <table class="view-ingredients-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Qty</th>
-                                    <th>Unit</th>
-                                </tr>
-                            </thead>
-                            <tbody id="view-ingredients-list">
-                                <!-- Populated via JS -->
-                            </tbody>
-                        </table>
-                    </div>
+                    </form>
                 </div>
-
-                <!-- ═══ EDIT MODE CONTENT ═══ -->
-                <form id="meal-form" onsubmit="return false;">
-                    <div id="meal-modal-edit-content">
-                        <div class="form-group">
-                            <label for="meal-form-image">Image URL</label>
-                            <input type="text" id="meal-form-image" placeholder="https://...">
-                        </div>
-                        <div class="form-group">
-                            <label for="meal-form-link">Link to Original Recipe</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="text" id="meal-form-link" placeholder="https://..." style="flex: 1;">
-                                <button class="btn-icon" id="btn-open-source" title="Open Original Recipe"
-                                    style="display: flex; align-items: center; justify-content: center;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path
-                                            d="M21 9L21 3M21 3H15M21 3L13 11M10 5H7.8C6.11984 5 5.27976 5 4.63803 5.32698C4.07354 5.6146 3.6146 6.07354 3.32698 6.63803C3 7.27976 3 8.11984 3 9.8V16.2C3 17.8802 3 18.7202 3.32698 19.362C3.6146 19.9265 4.07354 20.3854 4.63803 20.673C5.27976 21 6.11984 21 7.8 21H14.2C15.8802 21 16.7202 21 17.362 20.673C17.9265 20.3854 18.3854 19.9265 18.673 19.362C19 18.7202 19 17.8802 19 16.2V14" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="meal-form-name">Meal Name</label>
-                            <input type="text" id="meal-form-name" placeholder="e.g. Grilled Chicken with Rice">
-                        </div>
-                        <div class="form-group">
-                            <label for="meal-form-desc">Description</label>
-                            <textarea id="meal-form-desc" placeholder="Describe this meal..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Ingredients</label>
-                            <div class="ingredient-header"
-                                style="display: flex; gap: 12px; margin-bottom: 8px; padding-right: 40px; font-size: 0.75rem; font-weight: 400; color: var(--text-muted);">
-                                <div style="flex: 2;">Name</div>
-                                <div style="width: 60px;">Qty</div>
-                                <div style="width: 80px;">Unit</div>
-                                <div style="flex: 1;">Comment</div>
-                            </div>
-                            <div id="meal-form-ingredients" class="ingredient-list"></div>
-                            <button class="btn btn-secondary" id="btn-add-ingredient" style="margin-top:8px">+ Add
-                                Ingredient</button>
-                        </div>
-                        <div class="form-group">
-                            <label for="meal-form-time">Cook Time (hours)</label>
-                            <input type="number" id="meal-form-time" step="0.25" min="0" placeholder="1.5">
-                        </div>
-                        <div class="form-group">
-                            <label for="meal-form-servings">Number of Servings</label>
-                            <input type="text" id="meal-form-servings" placeholder="e.g. 4">
-                        </div>
-                        <div class="form-group">
-                            <label for="meal-form-calories">Calories (kcal) <span id="meal-form-calories-incomplete"
-                                    class="calorie-tag" style="display:none; margin-left: 5px;"></span></label>
-                            <input type="number" id="meal-form-calories" min="0" placeholder="350">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" id="meal-modal-footer">
-                <button class="btn btn-secondary" id="view-meal-recalculate" style="display: none; margin-right: auto;">Recalculate Calories</button>
-                <button class="btn btn-secondary" id="meal-modal-cancel">Cancel</button>
-                <button class="btn btn-primary" id="meal-modal-save">Save</button>
-                <button class="btn btn-primary" id="meal-modal-edit-btn" style="display: none;">Edit</button>
+                <div class="modal-footer" id="meal-modal-footer">
+                    <button class="btn btn-secondary" id="view-meal-recalculate" style="display: none; margin-right: auto;">Recalculate Calories</button>
+                    <button class="btn btn-secondary" id="meal-modal-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="meal-modal-save">Save Meal</button>
+                    <button class="btn btn-primary" id="meal-modal-edit-btn" style="display: none;">Edit Recipe</button>
+                </div>
             </div>
         </div>
     </div>
@@ -262,65 +264,67 @@
                 <h3 id="food-modal-title">Add Food</h3>
                 <button class="modal-close" id="food-modal-close">✕</button>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="food-form-name">Food Name</label>
-                    <input type="text" id="food-form-name" placeholder="e.g. Spinach">
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <div class="combobox-wrapper" id="food-category-combobox">
-                        <div class="combobox-trigger" id="combobox-trigger">
-                            <span id="combobox-value">Select category...</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="combobox-chevron">
-                                <path d="m6 9 6 6 6-6" />
-                            </svg>
-                        </div>
-                        <div class="combobox-content" id="combobox-content">
-                            <div class="command-input-wrapper">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="food-form-name">Food Name</label>
+                        <input type="text" id="food-form-name" class="input-shadcn" placeholder="e.g. Avocado">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <div class="cb-container" id="category-combobox">
+                            <div class="cb-trigger" id="combobox-trigger">
+                                <span id="combobox-value" class="cb-placeholder">Select category...</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="command-search-icon">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <path d="m21 21-4.3-4.3" />
+                                    stroke-linejoin="round" class="cb-chevron">
+                                    <path d="m6 9 6 6 6-6" />
                                 </svg>
-                                <input type="text" id="combobox-search" placeholder="Search category...">
                             </div>
-                            <div class="command-list" id="combobox-list">
-                                <!-- Categories populated via JS -->
-                            </div>
-                            <div class="command-empty" id="combobox-empty" style="display:none">
-                                <button class="command-add-btn" id="btn-add-new-category">
-                                    <span>+</span> Add "<span id="new-category-name"></span>"
-                                </button>
+                            <div class="combobox-content" id="combobox-content">
+                                <div class="cb-input-wrapper">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="cb-search-icon">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <path d="m21 21-4.3-4.3" />
+                                    </svg>
+                                    <input type="text" id="combobox-search" placeholder="Search category...">
+                                </div>
+                                <div class="cb-list" id="combobox-list">
+                                    <!-- Categories populated via JS -->
+                                </div>
+                                <div class="cb-empty" id="combobox-empty" style="display:none">
+                                    <button class="cb-add-btn" id="btn-add-new-category">
+                                        <span>+</span> Add "<span id="new-category-name"></span>"
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                        <input type="hidden" id="food-form-category">
                     </div>
-                    <input type="hidden" id="food-form-category">
+                    <div class="form-group">
+                        <label for="food-form-reflux">Status</label>
+                        <select id="food-form-reflux" class="select-shadcn">
+                            <option value="ok">✅ Safe</option>
+                            <option value="avoid">🚫 Avoid</option>
+                            <option value="remedy">💊 Remedy</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="food-form-meal-type">Meal Type</label>
+                        <select id="food-form-meal-type" class="select-shadcn">
+                            <option value="breakfast">🍳 Breakfast</option>
+                            <option value="lunch/dinner">🍲 Lunch/Dinner</option>
+                            <option value="both">🍱 Both</option>
+                            <option value="none">✖ None</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="food-form-reflux">Status</label>
-                    <select id="food-form-reflux" class="select-shadcn">
-                        <option value="ok">✅ Safe</option>
-                        <option value="avoid">🚫 Avoid</option>
-                        <option value="remedy">💊 Remedy</option>
-                    </select>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="food-modal-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="food-modal-save">Save</button>
                 </div>
-                <div class="form-group">
-                    <label for="food-form-meal-type">Meal Type</label>
-                    <select id="food-form-meal-type" class="select-shadcn">
-                        <option value="breakfast">🍳 Breakfast</option>
-                        <option value="lunch/dinner">🍲 Lunch/Dinner</option>
-                        <option value="both">🍱 Both</option>
-                        <option value="none">✖ None</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="food-modal-cancel">Cancel</button>
-                <button class="btn btn-primary" id="food-modal-save">Save</button>
             </div>
         </div>
     </div>
@@ -333,54 +337,56 @@
                 <button class="modal-close"
                     onclick="document.getElementById('meal-choice-modal').classList.remove('visible')">✕</button>
             </div>
-            <div class="modal-body"
-                style="padding: 32px 24px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-bottom: 8px;">
-                    How would you like to add a new meal to your library?
-                </p>
+            <div class="modal-content">
+                <div class="modal-body"
+                    style="padding: 32px 24px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-bottom: 8px;">
+                        How would you like to add a new meal to your library?
+                    </p>
 
-                <!-- Outline Div: Styled like a meal card action container or card surface -->
-                <div
-                    style="display: flex; gap: 20px; justify-content: center; width: 100%;border-radius: var(--radius-lg); padding: 10px 10px;">
+                    <!-- Outline Div: Styled like a meal card action container or card surface -->
+                    <div
+                        style="display: flex; gap: 20px; justify-content: center; width: 100%;border-radius: var(--radius-lg); padding: 10px 10px;">
 
-                    <button class="btn btn-secondary" id="btn-choice-manual"
-                        style="flex: 1; flex-direction: column; padding: 24px; height: auto; gap: 16px; border-radius: var(--radius-lg); transition: all 0.3s ease;">
-                        <div
-                            style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="currentColor">
-                                <path
-                                    d="M15.9087 3.87352C16.4681 3.31421 17.2266 3 18.0176 3C18.4093 3 18.7971 3.07714 19.1589 3.22702C19.5208 3.3769 19.8495 3.59658 20.1265 3.87352C20.4034 4.15046 20.6231 4.47924 20.773 4.84108C20.9229 5.20292 21 5.59074 21 5.98239C21 6.37404 20.9229 6.76186 20.773 7.1237C20.6231 7.48554 20.4034 7.81432 20.1265 8.09126L19.0231 9.19466C18.6326 9.58519 17.9994 9.58519 17.6089 9.19467L14.8053 6.39114C14.4148 6.00062 14.4148 5.36745 14.8053 4.97693L15.9087 3.87352ZM13.3911 7.80536C13.0006 7.41483 12.3674 7.41483 11.9769 7.80536L5.01084 14.7714C4.37004 15.4122 3.91545 16.2151 3.69566 17.0943L3.02986 19.7575C2.94467 20.0982 3.04452 20.4587 3.2929 20.7071C3.54128 20.9555 3.90177 21.0553 4.24254 20.9701L6.90572 20.3043C7.78488 20.0846 8.58778 19.63 9.22857 18.9892L16.1946 12.0231C16.5852 11.6326 16.5852 10.9994 16.1946 10.6089L13.3911 7.80536Z M12 20C12 19.4477 12.4477 19 13 19L20 19C20.5523 19 21 19.4477 21 20C21 20.5523 20.5523 21 20 21L13 21C12.4477 21 12 20.5523 12 20Z" />
-                            </svg>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">Manual Entry</div>
+                        <button class="btn btn-secondary" id="btn-choice-manual"
+                            style="flex: 1; flex-direction: column; padding: 24px; height: auto; gap: 16px; border-radius: var(--radius-lg); transition: all 0.3s ease;">
                             <div
-                                style="font-size: 0.75rem; color: var(--text-muted); font-weight: 300; line-height: 1.4;">
-                                Input details and ingredients yourself.
+                                style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="currentColor">
+                                    <path
+                                        d="M15.9087 3.87352C16.4681 3.31421 17.2266 3 18.0176 3C18.4093 3 18.7971 3.07714 19.1589 3.22702C19.5208 3.3769 19.8495 3.59658 20.1265 3.87352C20.4034 4.15046 20.6231 4.47924 20.773 4.84108C20.9229 5.20292 21 5.59074 21 5.98239C21 6.37404 20.9229 6.76186 20.773 7.1237C20.6231 7.48554 20.4034 7.81432 20.1265 8.09126L19.0231 9.19466C18.6326 9.58519 17.9994 9.58519 17.6089 9.19467L14.8053 6.39114C14.4148 6.00062 14.4148 5.36745 14.8053 4.97693L15.9087 3.87352ZM13.3911 7.80536C13.0006 7.41483 12.3674 7.41483 11.9769 7.80536L5.01084 14.7714C4.37004 15.4122 3.91545 16.2151 3.69566 17.0943L3.02986 19.7575C2.94467 20.0982 3.04452 20.4587 3.2929 20.7071C3.54128 20.9555 3.90177 21.0553 4.24254 20.9701L6.90572 20.3043C7.78488 20.0846 8.58778 19.63 9.22857 18.9892L16.1946 12.0231C16.5852 11.6326 16.5852 10.9994 16.1946 10.6089L13.3911 7.80536Z M12 20C12 19.4477 12.4477 19 13 19L20 19C20.5523 19 21 19.4477 21 20C21 20.5523 20.5523 21 20 21L13 21C12.4477 21 12 20.5523 12 20Z" />
+                                </svg>
                             </div>
-                        </div>
-                    </button>
+                            <div style="text-align: center;">
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">Manual Entry</div>
+                                <div
+                                    style="font-size: 0.75rem; color: var(--text-muted); font-weight: 300; line-height: 1.4;">
+                                    Input details and ingredients yourself.
+                                </div>
+                            </div>
+                        </button>
 
-                    <button class="btn btn-secondary" id="btn-choice-url"
-                        style="flex: 1; flex-direction: column; padding: 24px; height: auto; gap: 16px; border-radius: var(--radius-lg); transition: all 0.3s ease;">
-                        <div
-                            style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="1 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path
-                                    d="M 17.6 14.3 L 19.8 12.1 C 21.3188 10.5812 21.3188 8.1188 19.8 6.6 V 6.6 C 18.2812 5.0812 15.8188 5.0812 14.3 6.6 L 12.1 8.8 M 8.8 12.1 L 6.6 14.3 C 5.0812 15.8188 5.0812 18.2812 6.6 19.8 V 19.8 C 8.1188 21.3188 10.5812 21.3188 12.1 19.8 L 14.3 17.6 M 15.4 11 L 11 15.4" />
-                            </svg>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">From URL</div>
+                        <button class="btn btn-secondary" id="btn-choice-url"
+                            style="flex: 1; flex-direction: column; padding: 24px; height: auto; gap: 16px; border-radius: var(--radius-lg); transition: all 0.3s ease;">
                             <div
-                                style="font-size: 0.75rem; color: var(--text-muted); font-weight: 300; line-height: 1.4;">
-                                Scrape recipe data from a link automatically.
+                                style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d="M 17.6 14.3 L 19.8 12.1 C 21.3188 10.5812 21.3188 8.1188 19.8 6.6 V 6.6 C 18.2812 5.0812 15.8188 5.0812 14.3 6.6 L 12.1 8.8 M 8.8 12.1 L 6.6 14.3 C 5.0812 15.8188 5.0812 18.2812 6.6 19.8 V 19.8 C 8.1188 21.3188 10.5812 21.3188 12.1 19.8 L 14.3 17.6 M 15.4 11 L 11 15.4" />
+                                </svg>
                             </div>
-                        </div>
-                    </button>
+                            <div style="text-align: center;">
+                                <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">From URL</div>
+                                <div
+                                    style="font-size: 0.75rem; color: var(--text-muted); font-weight: 300; line-height: 1.4;">
+                                    Scrape recipe data from a link automatically.
+                                </div>
+                            </div>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -394,20 +400,22 @@
                 <button class="modal-close"
                     onclick="document.getElementById('scrape-url-modal').classList.remove('visible')">✕</button>
             </div>
-            <div class="modal-body" style="padding: 24px 20px;">
-                <div class="form-group">
-                    <label for="scrape-url-input">Recipe URL</label>
-                    <input type="text" id="scrape-url-input" class="input-shadcn"
-                        placeholder="https://www.allrecipes.com/recipe/..." style="margin-top: 8px;">
-                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 12px;">
-                        Supported sites: AllRecipes, Samsung Food, Mon Ngon Moi Ngay, Cookpad, and many more via
-                        recipe-scrapers.
-                    </p>
+            <div class="modal-content">
+                <div class="modal-body" style="padding: 24px 20px;">
+                    <div class="form-group">
+                        <label for="scrape-url-input">Recipe URL</label>
+                        <input type="text" id="scrape-url-input" class="input-shadcn"
+                            placeholder="https://www.allrecipes.com/recipe/..." style="margin-top: 8px;">
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 12px;">
+                            Supported sites: AllRecipes, Samsung Food, Mon Ngon Moi Ngay, Cookpad, and many more via
+                            recipe-scrapers.
+                        </p>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="scrape-url-cancel">Cancel</button>
-                <button class="btn btn-primary" id="scrape-url-confirm">Confirm & Scrape</button>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="scrape-url-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="scrape-url-confirm">Confirm & Scrape</button>
+                </div>
             </div>
         </div>
     </div>
@@ -418,18 +426,20 @@
             <div class="modal-header">
                 <h3>Scraping Recipes</h3>
             </div>
-            <div class="modal-body" style="text-align:center; padding: 40px 20px;">
-                <div id="scrape-status-msg" style="margin-bottom:20px; font-weight:500; color: var(--text-muted);">
-                    Initializing...</div>
-                <div class="progress-container"
-                    style="background: rgba(255,255,255,0.05); border-radius: var(--radius); height: 12px; overflow: hidden; margin-bottom: 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
-                    <div id="scrape-progress-bar"
-                        style="width: 0%; height: 100%; background: var(--gradient-primary); transition: width 0.4s ease; box-shadow: 0 0 15px var(--primary-light);">
+            <div class="modal-content">
+                <div class="modal-body" style="text-align:center; padding: 40px 20px;">
+                    <div id="scrape-status-msg" style="margin-bottom:20px; font-weight:500; color: var(--text-muted);">
+                        Initializing...</div>
+                    <div class="progress-container"
+                        style="background: rgba(255,255,255,0.05); border-radius: var(--radius); height: 12px; overflow: hidden; margin-bottom: 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                        <div id="scrape-progress-bar"
+                            style="width: 0%; height: 100%; background: var(--gradient-primary); transition: width 0.4s ease; box-shadow: 0 0 15px var(--primary-light);">
+                        </div>
                     </div>
+                    <button class="btn btn-secondary" id="btn-terminate-scrape"
+                        style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: none;">Terminate
+                        Process</button>
                 </div>
-                <button class="btn btn-secondary" id="btn-terminate-scrape"
-                    style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: none;">Terminate
-                    Process</button>
             </div>
         </div>
     </div>
@@ -440,12 +450,14 @@
             <div class="modal-header">
                 <h3 id="confirm-modal-title">Are you sure?</h3>
             </div>
-            <div class="modal-body">
-                <p id="confirm-modal-message">This action cannot be undone. This will permanently delete the item.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="confirm-modal-cancel">Cancel</button>
-                <button class="btn btn-destructive" id="confirm-modal-confirm">Delete</button>
+            <div class="modal-content">
+                <div class="modal-body">
+                    <p id="confirm-modal-message">This action cannot be undone. This will permanently delete the item.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="confirm-modal-cancel">Cancel</button>
+                    <button class="btn btn-destructive" id="confirm-modal-confirm">Delete</button>
+                </div>
             </div>
         </div>
     </div>
