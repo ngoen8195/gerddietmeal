@@ -1608,16 +1608,6 @@ main {
 /* ═══ Shadcn Alert Dialog ═══ */
 .modal-alert {
     max-width: 400px !important;
-    padding: 24px !important;
-    border-radius: var(--radius-lg) !important;
-    background: #0b2b26e6 !important;
-    border: none !important;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-}
-
-.modal-alert .modal-header {
-    padding: 0;
-    margin-bottom: 8px;
 }
 
 .modal-alert .modal-header h3 {
@@ -1625,23 +1615,10 @@ main {
     font-weight: 600;
 }
 
-.modal-alert .modal-body {
-    padding: 0;
-    margin-bottom: 24px;
-}
-
 .modal-alert .modal-body p {
     font-size: 0.875rem;
     color: var(--text-muted);
     line-height: 1.5;
-}
-
-.modal-alert .modal-footer {
-    border: none;
-    padding: 0;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
 }
 
 .modal-alert .btn {

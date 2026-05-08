@@ -27,7 +27,7 @@ async def list_foods(
     if reflux:
         stmt = stmt.where(Food.reflux == reflux)
     if search:
-        stmt = stmt.where(Food.name.ilike(f"%{search}%"))
+        stmt = stmt.where(Food.name.ilike(f"%{search}%") | Food.name_vi.ilike(f"%{search}%"))
     result = await session.execute(stmt)
     return result.scalars().all()
 
