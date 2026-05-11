@@ -471,12 +471,18 @@ async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: 
         
         if fdc_id and energy_found and weight > 0:
             ing.fdc_id = fdc_id
+            ing.fdc_name = fdc_desc
             ing.calories_incomplete = False
-            ing_kcal = (weight / 100.0) * kcal_100g
+            ing_kcal = round((weight / 100.0) * kcal_100g, 1)
+            ing.calories = ing_kcal
             total_kcal += ing_kcal
         else:
             if fdc_id:
                 ing.fdc_id = fdc_id
+                ing.fdc_name = fdc_desc
+            else:
+                ing.fdc_name = None
+            ing.calories = 0.0
             ing.calories_incomplete = True
             incomplete = True
             

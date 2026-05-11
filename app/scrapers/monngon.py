@@ -51,12 +51,14 @@ class MonNgonScraper(BaseScraper):
 
                 results.append(ScrapedMeal(
                     name=details["name"][:300],
+                    description=details.get("description", ""),
                     image_url=details.get("image_url", ""),
                     source_url=full_url,
                     source_site=self.SITE_NAME,
                     language="vi",
                     ingredients=details.get("ingredients", []),
-                    cook_time_hours=details.get("cook_time_hours", 0.0)
+                    cook_time_hours=details.get("cook_time_hours", 0.0),
+                    servings=details.get("servings", "")
                 ))
             except Exception:
                 continue

@@ -43,12 +43,14 @@ class CookpadScraper(BaseScraper):
 
                     results.append(ScrapedMeal(
                         name=details["name"][:300],
+                        description=details.get("description", ""),
                         image_url=details.get("image_url", ""),
                         source_url=href,
                         source_site=self.SITE_NAME,
                         language=lang,
                         ingredients=details.get("ingredients", []),
-                        cook_time_hours=details.get("cook_time_hours", 0.0)
+                        cook_time_hours=details.get("cook_time_hours", 0.0),
+                        servings=details.get("servings", "")
                     ))
                 except Exception:
                     continue

@@ -1357,7 +1357,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="view-ingredient-name-cell">
-                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}">
+                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}" title="${ing.calories_incomplete ? 'No matching FDC food' : `${esc(ing.fdc_name)}, ${ing.calories} kcal`}">
                                 ${esc(ing.name)}${ing.calories_incomplete ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
                             </div>
                             ${ing.comment ? `<div class="view-ingredient-comment" title="${esc(ing.comment)}">${esc(ing.comment)}</div>` : ''}

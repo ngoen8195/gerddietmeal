@@ -52,6 +52,8 @@ class MealIngredient(Base):
     comment = Column(Text, default="")
     metric_weight_grams = Column(Float, default=0.0)
     fdc_id = Column(Integer, nullable=True)
+    fdc_name = Column(String(500), nullable=True)
+    calories = Column(Float, default=0.0)
     calories_incomplete = Column(Boolean, default=False)
 
     meal = relationship("Meal", back_populates="ingredients")
