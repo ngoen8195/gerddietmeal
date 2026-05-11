@@ -700,25 +700,25 @@ window.initShadcnSelect = (selectId, options = {}) => {
     if (!select) return;
 
     const wrapper = document.createElement('div');
-    wrapper.className = `combobox-wrapper ${options.className || ''}`;
+    wrapper.className = `cb-wrapper ${options.className || ''}`;
 
     const trigger = document.createElement('div');
-    trigger.className = 'combobox-trigger';
+    trigger.className = 'cb-trigger';
     trigger.innerHTML = `
         <span></span>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round" class="combobox-chevron">
+            stroke-linejoin="round" class="cb-chevron">
             <path d="m6 9 6 6 6-6" />
         </svg>
     `;
     const displayValue = trigger.querySelector('span');
 
     const content = document.createElement('div');
-    content.className = 'combobox-content';
+    content.className = 'cb-content';
 
     const list = document.createElement('div');
-    list.className = 'command-list';
+    list.className = 'cb-list';
     content.appendChild(list);
 
     wrapper.appendChild(trigger);
@@ -731,7 +731,7 @@ window.initShadcnSelect = (selectId, options = {}) => {
         const isOpen = wrapper.classList.toggle('open', force);
         if (isOpen) {
             // Close other open selects
-            document.querySelectorAll('.combobox-wrapper.open').forEach(w => {
+            document.querySelectorAll('.cb-wrapper.open').forEach(w => {
                 if (w !== wrapper) w.classList.remove('open');
             });
         }
@@ -785,7 +785,7 @@ window.initShadcnSelect = (selectId, options = {}) => {
 
 // ─── Combobox Helper ───────────────────────────────
 function initCategoryCombobox() {
-    const wrapper = document.getElementById('food-category-combobox');
+    const wrapper = document.getElementById('category-combobox');
     const trigger = document.getElementById('combobox-trigger');
     const searchInput = document.getElementById('combobox-search');
     const list = document.getElementById('combobox-list');
@@ -795,11 +795,18 @@ function initCategoryCombobox() {
     const hiddenInput = document.getElementById('food-form-category');
     const displayValue = document.getElementById('combobox-value');
 
-    const toggle = (force) => {
+    const toggle = async (force) => {
+        if (availableCategories.length === 0) {
+            try {
+                availableCategories = await API.get('/api/foods/categories');
+            } catch (err) {
+                console.error("Failed to load categories:", err);
+            }
+        }
         const isOpen = wrapper.classList.toggle('open', force);
         if (isOpen) {
             // Close other open selects/comboboxes
-            document.querySelectorAll('.combobox-wrapper.open').forEach(w => {
+            document.querySelectorAll('.cb-wrapper.open').forEach(w => {
                 if (w !== wrapper) w.classList.remove('open');
             });
             searchInput.value = '';
