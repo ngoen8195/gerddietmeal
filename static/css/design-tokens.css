@@ -1707,11 +1707,6 @@ main {
     color: var(--text-muted);
 }
 
-.calorie-tag .incomplete-tag {
-    color: #fbbf24;
-    margin-left: 2px;
-}
-
 .cb-add-btn {
     width: 100%;
     padding: 10px;
@@ -1847,7 +1842,10 @@ main {
 
 .incomplete-tag {
     color: #f59e0b;
+    border-radius: 4px;
     font-weight: normal;
+    font-size: 0.7rem;
+    margin-left: 2px;
 }
 
 .vn-badge,

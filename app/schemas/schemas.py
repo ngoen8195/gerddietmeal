@@ -52,6 +52,7 @@ class IngredientOut(BaseModel):
     comment: str = ""
     metric_weight_grams: float = 0.0
     fdc_id: Optional[int] = None
+    calories_incomplete: bool = False
     is_avoid: bool = False
 
     class Config:

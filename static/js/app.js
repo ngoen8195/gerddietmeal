@@ -430,7 +430,7 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
     const isMissing = !meal || !meal.name;
 
     card.className = isCompact ? 'meal-card-compact' : `meal-card-full ${type}`;
-    if (!isMissing && meal.avoid_percentage > 20) card.classList.add('has-avoid');
+    if (!isMissing && meal.avoid_percentage > 25) card.classList.add('has-avoid');
     if (!isMissing) card.dataset.mealId = meal.id;
 
     // Hover tooltip (only if meal exists)
@@ -458,7 +458,10 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
     const infoStatsHTML = `
         <div class="meal-card-title" onclick="${!isMissing ? `openViewMeal('${meal.id}')` : ''}">${esc(mealName)}</div>
         <div class="meal-card-stats">
-            ${!isMissing && meal.calories ? `<span class="calorie-tag" ${meal.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(meal.calories)} kcal${meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
+            ${!isMissing ? `
+                <span class="calorie-tag" ${meal.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>
+                    ${(meal.calories !== null && meal.calories !== undefined) ? Math.round(meal.calories) : '---'} kcal${meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}
+                </span> • ` : ''}
             ${!isMissing ? (meal.ingredient_count || 0) + ' ingredients' : ''}
             ${!isMissing && meal.cook_time_hours ? ' • ' + formatTime(meal.cook_time_hours) : ''}
         </div>
@@ -467,7 +470,7 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
         ${!isMissing ? `
             <button class="btn-icon ${meal.is_favorite ? 'fav-active' : ''}" onclick="event.stopPropagation();toggleFav('${meal.id}',this)" title="Favorite">${favIcon}</button>
         ` : ''}
-        <button class="btn-icon" onclick="event.stopPropagation();toggleRefreshPopover(event, '${meal.id}', '${dateStr}', '${mealTypeStr}')" title="Refresh Meal">${refreshIcon}</button>
+        <button class="btn-icon" onclick="event.stopPropagation();toggleRefreshPopover(event, '${meal ? meal.id : ''}', '${dateStr}', '${mealTypeStr}')" title="Refresh Meal">${refreshIcon}</button>
     `;
 
     if (isCompact) {
@@ -679,7 +682,7 @@ function showTooltip(e, meal) {
     document.getElementById('tooltip-img').src = meal.image_url || DEFAULT_IMG;
     document.getElementById('tooltip-name').textContent = meal.name;
     document.getElementById('tooltip-details').innerHTML =
-        `${meal.calories ? Math.round(meal.calories) + ' kcal' + (meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : '') : 'N/A'} · ${meal.ingredient_count || 0} ingredients · ${meal.cook_time_hours || 0}h<br>${meal.source_site || ''}${meal.language === 'vi' ? ' 🇻🇳' : ''}`;
+        `${(meal.calories !== null && meal.calories !== undefined) ? Math.round(meal.calories) + ' kcal' + (meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : '') : 'N/A'} · ${meal.ingredient_count || 0} ingredients · ${meal.cook_time_hours || 0}h<br>${meal.source_site || ''}${meal.language === 'vi' ? ' 🇻🇳' : ''}`;
     tooltip.classList.add('visible');
     moveTooltip(e);
 }
@@ -1035,7 +1038,7 @@ function renderMealLibrary() {
         };
 
         return `
-        <div class="meal-lib-card ${m.avoid_percentage > 20 ? 'has-avoid' : ''}">
+        <div class="meal-lib-card ${m.avoid_percentage > 25 ? 'has-avoid' : ''}">
             <div class="meal-lib-card-img-wrapper" onclick="openViewMeal('${m.id}')">
                 <img class="meal-lib-card-img" src="${esc(m.image_url || DEFAULT_IMG)}" alt="${esc(m.name)}" onerror="this.src='${DEFAULT_IMG}'">
                 ${sourceDomain ? `
@@ -1047,7 +1050,7 @@ function renderMealLibrary() {
             <div class="meal-lib-card-body">
                 <div class="meal-lib-card-title" onclick="openViewMeal('${m.id}')">${esc(m.name)}</div>
                 <div class="meal-lib-card-stats">
-                    ${m.calories ? `<span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(m.calories)} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
+                    <span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${(m.calories !== null && m.calories !== undefined) ? Math.round(m.calories) : '---'} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • 
                     ${(m.ingredient_count || 0)} ingredients
                     ${m.cook_time_hours ? ' • ' + formatTime(m.cook_time_hours) : ''}
                     ${m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>'}
@@ -1285,7 +1288,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
             const incIndicator = document.getElementById('meal-form-calories-incomplete');
             if (meal.calories_incomplete) {
                 incIndicator.style.display = 'inline-flex';
-                incIndicator.innerHTML = '<span class="incomplete-tag">(!)</span>';
+                incIndicator.innerHTML = '<span class="incomplete-tag">(!) Incomplete Data</span>';
                 incIndicator.title = "Some ingredients missing kcal data";
             } else {
                 incIndicator.style.display = 'none';
@@ -1309,7 +1312,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                 return h + 'h';
             };
 
-            const kcalText = meal.calories ? `${Math.round(meal.calories)} kcal` : '--- kcal';
+            const kcalText = (meal.calories !== null && meal.calories !== undefined) ? `${Math.round(meal.calories)} kcal` : '--- kcal';
             const kcalWarning = meal.calories_incomplete ? ' <span class="incomplete-tag" title="Some ingredients missing kcal data">(!)</span>' : '';
 
             const hasServings = !!meal.servings && !isNaN(parseInt(meal.servings));
@@ -1355,7 +1358,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                     tr.innerHTML = `
                         <td class="view-ingredient-name-cell">
                             <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}">
-                                ${esc(ing.name)}${!ing.fdc_id ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
+                                ${esc(ing.name)}${ing.calories_incomplete ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
                             </div>
                             ${ing.comment ? `<div class="view-ingredient-comment" title="${esc(ing.comment)}">${esc(ing.comment)}</div>` : ''}
                         </td>
@@ -1469,9 +1472,9 @@ function addIngredientRow(name = '', qty = '', unit = '', comment = '', isReadon
 }
 
 document.getElementById('btn-add-ingredient').addEventListener('click', () => addIngredientRow());
+// Close button (X) for the modal
 document.getElementById('meal-modal-close').addEventListener('click', () => document.getElementById('meal-modal').classList.remove('visible'));
-document.getElementById('meal-modal-cancel').addEventListener('click', () => document.getElementById('meal-modal').classList.remove('visible'));
-document.getElementById('meal-modal-save').addEventListener('click', saveMeal);
+
 
 // Live image preview
 document.getElementById('meal-form-image').addEventListener('input', function () {
@@ -1555,7 +1558,7 @@ function renderFavorites() {
             <div class="meal-lib-card-body">
                 <div class="meal-lib-card-title" onclick="openViewMeal('${m.id}')">${esc(m.name)}</div>
                 <div class="meal-lib-card-stats">
-                    ${m.calories ? `<span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(m.calories)} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
+                    <span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${(m.calories !== null && m.calories !== undefined) ? Math.round(m.calories) : '---'} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • 
                     ${(m.ingredient_count || 0)} ingredients
                     ${m.cook_time_hours ? ' • ' + formatTime(m.cook_time_hours) : ''}
                     ${m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>'}
