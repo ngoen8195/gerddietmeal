@@ -11,3 +11,4 @@ ingredient-parser-nlp
 recipe-scrapers
 rapidfuzz
 usda-fdc
+curl-cffi
