@@ -134,8 +134,10 @@ async def seed_foods(session: AsyncSession = Depends(get_session)):
             reflux = "avoid"
         db_food = Food(
             name=item["name"],
+            name_vi=item.get("vi_name"),
             reflux=reflux,
             category=item.get("category", "Uncategorized"),
+            meal_type=item.get("meal_type", "none")
         )
         session.add(db_food)
 

@@ -388,8 +388,8 @@ a:hover {
 }
 
 .tab-btn.active {
-    color: var(--cta);
-    border-bottom-color: var(--cta);
+    color: var(--cta-hover);
+    border-bottom-color: var(--cta-hover);
 }
 
 .tab-content {

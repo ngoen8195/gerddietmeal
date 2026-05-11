@@ -1,1592 +1,2122 @@
 [
   {
-    "id":"12",
-    "name":"Coconuts",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "12",
+    "name": "Coconuts",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Dừa"
+  },
+  {
+    "id": "13",
+    "name": "Coconut oil",
+    "reflux": "ok",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu dừa"
+  },
+  {
+    "id": "14",
+    "name": "Mustard",
+    "reflux": "remedy",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "mù tạt"
+  },
+  {
+    "id": "15",
+    "name": "Mayonnaise",
+    "reflux": "avoid",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "Mayonnaise"
+  },
+  {
+    "id": "16",
+    "name": "Brussel sprouts",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cải Brussels"
+  },
+  {
+    "id": "17",
+    "name": "Rice, white",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Gạo trắng"
+  },
+  {
+    "id": "18",
+    "name": "Rice, brown",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Gạo lứt"
+  },
+  {
+    "id": "19",
+    "name": "Raspberries",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Mâm xôi"
+  },
+  {
+    "id": "20",
+    "name": "Peanuts",
+    "reflux": "avoid",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "Đậu phộng"
+  },
+  {
+    "id": "21",
+    "name": "Mushrooms",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "nấm"
+  },
+  {
+    "id": "22",
+    "name": "Blueberries",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "việt quất"
+  },
+  {
+    "id": "23",
+    "name": "Beer",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Bia"
+  },
+  {
+    "id": "24",
+    "name": "Almond butter",
+    "reflux": "ok",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Bơ hạnh nhân"
   },
   {
-    "id":"13",
-    "name":"Coconut oil",
-    "reflux":"ok",
-    "category":"Cooking ingredients"
+    "id": "25",
+    "name": "Corn oil",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu ngô"
   },
   {
-    "id":"14",
-    "name":"Mustard",
-    "reflux":"remedy",
-    "category":"Condiments"
+    "id": "26",
+    "name": "Vegetable oil",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu thực vật"
   },
   {
-    "id":"15",
-    "name":"Mayonnaise",
-    "reflux":"avoid",
-    "category":"Condiments"
+    "id": "27",
+    "name": "Sunflower oil",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu hướng dương"
   },
   {
-    "id":"16",
-    "name":"Brussel sprouts",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "28",
+    "name": "Hydrogenated oils",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu hydro hóa"
   },
   {
-    "id":"17",
-    "name":"Rice, white",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "29",
+    "name": "Bell pepper",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Ớt chuông"
   },
   {
-    "id":"18",
-    "name":"Rice, brown",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "30",
+    "name": "Pasta (no acidic sauce)",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Pasta (không có sốt chua)"
   },
   {
-    "id":"19",
-    "name":"Raspberries",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "31",
+    "name": "Tofu",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu hũ"
   },
   {
-    "id":"20",
-    "name":"Peanuts",
-    "reflux":"avoid",
-    "category":"Nuts and seeds"
+    "id": "32",
+    "name": "Caramel",
+    "reflux": "avoid",
+    "category": "Confections",
+    "meal_type": "none",
+    "vi_name": "caramel"
   },
   {
-  "id":"21",
-    "name":"Mushrooms",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "33",
+    "name": "Kelp",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Tảo bẹ"
   },
   {
-  "id":"22",
-    "name":"Blueberries",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "34",
+    "name": "Beets",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "củ cải đường"
   },
   {
-  "id":"23",
-    "name":"Beer",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "35",
+    "name": "Potato juice",
+    "reflux": "remedy",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước ép khoai tây"
   },
   {
-  "id":"24",
-    "name":"Almond butter",
-    "reflux":"ok",
-    "category":"Cooking ingredients"
+    "id": "36",
+    "name": "Cabbage juice",
+    "reflux": "remedy",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước ép bắp cải"
   },
   {
-  "id":"25",
-    "name":"Corn oil",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "37",
+    "name": "Guava",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Ổi"
   },
   {
-  "id":"26",
-    "name":"Vegetable oil",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "38",
+    "name": "Mango",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Quả xoài"
   },
   {
-  "id":"27",
-    "name":"Sunflower oil",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "39",
+    "name": "Pineapple (canned)",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Dứa (đóng hộp)"
   },
   {
-  "id":"28",
-    "name":"Hydrogenated oils",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "40",
+    "name": "Chips",
+    "reflux": "avoid",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Khoai tây chiên"
   },
   {
-  "id":"29",
-    "name":"Bell pepper",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "41",
+    "name": "Crackers",
+    "reflux": "avoid",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "bánh quy giòn"
   },
   {
-  "id":"30",
-    "name":"Pasta (no acidic sauce)",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "42",
+    "name": "Honey",
+    "reflux": "remedy",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "Mật ong"
   },
   {
-  "id":"31",
-    "name":"Tofu",
-    "reflux":"ok",
-    "category":"Meat and substitutes"
+    "id": "43",
+    "name": "Almonds",
+    "reflux": "remedy",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "hạnh nhân"
   },
   {
-  "id":"32",
-    "name":"Caramel",
-    "reflux":"avoid",
-    "category":"Confections"
+    "id": "44",
+    "name": "Pumpkin",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "bí đỏ"
   },
   {
-  "id":"33",
-    "name":"Kelp",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "45",
+    "name": "Squash",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "bí"
   },
   {
-  "id":"34",
-    "name":"Beets",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "46",
+    "name": "Artichokes",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Atisô"
   },
   {
-  "id":"35",
-    "name":"Potato juice",
-    "reflux":"remedy",
-    "category":"Drinks"
+    "id": "47",
+    "name": "Kombucha",
+    "reflux": "remedy",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Kombucha"
   },
   {
-  "id":"36",
-    "name":"Cabbage juice",
-    "reflux":"remedy",
-    "category":"Drinks"
+    "id": "48",
+    "name": "Pickles",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "dưa chua"
   },
   {
-  "id":"37",
-    "name":"Guava",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "49",
+    "name": "Sauerkraut",
+    "reflux": "remedy",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "Sauerkraut"
   },
   {
-  "id":"38",
-    "name":"Mango",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "50",
+    "name": "Apple cider vinegar",
+    "reflux": "remedy",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "Giấm táo"
   },
   {
-  "id":"39",
-    "name":"Pineapple (canned)",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "51",
+    "name": "Olives",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "ô liu"
   },
   {
-  "id":"40",
-    "name":"Chips",
-    "reflux":"avoid",
-    "category":"Grain products"
+    "id": "52",
+    "name": "Peppermint tea",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Trà bạc hà"
   },
   {
- "id":"41",
-    "name":"Crackers",
-    "reflux":"avoid",
-    "category":"Grain products"
+    "id": "53",
+    "name": "Spearmint tea",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Trà bạc hà"
   },
   {
-  "id":"42",
-    "name":"Honey",
-    "reflux":"remedy",
-    "category":"Condiments"
+    "id": "54",
+    "name": "Cheese",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Phô mai"
   },
   {
-  "id":"43",
-    "name":"Almonds",
-    "reflux":"remedy",
-    "category":"Nuts and seeds"
+    "id": "55",
+    "name": "Green beans",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu xanh"
   },
   {
-  "id":"44",
-    "name":"Pumpkin",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "56",
+    "name": "Carrots",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cà rốt"
   },
   {
-  "id":"45",
-    "name":"Squash",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "57",
+    "name": "Peas",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu Hà Lan"
   },
   {
-  "id":"46",
-    "name":"Artichokes",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "58",
+    "name": "Cabbage",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Bắp cải"
   },
   {
-  "id":"47",
-    "name":"Kombucha",
-    "reflux":"remedy",
-    "category":"Drinks"
+    "id": "59",
+    "name": "Corn thins",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Bắp mỏng"
   },
   {
-  "id":"48",
-    "name":"Pickles",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "60",
+    "name": "Bread (multi-grain or white)",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "both",
+    "vi_name": "Bánh mì (ngũ cốc hoặc trắng)"
   },
   {
-  "id":"49",
-    "name":"Sauerkraut",
-    "reflux":"remedy",
-    "category":"Condiments"
+    "id": "61",
+    "name": "Pretzels",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "bánh quy xoắn"
   },
   {
-  "id":"50",
-    "name":"Apple cider vinegar",
-    "reflux":"remedy",
-    "category":"Condiments"
+    "id": "62",
+    "name": "Wine",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Rượu"
   },
   {
-  "id":"51",
-    "name":"Olives",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "63",
+    "name": "Liquor",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "rượu"
   },
   {
-  "id":"52",
-    "name":"Peppermint tea",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "64",
+    "name": "Yogurt",
+    "reflux": "remedy",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "Yogurt"
   },
   {
-  "id":"53",
-    "name":"Spearmint tea",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "65",
+    "name": "Kefir",
+    "reflux": "remedy",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "kefir"
   },
   {
-  "id":"54",
-    "name":"Cheese",
-    "reflux":"ok",
-    "category":"Dairy"
+    "id": "66",
+    "name": "Sour cream",
+    "reflux": "remedy",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Kem chua"
   },
   {
-  "id":"55",
-    "name":"Green beans",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "67",
+    "name": "Cucumber",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "dưa chuột"
   },
   {
-  "id":"56",
-    "name":"Carrots",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "68",
+    "name": "Aloe vera",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Nha đam"
   },
   {
-  "id":"57",
-    "name":"Peas",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "69",
+    "name": "Parsley",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "mùi tây"
   },
   {
-  "id":"58",
-    "name":"Cabbage",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "70",
+    "name": "Fennel",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "thì là"
   },
   {
-  "id":"59",
-    "name":"Corn thins",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "71",
+    "name": "Potatoes",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "khoai tây"
   },
   {
-  "id":"60",
-    "name":"Bread (multi-grain or white)",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "72",
+    "name": "Asparagus",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Măng tây"
   },
   {
-  "id":"61",
-    "name":"Pretzels",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "73",
+    "name": "Cauliflower",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Súp lơ"
   },
   {
-  "id":"62",
-    "name":"Wine",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "74",
+    "name": "Celery",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cần tây"
   },
   {
-  "id":"63",
-    "name":"Liquor",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "75",
+    "name": "Broccoli",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "bông cải xanh"
   },
   {
-  "id":"64",
-    "name":"Yogurt",
-    "reflux":"remedy",
-    "category":"Dairy"
+    "id": "77",
+    "name": "Couscous",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "couscous"
   },
   {
-  "id":"65",
-    "name":"Kefir",
-    "reflux":"remedy",
-    "category":"Dairy"
+    "id": "78",
+    "name": "Canteloupe",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "dưa đỏ"
   },
   {
-  "id":"66",
-    "name":"Sour cream",
-    "reflux":"remedy",
-    "category":"Dairy"
+    "id": "80",
+    "name": "Honeydew",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "dưa lê"
   },
   {
-  "id":"67",
-    "name":"Cucumber",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "81",
+    "name": "Mint tea",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Trà bạc hà"
   },
   {
-  "id":"68",
-    "name":"Aloe vera",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "82",
+    "name": "Bacon",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "both",
+    "vi_name": "Thịt xông khói"
   },
   {
-  "id":"69",
-    "name":"Parsley",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "83",
+    "name": "Coffee (regular or decaf)",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Cà phê"
   },
   {
-  "id":"70",
-    "name":"Fennel",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "84",
+    "name": "Milk, whole",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "sữa nguyên kem"
   },
   {
-  "id":"71",
-    "name":"Potatoes",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "85",
+    "name": "Milk, 2%",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "Sữa, 2%"
   },
   {
-  "id":"72",
-    "name":"Asparagus",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "86",
+    "name": "Milk, skim/fat-free",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "Sữa, gầy/không béo"
   },
   {
-  "id":"73",
-    "name":"Cauliflower",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "87",
+    "name": "Soy milk",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "Sữa đậu nành"
   },
   {
-  "id":"74",
-    "name":"Celery",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "88",
+    "name": "Margarine",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "bơ thực vật"
   },
   {
-  "id":"75",
-    "name":"Broccoli",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "89",
+    "name": "Avocados",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Bơ"
   },
   {
-  "id":"77",
-    "name":"Couscous",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "90",
+    "name": "Chicken",
+    "reflux": "remedy",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Gà"
   },
   {
-  "id":"78",
-    "name":"Canteloupe",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "91",
+    "name": "Turkey",
+    "reflux": "remedy",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Gà tây"
   },
   {
-  "id":"80",
-    "name":"Honeydew",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "92",
+    "name": "Fish",
+    "reflux": "remedy",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Cá"
   },
   {
-  "id":"81",
-    "name":"Mint tea",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "93",
+    "name": "Egg yolk",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "Lòng đỏ trứng"
   },
   {
-  "id":"82",
-    "name":"Bacon",
-    "reflux":"avoid",
-    "category":"Meat and substitutes"
+    "id": "94",
+    "name": "Egg white",
+    "reflux": "remedy",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Lòng trắng trứng"
   },
   {
-  "id":"83",
-    "name":"Coffee (regular or decaf)",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "95",
+    "name": "Pear",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Lê"
   },
   {
-  "id":"84",
-    "name":"Milk, whole",
-    "reflux":"avoid",
-    "category":"Dairy"
+    "id": "96",
+    "name": "Apple",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Táo"
   },
   {
-  "id":"85",
-    "name":"Milk, 2%",
-    "reflux":"ok",
-    "category":"Dairy"
+    "id": "97",
+    "name": "Banana",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Chuối"
   },
   {
-  "id":"86",
-    "name":"Milk, skim/fat-free",
-    "reflux":"ok",
-    "category":"Dairy"
+    "id": "98",
+    "name": "Watermelon",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "dưa hấu"
   },
   {
-  "id":"87",
-    "name":"Soy milk",
-    "reflux":"ok",
-    "category":"Dairy"
+    "id": "99",
+    "name": "Oatmeal",
+    "reflux": "remedy",
+    "category": "Grain products",
+    "meal_type": "breakfast",
+    "vi_name": "yến mạch"
   },
   {
-  "id":"88",
-    "name":"Margarine",
-    "reflux":"avoid",
-    "category":"Dairy"
+    "id": "100",
+    "name": "Tomatoes",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cà chua"
   },
   {
-  "id":"89",
-    "name":"Avocados",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "101",
+    "name": "Oranges",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "cam"
   },
   {
-  "id":"90",
-    "name":"Chicken",
-    "reflux":"remedy",
-    "category":"Meat and substitutes"
+    "id": "102",
+    "name": "Grapefruit",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Bưởi"
   },
   {
-  "id":"91",
-    "name":"Turkey",
-    "reflux":"remedy",
-    "category":"Meat and substitutes"
+    "id": "103",
+    "name": "Lemons",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "chanh vàng"
   },
   {
-  "id":"92",
-    "name":"Fish (salmon, tuna, etc)",
-    "reflux":"remedy",
-    "category":"Meat and substitutes"
+    "id": "104",
+    "name": "Limes",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "chanh"
   },
   {
-  "id":"93",
-    "name":"Egg yolk",
-    "reflux":"avoid",
-    "category":"Dairy"
+    "id": "105",
+    "name": "Pineapple (fresh)",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Dứa (tươi)"
   },
   {
-  "id":"94",
-    "name":"Egg white",
-    "reflux":"remedy",
-    "category":"Dairy"
+    "id": "106",
+    "name": "Salsa",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Salsa"
   },
   {
-  "id":"95",
-    "name":"Pear",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "107",
+    "name": "Tomato sauce (or foods where tomato sauce or paste is a main ingredient, such as pizza or chili)",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Sốt cà chua (hoặc các món ăn có thành phần chính là sốt cà chua, chẳng hạn như pizza hoặc ớt)"
   },
   {
-  "id":"96",
-    "name":"Apple",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "108",
+    "name": "Garlic",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Tỏi"
   },
   {
-  "id":"97",
-    "name":"Banana",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "109",
+    "name": "Onion",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "hành tây"
   },
   {
-  "id":"98",
-    "name":"Watermelon",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "110",
+    "name": "Chocolate (milk/dark/white)",
+    "reflux": "avoid",
+    "category": "Confections",
+    "meal_type": "none",
+    "vi_name": "Sôcôla (sữa/đen/trắng)"
   },
   {
-  "id":"99",
-    "name":"Oatmeal",
-    "reflux":"remedy",
-    "category":"Grain products"
+    "id": "111",
+    "name": "Ginger",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "gừng"
   },
   {
-  "id":"100",
-    "name":"Tomatoes",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "112",
+    "name": "Tomato Juice",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước ép cà chua"
   },
   {
-  "id":"101",
-    "name":"Oranges",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "113",
+    "name": "Ketchup",
+    "reflux": "avoid",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "tương cà"
   },
   {
-  "id":"102",
-    "name":"Grapefruit",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "114",
+    "name": "Orange Juice",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước cam"
   },
   {
-  "id":"103",
-    "name":"Lemons",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "115",
+    "name": "Lemon Juice",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước chanh"
   },
   {
-  "id":"104",
-    "name":"Limes",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "116",
+    "name": "Lemonade",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "nước chanh"
   },
   {
-  "id":"105",
-    "name":"Pineapple (fresh)",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "117",
+    "name": "Peppers",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Ớt"
   },
   {
-  "id":"106",
-    "name":"Salsa",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "118",
+    "name": "Radishes",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "củ cải"
   },
   {
-  "id":"107",
-    "name":"Tomato sauce (or foods where tomato sauce or paste is a main ingredient, such as pizza or chili)",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "119",
+    "name": "French Fries",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "khoai tây chiên"
   },
   {
-  "id":"108",
-    "name":"Garlic",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "120",
+    "name": "Onion Rings",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Hành tây chiên"
   },
   {
-  "id":"109",
-    "name":"Onion",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "121",
+    "name": "Fatty Ground Beef",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Thịt bò xay"
   },
   {
-    "id":"110",
-    "name":"Chocolate (milk/dark/white)",
-    "reflux":"avoid",
-    "category":"Confections"
+    "id": "122",
+    "name": "Marbled Steak",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Bít tết"
   },
   {
-  "id":"111",
-    "name":"Ginger",
-    "reflux":"remedy",
-    "category":"Fruits and vegetables"
+    "id": "123",
+    "name": "Fried Meat",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Thịt Chiên"
   },
   {
-  "id":"112",
-    "name":"Tomato Juice",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "124",
+    "name": "Chicken Wings",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Cánh gà"
   },
   {
-  "id":"113",
-    "name":"Ketchup",
-    "reflux":"avoid",
-    "category":"Condiments"
+    "id": "125",
+    "name": "Chicken Nuggets",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "gà viên"
   },
   {
-  "id":"114",
-    "name":"Orange Juice",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "126",
+    "name": "Sausages",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "both",
+    "vi_name": "xúc xích"
   },
   {
-  "id":"115",
-    "name":"Lemon Juice",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "127",
+    "name": "Chocolate milk",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "Sữa sô cô la"
   },
- {
- "id":"116",
- "name":"Lemonade",
- "reflux":"avoid",
- "category":"Drinks"
- },
- {
- "id":"117",
- "name":"Peppers",
- "reflux":"avoid",
- "category":"Fruits and vegetables"
- },
- {
- "id":"118",
- "name":"Radishes",
- "reflux":"remedy",
- "category":"Fruits and vegetables"
- },
- {
- "id":"119",
- "name":"French Fries",
- "reflux":"avoid",
- "category":"Fruits and vegetables"
- },
- {
- "id":"120",
- "name":"Onion Rings",
- "reflux":"avoid",
- "category":"Fruits and vegetables"
- },
- {
- "id":"121",
- "name":"Fatty Ground Beef",
- "reflux":"avoid",
- "category":"Meat and substitutes"
- },
- {
-"id":"122",
- "name":"Marbled Steak",
- "reflux":"avoid",
- "category":"Meat and substitutes"
- },
- {
- "id":"123",
- "name":"Fried Meat",
- "reflux":"avoid",
- "category":"Meat and substitutes"
- },
- {
- "id":"124",
- "name":"Chicken Wings",
- "reflux":"avoid",
- "category":"Meat and substitutes"
- },
- {
- "id":"125",
- "name":"Chicken Nuggets",
- "reflux":"avoid",
- "category":"Meat and substitutes"
- },
- {
- "id":"126",
- "name":"Sausages",
- "reflux":"avoid",
- "category":"Meat and substitutes"
- },
- {
- "id":"127",
- "name":"Chocolate milk",
- "reflux":"avoid",
- "category":"Dairy"
- },
- {
- "id":"128",
- "name":"Ice Cream",
- "reflux":"avoid",
- "category":"Dairy"
- },
- {
- "id":"129",
- "name":"Cream",
- "reflux":"avoid",
- "category":"Dairy"
- },
- {
- "id":"129",
- "name":"Cream Cheese",
- "reflux":"avoid",
- "category":"Dairy"
- },
- {
- "id":"130",
- "name":"Butter",
- "reflux":"avoid",
- "category":"Dairy"
- },
- {
- "id":"131",
- "name":"Tea (caffeinated)",
- "reflux":"avoid",
- "category":"Drinks"
- },
- {
- "id":"132",
- "name":"Alcohol",
- "reflux":"avoid",
- "category":"Drinks"
- },
- {
- "id":"133",
- "name":"Soda/Carbonated Beverages",
- "reflux":"avoid",
- "category":"Drinks"
- },
- {
- "id":"134",
- "name":"White Vinegar",
- "reflux":"avoid",
- "category":"Condiments"
- },
- {
- "id":"135",
- "name":"Wine Vinegar",
- "reflux":"avoid",
- "category":"Condiments"
- },
- {
- "id":"136",
- "name":"Mint",
- "reflux":"avoid",
- "category":"Condiments"
- },
- {
- "id":"137",
- "name":"Apple juice",
- "reflux":"ok",
- "category":"Drinks"
- },
- {
- "id":"138",
- "name":"Peach",
- "reflux":"ok",
- "category":"Fruits and vegetables"
- },
- {
- "id":"139",
- "name":"Melon",
- "reflux":"ok",
- "category":"Fruits and vegetables"
- },
- {
- "id":"140",
- "name":"Strawberry",
- "reflux":"ok",
- "category":"Fruits and vegetables"
- },
- {
- "id":"141",
- "name":"Grapes",
- "reflux":"ok",
- "category":"Fruits and vegetables"
- },
- {
- "id":"142",
- "name":"Baked Potato",
- "reflux":"ok",
- "category":"Fruits and vegetables"
- },
- {
- "id":"143",
- "name":"Extra Lean Ground Beef",
- "reflux":"ok",
- "category":"Meat and substitutes"
- },
- {
- "id":"144",
- "name":"Cereal",
- "reflux":"ok",
- "category":"Grain products"
- },
- {
- "id":"145",
- "name":"Corn Bread",
- "reflux":"ok",
- "category":"Grain products"
- },
- {
- "id":"146",
- "name":"Rice Cakes",
- "reflux":"ok",
- "category":"Grain products"
- },
- {
- "id":"147",
- "name":"Millet",
- "reflux":"ok",
- "category":"Grain products"
- },
- {
- "id":"148",
- "name":"Quinoa",
- "reflux":"ok",
- "category":"Grain products"
- },
- {
-   "id":"149",
-   "name":"Olive oil",
-   "reflux":"avoid",
-   "category":"Cooking ingredients"
- },
- {
-   "id":"150",
-   "name":"Sesame oil",
-   "reflux":"avoid",
-   "category":"Cooking ingredients"
- },
- {
- "id":"152",
- "name":"Lettuce",
- "reflux":"ok",
- "category":"Fruits and vegetables"
- },
- {
- "id":"153",
- "name":"Blackberries",
- "reflux":"avoid",
- "category":"Fruits and vegetables"
- },
- {
- "id":"154",
- "name":"Cashews",
- "reflux":"avoid",
- "category":"Nuts and seeds"
- },
- {
- "id":"1",
- "name":"Cottage Cheese",
- "reflux":"ok",
- "category":"Dairy"
- },
- {
-  "id":"2",
- "name":"Cranberry juice",
- "reflux":"avoid",
- "category":"Drinks"
- },
- {
-   "id":"3",
- "name":"Eggplant",
- "reflux":"ok",
- "category":"Fruits and vegetables"
- },
- {
-   "id":"4",
- "name":"Lamb",
- "reflux":"avoid",
- "category":"Meat and substitutes"
- },
- {
-   "id":"5",
- "name":"Papaya",
- "reflux":"remedy",
- "category":"Fruits and vegetables"
- },
- {
-   "id":"6",
- "name":"Peanut Butter (small amounts)",
- "reflux":"ok",
- "category":"Nuts and seeds"
- },
- {
-   "id":"7",
- "name":"Popcorn (plain or salted, no butter)",
- "reflux":"ok",
- "category":"Grain products"
- },
- {
-   "id":"8",
- "name":"Pork - Lean cuts (loin, center cut chops, etc)",
- "reflux":"ok",
- "category":"Meat and substitutes"
- },
- {
-   "id":"9",
- "name":"Pork - High fat cuts (shoulder, butt, hock, etc)",
- "reflux":"avoid",
- "category":"Meat and substitutes"
- },
- {
-   "id":"10",
- "name":"Spinach",
- "reflux":"ok",
- "category":"Fruits and vegetables"
- },
- {
-   "id":"11",
- "name":"Noodles",
- "reflux":"ok",
- "category":"Grain products"
- },
-  {
-    "id":"155",
-    "name":"Sweet potatoes",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"156",
-    "name":"Hazelnuts",
-    "reflux":"avoid",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"157",
-    "name":"Pecans",
-    "reflux":"avoid",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"158",
-    "name":"Almond milk",
-    "reflux":"ok",
-    "category":"Dairy"
-  },
-  {
-    "id":"159",
-    "name":"Raisins",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"160",
-    "name":"Prunes",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"161",
-    "name":"Zucchini",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"162",
-    "name":"Feta cheese",
-    "reflux":"ok",
-    "category":"Dairy"
-  },
-  {
-    "id":"163",
-    "name":"Cream cheese (fat-free)",
-    "reflux":"ok",
-    "category":"Dairy"
-  },
-  {
-    "id":"164",
-    "name":"Pumpkin seeds",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"165",
-    "name":"Sesame seeds",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"166",
-    "name":"Sunflower seeds",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"167",
-    "name":"Flaxseed",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"168",
-    "name":"Chestnuts",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"169",
-    "name":"Brazil nuts",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"170",
-    "name":"Walnut",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"171",
-    "name":"Pinto beans",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"172",
-    "name":"White beans",
-    "reflux":"aviod",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"173",
-    "name":"Navy beans",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"174",
-    "name":"Red beans",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"175",
-    "name":"Lima beans",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"176",
-    "name":"Turkey bacon",
-    "reflux":"ok",
-    "category":"Meat and substitutes"
-  },
-  {
-    "id":"177",
-    "name":"Linseed oil",
-    "reflux":"ok",
-    "category":"Cooking ingredients"
-  },
-  {
-    "id":"178",
-    "name":"Avocado oil",
-    "reflux":"ok",
-    "category":"Cooking ingredients"
-  },
-  {
-    "id":"179",
-    "name":"Cranberries",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"180",
-    "name":"Mandarines",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"181",
-    "name":"Cherry",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"182",
-    "name":"Ginger Tea",
-    "reflux":"remedy",
-    "category":"Drinks"
-  },
-  {
-    "id":"183",
-    "name":"Apricot",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"184",
-    "name":"Corn",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"185",
-    "name":"Canola oil",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
-  },
-  {
-    "id":"186",
-    "name":"Pistachio",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
-  },
-  {
-    "id":"187",
-    "name":"Black beans",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"188",
-    "name":"Chamomile tea",
-    "reflux":"remedy",
-    "category":"Drinks"
-  },
-  {
-    "id":"189",
-    "name":"Green tea",
-    "reflux":"avoid",
-    "category":"Drinks"
-  },
-  {
-    "id":"190",
-    "name":"Cinnamon",
-    "reflux":"ok",
-    "category":"Cooking ingredients"
-  },
-  {
-    "id":"191",
-    "name":"Dates",
-    "reflux":"ok",
-     "category":"Fruits and vegetables"
-  },
-  {
-    "id":"192",
-    "name":"Kiwi",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"193",
-    "name":"Ham",
-    "reflux":"avoid",
-    "category":"Meat and substitutes"
-  },
-  {
-    "id":"194",
-    "name":"Lentils",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"195",
-    "name":"Soy sauce",
-    "reflux":"ok",
-    "category":"Cooking ingredients"
-  },
-  {
-    "id":"196",
-    "name":"Maple syrup",
-    "reflux":"ok",
-    "category":"Condiments"
-  },
-  {
-    "id":"197",
-    "name":"Agave nectar",
-    "reflux":"ok",
-    "category":"Condiments"
-  },
-  {
-    "id":"198",
-    "name":"Corn starch",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
-  },
-  {
-    "id":"199",
-    "name":"Plums",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"200",
-    "name":"Turnips",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
-  },
-  {
-    "id":"201",
-    "name":"Leeks",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+  {
+    "id": "128",
+    "name": "Ice Cream",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Kem"
+  },
+  {
+    "id": "129",
+    "name": "Cream",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Cream"
+  },
+  {
+    "id": "129",
+    "name": "Cream Cheese",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "kem phô mai"
+  },
+  {
+    "id": "130",
+    "name": "Butter",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Bơ"
+  },
+  {
+    "id": "131",
+    "name": "Tea (caffeinated)",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Trà (có chứa caffein)"
+  },
+  {
+    "id": "132",
+    "name": "Alcohol",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Rượu bia"
+  },
+  {
+    "id": "133",
+    "name": "Soda/Carbonated Beverages",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước giải khát có ga"
+  },
+  {
+    "id": "134",
+    "name": "White Vinegar",
+    "reflux": "avoid",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "Giấm trắng"
+  },
+  {
+    "id": "135",
+    "name": "Wine Vinegar",
+    "reflux": "avoid",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "Giấm rượu"
+  },
+  {
+    "id": "136",
+    "name": "Mint",
+    "reflux": "avoid",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "bạc hà"
+  },
+  {
+    "id": "137",
+    "name": "Apple juice",
+    "reflux": "ok",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "nước ép táo"
+  },
+  {
+    "id": "138",
+    "name": "Peach",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "đào"
+  },
+  {
+    "id": "139",
+    "name": "Melon",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Dưa gang"
+  },
+  {
+    "id": "140",
+    "name": "Strawberry",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "dâu"
+  },
+  {
+    "id": "141",
+    "name": "Grapes",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "nho"
+  },
+  {
+    "id": "142",
+    "name": "Baked Potato",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "khoai tây nướng"
+  },
+  {
+    "id": "143",
+    "name": "Extra Lean Ground Beef",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Thịt bò xay thêm nạc"
+  },
+  {
+    "id": "144",
+    "name": "Cereal",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "breakfast",
+    "vi_name": "Ngũ cốc"
+  },
+  {
+    "id": "145",
+    "name": "Corn Bread",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "both",
+    "vi_name": "bánh mì ngô"
+  },
+  {
+    "id": "146",
+    "name": "Rice Cakes",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Bánh gạo"
+  },
+  {
+    "id": "147",
+    "name": "Millet",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "kê"
+  },
+  {
+    "id": "148",
+    "name": "Quinoa",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "diêm mạch"
+  },
+  {
+    "id": "149",
+    "name": "Olive oil",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu ô liu"
+  },
+  {
+    "id": "150",
+    "name": "Sesame oil",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu mè"
+  },
+  {
+    "id": "152",
+    "name": "Lettuce",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Rau xà lách"
+  },
+  {
+    "id": "153",
+    "name": "Blackberries",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Quả mâm xôi"
+  },
+  {
+    "id": "154",
+    "name": "Cashews",
+    "reflux": "avoid",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "hạt điều"
+  },
+  {
+    "id": "1",
+    "name": "Cottage Cheese",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Phô mai Cottage"
+  },
+  {
+    "id": "2",
+    "name": "Cranberry juice",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước ép nam việt quất"
+  },
+  {
+    "id": "3",
+    "name": "Eggplant",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cà tím"
+  },
+  {
+    "id": "4",
+    "name": "Lamb",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Cừu non"
+  },
+  {
+    "id": "5",
+    "name": "Papaya",
+    "reflux": "remedy",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Đu đủ"
+  },
+  {
+    "id": "6",
+    "name": "Peanut Butter (small amounts)",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "Bơ đậu phộng (số lượng nhỏ)"
+  },
+  {
+    "id": "7",
+    "name": "Popcorn (plain or salted, no butter)",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Bỏng ngô (đồng bằng hoặc muối, không bơ)"
+  },
+  {
+    "id": "8",
+    "name": "Pork - Lean cuts (loin, center cut chops, etc)",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Thịt lợn - Thịt nạc (thăn thăn, sườn cắt ở giữa, v.v.)"
+  },
+  {
+    "id": "9",
+    "name": "Pork - High fat cuts (shoulder, butt, hock, etc)",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Thịt lợn - Thịt có nhiều mỡ (vai, mông, hông, v.v.)"
+  },
+  {
+    "id": "10",
+    "name": "Spinach",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Rau chân vịt"
   },
-  {
-    "id":"202",
-    "name":"Capsicum",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+  {
+    "id": "11",
+    "name": "Noodles",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Mì"
+  },
+  {
+    "id": "155",
+    "name": "Sweet potatoes",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "khoai lang"
+  },
+  {
+    "id": "156",
+    "name": "Hazelnuts",
+    "reflux": "avoid",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "hạt phỉ"
+  },
+  {
+    "id": "157",
+    "name": "Pecans",
+    "reflux": "avoid",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "quả hồ đào"
+  },
+  {
+    "id": "158",
+    "name": "Almond milk",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "sữa hạnh nhân"
+  },
+  {
+    "id": "159",
+    "name": "Raisins",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "nho khô"
+  },
+  {
+    "id": "160",
+    "name": "Prunes",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "mận"
+  },
+  {
+    "id": "161",
+    "name": "Zucchini",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "bí xanh"
+  },
+  {
+    "id": "162",
+    "name": "Feta cheese",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Phô mai feta"
+  },
+  {
+    "id": "163",
+    "name": "Cream cheese (fat-free)",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Phô mai kem (không béo)"
+  },
+  {
+    "id": "164",
+    "name": "Pumpkin seeds",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "Hạt bí ngô"
+  },
+  {
+    "id": "165",
+    "name": "Sesame seeds",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "Hạt mè"
+  },
+  {
+    "id": "166",
+    "name": "Sunflower seeds",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "Hạt hướng dương"
+  },
+  {
+    "id": "167",
+    "name": "Flaxseed",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "Hạt lanh"
+  },
+  {
+    "id": "168",
+    "name": "Chestnuts",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "hạt dẻ"
+  },
+  {
+    "id": "169",
+    "name": "Brazil nuts",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "quả hạch Brazil"
+  },
+  {
+    "id": "170",
+    "name": "Walnut",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "quả óc chó"
+  },
+  {
+    "id": "171",
+    "name": "Pinto beans",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu Pinto"
+  },
+  {
+    "id": "172",
+    "name": "White beans",
+    "reflux": "aviod",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu trắng"
+  },
+  {
+    "id": "173",
+    "name": "Navy beans",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu hải quân"
+  },
+  {
+    "id": "174",
+    "name": "Red beans",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu đỏ"
+  },
+  {
+    "id": "175",
+    "name": "Lima beans",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "đậu lima"
+  },
+  {
+    "id": "176",
+    "name": "Turkey bacon",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Thịt gà tâyxông khói"
+  },
+  {
+    "id": "177",
+    "name": "Linseed oil",
+    "reflux": "ok",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu hạt lanh"
+  },
+  {
+    "id": "178",
+    "name": "Avocado oil",
+    "reflux": "ok",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu bơ"
+  },
+  {
+    "id": "179",
+    "name": "Cranberries",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "quả nam việt quất"
+  },
+  {
+    "id": "180",
+    "name": "Mandarines",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "quýt"
+  },
+  {
+    "id": "181",
+    "name": "Cherry",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "anh đào"
+  },
+  {
+    "id": "182",
+    "name": "Ginger Tea",
+    "reflux": "remedy",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Trà Gừng"
+  },
+  {
+    "id": "183",
+    "name": "Apricot",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Quả mơ"
+  },
+  {
+    "id": "184",
+    "name": "Corn",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "ngô"
+  },
+  {
+    "id": "185",
+    "name": "Canola oil",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu hạt cải"
+  },
+  {
+    "id": "186",
+    "name": "Pistachio",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "quả hồ trăn"
+  },
+  {
+    "id": "187",
+    "name": "Black beans",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu đen"
+  },
+  {
+    "id": "188",
+    "name": "Chamomile tea",
+    "reflux": "remedy",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Trà hoa cúc"
+  },
+  {
+    "id": "189",
+    "name": "Green tea",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Trà xanh"
+  },
+  {
+    "id": "190",
+    "name": "Cinnamon",
+    "reflux": "ok",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "quế"
   },
   {
-    "id":"203",
-    "name":"Celeriac",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "191",
+    "name": "Dates",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Ngày"
   },
   {
-    "id":"204",
-    "name":"Oat milk",
-    "reflux":"remedy",
-    "category":"Dairy"
+    "id": "192",
+    "name": "Kiwi",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Kiwi"
   },
   {
-    "id":"205",
-    "name":"Pine nuts",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
+    "id": "193",
+    "name": "Ham",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Giăm bông"
   },
   {
-    "id":"206",
-    "name":"Alfredo",
-    "reflux":"avoid",
-    "category":"Dairy"
+    "id": "194",
+    "name": "Lentils",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "đậu lăng"
   },
   {
-    "id":"207",
-    "name":"Grape juice",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "195",
+    "name": "Soy sauce",
+    "reflux": "ok",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "xì dầu"
   },
   {
-    "id":"208",
-    "name":"Jasmine tea",
-    "reflux":"avoid",
-    "category":"Drinks"
+    "id": "196",
+    "name": "Maple syrup",
+    "reflux": "ok",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "Xi-rô cây phong"
   },
   {
-    "id":"209",
-    "name":"White sugar",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "197",
+    "name": "Agave nectar",
+    "reflux": "ok",
+    "category": "Condiments",
+    "meal_type": "none",
+    "vi_name": "Mật hoa thùa"
   },
   {
-    "id":"210",
-    "name":"Pomegranate",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "198",
+    "name": "Corn starch",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Tinh bột ngô"
   },
   {
-    "id":"211",
-    "name":"Salt",
-    "reflux":"ok",
-    "category":"Cooking ingredients"
+    "id": "199",
+    "name": "Plums",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "quả mận"
   },
   {
-    "id":"212",
-    "name":"Rye Bread",
-    "reflux":"avoid",
-    "category":"Grain products"
+    "id": "200",
+    "name": "Turnips",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "củ cải"
   },
   {
-    "id":"213",
-    "name":"Chickpeas",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "201",
+    "name": "Leeks",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "tỏi tây"
   },
   {
-    "id":"214",
-    "name":"Kale",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "202",
+    "name": "Capsicum",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Ớt"
   },
   {
-    "id":"215",
-    "name":"Shrimp (avoid frying)",
-    "reflux":"ok",
-    "category":"Meat and substitutes"
+    "id": "203",
+    "name": "Celeriac",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cần tây"
   },
   {
-    "id":"216",
-    "name":"Turmeric",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "204",
+    "name": "Oat milk",
+    "reflux": "remedy",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "Sữa yến mạch"
   },
   {
-    "id":"217",
-    "name":"Macadamia nuts",
-    "reflux":"avoid",
-    "category":"Nuts and seeds"
+    "id": "205",
+    "name": "Pine nuts",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "hạt thông"
   },
   {
-    "id":"218",
-    "name":"Figs",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "206",
+    "name": "Alfredo",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Alfredo"
   },
   {
-    "id":"219",
-    "name":"Acai berry",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "207",
+    "name": "Grape juice",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước nho"
   },
   {
-    "id":"220",
-    "name":"Kidney beans",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "208",
+    "name": "Jasmine tea",
+    "reflux": "avoid",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Trà hoa lài"
   },
   {
-    "id":"221",
-    "name":"Boiled eggs",
-    "reflux":"avoid",
-    "category":"Dairy"
+    "id": "209",
+    "name": "White sugar",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "đường trắng"
   },
   {
-    "id":"222",
-    "name":"Chia seeds",
-    "reflux":"avoid",
-    "category":"Nuts and seeds"
+    "id": "210",
+    "name": "Pomegranate",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Lựu"
   },
   {
-    "id":"223",
-    "name":"Goat cheese",
-    "reflux":"ok",
-    "category":"Dairy"
+    "id": "211",
+    "name": "Salt",
+    "reflux": "ok",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Muối"
   },
   {
-    "id":"224",
-    "name":"Hummus",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "212",
+    "name": "Rye Bread",
+    "reflux": "avoid",
+    "category": "Grain products",
+    "meal_type": "both",
+    "vi_name": "Bánh mì lúa mạch đen"
   },
   {
-    "id":"225",
-    "name":"Licorice root",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "213",
+    "name": "Chickpeas",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "đậu xanh"
   },
   {
-    "id":"226",
-    "name":"Plantain",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "214",
+    "name": "Kale",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cải xoăn"
   },
   {
-    "id":"227",
-    "name":"Ranch dressing",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "215",
+    "name": "Shrimp (avoid frying)",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Tôm (tránh chiên)"
   },
   {
-    "id":"228",
-    "name":"Rooibos tea",
-    "reflux":"ok",
-    "category":"Drinks"
+    "id": "216",
+    "name": "Turmeric",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "nghệ"
   },
   {
-    "id":"229",
-    "name":"Fried eggs",
-    "reflux":"avoid",
-    "category":"Dairy"
+    "id": "217",
+    "name": "Macadamia nuts",
+    "reflux": "avoid",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "Hạt Macadamia"
   },
   {
-    "id":"230",
-    "name":"Palm oil",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "218",
+    "name": "Figs",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "quả sung"
   },
   {
-    "id":"231",
-    "name":"Sweetcorn",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "219",
+    "name": "Acai berry",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "quả acai"
   },
   {
-    "id":"232",
-    "name":"Brown sugar",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "220",
+    "name": "Kidney beans",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu thận"
   },
   {
-    "id":"233",
-    "name":"Buttermilk",
-    "reflux":"avoid",
-    "category":"Dairy"
+    "id": "221",
+    "name": "Boiled eggs",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "trứng luộc"
   },
   {
-    "id":"234",
-    "name":"Cilantro",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "222",
+    "name": "Chia seeds",
+    "reflux": "avoid",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "hạt chia"
   },
   {
-    "id":"235",
-    "name":"Coriander",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "223",
+    "name": "Goat cheese",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "lunch/dinner",
+    "vi_name": "phô mai dê"
   },
   {
-    "id":"236",
-    "name":"Coconut milk",
-    "reflux":"ok",
-    "category":"Dairy"
+    "id": "224",
+    "name": "Hummus",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "hummus"
   },
   {
-    "id":"237",
-    "name":"Seaweed",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "225",
+    "name": "Licorice root",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Rễ cam thảo"
   },
   {
-    "id":"238",
-    "name":"Vanilla",
-    "reflux":"ok",
-    "category":"Cooking ingredients"
+    "id": "226",
+    "name": "Plantain",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "chuối"
   },
   {
-    "id":"239",
-    "name":"Arugula",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "227",
+    "name": "Ranch dressing",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Sốt ranch"
   },
   {
-    "id":"240",
-    "name":"Dragon fruit",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "228",
+    "name": "Rooibos tea",
+    "reflux": "ok",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "trà Rooibos"
   },
   {
-    "id":"241",
-    "name":"Lobster (avoid frying)",
-    "reflux":"ok",
-    "category":"Meat and substitutes"
+    "id": "229",
+    "name": "Fried eggs",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "trứng chiên"
   },
   {
-    "id":"242",
-    "name":"Pesto",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "230",
+    "name": "Palm oil",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Dầu cọ"
   },
   {
-    "id":"243",
-    "name":"Granola",
-    "reflux":"ok",
-    "category":"Nuts and seeds"
+    "id": "231",
+    "name": "Sweetcorn",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Bắp ngọt"
   },
   {
-    "id":"244",
-    "name":"Bagel (plain)",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "232",
+    "name": "Brown sugar",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Đường nâu"
   },
   {
-    "id":"245",
-    "name":"Pancake",
-    "reflux":"avoid",
-    "category":"Grain products"
+    "id": "233",
+    "name": "Buttermilk",
+    "reflux": "avoid",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "Sữa bơ"
   },
   {
-    "id":"246",
-    "name":"Curry powder",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "234",
+    "name": "Cilantro",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "ngò"
   },
   {
-    "id":"247",
-    "name":"Hotdog",
-    "reflux":"avoid",
-    "category":"Meat and substitutes"
+    "id": "235",
+    "name": "Coriander",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "rau mùi"
   },
   {
-    "id":"248",
-    "name":"Wheat",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "236",
+    "name": "Coconut milk",
+    "reflux": "ok",
+    "category": "Dairy",
+    "meal_type": "breakfast",
+    "vi_name": "nước cốt dừa"
   },
   {
-    "id":"249",
-    "name":"Okra",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "237",
+    "name": "Seaweed",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "rong biển"
   },
   {
-    "id":"250",
-    "name":"Liver",
-    "reflux":"avoid",
-    "category":"Meat and substitutes"
+    "id": "238",
+    "name": "Vanilla",
+    "reflux": "ok",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "Vanilla"
   },
   {
-    "id":"251",
-    "name":"Squid",
-    "reflux":"ok",
-    "category":"Meat and substitutes"
+    "id": "239",
+    "name": "Arugula",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "rau arugula"
   },
   {
-    "id":"252",
-    "name":"Cassava",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "240",
+    "name": "Dragon fruit",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "breakfast",
+    "vi_name": "Thanh long"
   },
   {
-    "id":"253",
-    "name":"Porridge",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "241",
+    "name": "Lobster (avoid frying)",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Tôm hùm (tránh chiên)"
   },
   {
-    "id":"254",
-    "name":"Sardines",
-    "reflux":"ok",
-    "category":"Meat and substitutes"
+    "id": "242",
+    "name": "Pesto",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "sốt pesto"
   },
   {
-  "id":"255",
-    "name":"Salami",
-    "reflux":"avoid",
-    "category":"Meat and substitutes"
+    "id": "243",
+    "name": "Granola",
+    "reflux": "ok",
+    "category": "Nuts and seeds",
+    "meal_type": "breakfast",
+    "vi_name": "ngũ cốc"
   },
   {
-  "id":"256",
-    "name":"Muffin (non-fruit, low-fat)",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "244",
+    "name": "Bagel (plain)",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "both",
+    "vi_name": "Bánh mì tròn (đồng bằng)"
   },
   {
-  "id":"257",
-    "name":"Endive",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "245",
+    "name": "Pancake",
+    "reflux": "avoid",
+    "category": "Grain products",
+    "meal_type": "breakfast",
+    "vi_name": "bánh xèo"
   },
   {
-  "id":"258",
-    "name":"Parsnip",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "246",
+    "name": "Curry powder",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "bột cà ri"
   },
   {
-  "id":"259",
-    "name":"Snow Peas",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "247",
+    "name": "Hotdog",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "xúc xích"
   },
   {
-  "id":"260",
-    "name":"Watercress",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "248",
+    "name": "Wheat",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Lúa mì"
   },
   {
-  "id":"261",
-    "name":"Yams",
-    "reflux":"ok",
-    "category":"Fruits and vegetables"
+    "id": "249",
+    "name": "Okra",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "đậu bắp"
   },
   {
-  "id":"262",
-    "name":"Artificial Sweetener(less than 2tsp a day)",
-    "reflux":"ok",
-    "category":"Confections"
+    "id": "250",
+    "name": "Liver",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Gan"
   },
   {
-  "id":"263",
-    "name":"Chicken Stock",
-    "reflux":"ok",
-    "category":"Meat and substitutes"
+    "id": "251",
+    "name": "Squid",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "mực"
   },
   {
-    "id":"264",
-    "name":"Flour",
-    "reflux":"ok",
-    "category":"Grain products"
+    "id": "252",
+    "name": "Cassava",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Sắn"
   },
   {
-  "id":"265",
-    "name":"Nectarine",
-    "reflux":"avoid",
-    "category":"Fruits and vegetables"
+    "id": "253",
+    "name": "Porridge",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "breakfast",
+    "vi_name": "Cháo"
   },
   {
-    "id":"266",
-    "name":"Hot sauce",
-    "reflux":"avoid",
-    "category":"Cooking ingredients"
+    "id": "254",
+    "name": "Sardines",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cá mòi"
   },
   {
-  "id":"267",
-  "name":"Mineral water",
-  "reflux":"remedy",
-  "category":"Drinks"
+    "id": "255",
+    "name": "Salami",
+    "reflux": "avoid",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "salami"
+  },
+  {
+    "id": "256",
+    "name": "Muffin (non-fruit, low-fat)",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Muffin (không trái cây, ít béo)"
+  },
+  {
+    "id": "257",
+    "name": "Endive",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "rau diếp xoăn"
+  },
+  {
+    "id": "258",
+    "name": "Parsnip",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "củ cải"
+  },
+  {
+    "id": "259",
+    "name": "Snow Peas",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Đậu tuyết"
+  },
+  {
+    "id": "260",
+    "name": "Watercress",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "cải xoong"
+  },
+  {
+    "id": "261",
+    "name": "Yams",
+    "reflux": "ok",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "khoai mỡ"
+  },
+  {
+    "id": "262",
+    "name": "Artificial Sweetener(less than 2tsp a day)",
+    "reflux": "ok",
+    "category": "Confections",
+    "meal_type": "none",
+    "vi_name": "Chất làm ngọt nhân tạo (ít hơn 2 muỗng cà phê mỗi ngày)"
+  },
+  {
+    "id": "263",
+    "name": "Chicken Stock",
+    "reflux": "ok",
+    "category": "Meat and substitutes",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Nước dùng gà"
+  },
+  {
+    "id": "264",
+    "name": "Flour",
+    "reflux": "ok",
+    "category": "Grain products",
+    "meal_type": "lunch/dinner",
+    "vi_name": "Bột mì"
+  },
+  {
+    "id": "265",
+    "name": "Nectarine",
+    "reflux": "avoid",
+    "category": "Fruits and vegetables",
+    "meal_type": "lunch/dinner",
+    "vi_name": "quả xuân đào"
+  },
+  {
+    "id": "266",
+    "name": "Hot sauce",
+    "reflux": "avoid",
+    "category": "Cooking ingredients",
+    "meal_type": "none",
+    "vi_name": "tương ớt"
+  },
+  {
+    "id": "267",
+    "name": "Mineral water",
+    "reflux": "remedy",
+    "category": "Drinks",
+    "meal_type": "none",
+    "vi_name": "Nước khoáng"
   }
 ]
