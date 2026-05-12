@@ -1067,6 +1067,7 @@ function renderMealLibrary() {
 }
 
 document.getElementById('btn-search-meals').addEventListener('click', () => loadMeals(1));
+document.getElementById('meal-search').addEventListener('input', debounce(() => loadMeals(1), 300));
 document.getElementById('meal-search').addEventListener('keydown', e => { if (e.key === 'Enter') loadMeals(1); });
 
 // Scrape button
@@ -1324,7 +1325,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                 <span class="stats-divider"></span>
                 <span id="view-servings-display">🍚 ${meal.servings ? meal.servings + ' servings' : 'N/A'}</span>
                 <span class="stats-divider"></span>
-                <span>⚡ ${kcalText}${kcalWarning}</span>
+                <span id="view-kcal-display">⚡ ${kcalText}${kcalWarning}</span>
             `;
 
             // Servings Adjuster Logic
@@ -1368,9 +1369,16 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                     tbody.appendChild(tr);
                 });
 
-                // Update the stats display as well
+                // Update the stats display
                 const servingsText = hasServings ? `${servings} servings` : 'N/A';
                 document.getElementById('view-servings-display').innerText = `🍚 ${servingsText}`;
+
+                const scaledKcal = (meal.calories !== null && meal.calories !== undefined) ? Math.round(meal.calories * multiplier) : null;
+                const updatedKcalText = scaledKcal !== null ? `${scaledKcal} kcal` : '--- kcal';
+                const kcalDisplay = document.getElementById('view-kcal-display');
+                if (kcalDisplay) {
+                    kcalDisplay.innerHTML = `⚡ ${updatedKcalText}${kcalWarning}`;
+                }
             };
 
             minusBtn.onclick = (e) => {
@@ -1524,11 +1532,19 @@ window.deleteMeal = async (id) => {
 // ─── FAVORITES ─────────────────────────────────────
 async function loadFavorites(page = 1) {
     favPage = page;
-    const url = `/api/favorites/?page=${favPage}&page_size=${PAGE_SIZE}`;
-    const data = await API.get(url);
-    allFavorites = data.items;
-    renderFavorites();
-    renderPagination('fav-pagination', data.total_pages, data.page, 'loadFavorites');
+    const searchEl = document.getElementById('fav-search');
+    const search = searchEl ? searchEl.value : '';
+    let url = `/api/favorites/?page=${favPage}&page_size=${PAGE_SIZE}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    
+    try {
+        const data = await API.get(url);
+        allFavorites = data.items;
+        renderFavorites();
+        renderPagination('fav-pagination', data.total_pages, data.page, 'loadFavorites');
+    } catch (err) {
+        console.error("Failed to load favorites:", err);
+    }
 }
 
 function renderFavorites() {
@@ -1605,6 +1621,12 @@ async function init() {
     document.querySelectorAll('.select-shadcn, .week-dropdown').forEach(s => {
         if (s.id) initShadcnSelect(s.id);
     });
+
+    // Add search listener for Favorites
+    const favSearch = document.getElementById('fav-search');
+    if (favSearch) {
+        favSearch.addEventListener('input', debounce(() => loadFavorites(1), 300));
+    }
 
     // Restore previously selected tab or default to home
     const savedTab = sessionStorage.getItem('selectedTab') || 'home';
