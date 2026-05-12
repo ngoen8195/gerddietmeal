@@ -138,6 +138,11 @@ class BaseScraper(ABC):
                     details["cook_time_hours"] = round(total_time / 60.0, 2)
             except Exception:
                 pass
+            # Extract description
+            try:
+                details["description"] = scraper.description()
+            except Exception:
+                pass
                 
         except Exception as e:
             logger.warning(f"[{self.SITE_NAME}] Details scrape error for {url}: {e}")
