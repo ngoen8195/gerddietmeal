@@ -361,7 +361,7 @@ async def scrape_from_url(
                 if not is_custom:
                     raise HTTPException(status_code=400, detail=f"The site '{domain}' is not supported for automatic scraping. Please add it manually.")
 
-            scraper = scrape_html(html=html, org_url=url, wild_mode=True)
+            scraper = scrape_html(html=html, org_url=url, supported_only=False)
             
             # Extract data
             name = ""

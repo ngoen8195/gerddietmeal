@@ -98,7 +98,7 @@ class BaseScraper(ABC):
             if not html:
                 return details
             
-            scraper = scrape_html(html=html, org_url=url, wild_mode=True)
+            scraper = scrape_html(html=html, org_url=url, supported_only=False)
             
             # Extract name and image
             try:
