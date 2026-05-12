@@ -430,7 +430,7 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
     const isMissing = !meal || !meal.name;
 
     card.className = isCompact ? 'meal-card-compact' : `meal-card-full ${type}`;
-    if (!isMissing && meal.avoid_percentage > 20) card.classList.add('has-avoid');
+    if (!isMissing && meal.avoid_percentage > 25) card.classList.add('has-avoid');
     if (!isMissing) card.dataset.mealId = meal.id;
 
     // Hover tooltip (only if meal exists)
@@ -458,15 +458,19 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
     const infoStatsHTML = `
         <div class="meal-card-title" onclick="${!isMissing ? `openViewMeal('${meal.id}')` : ''}">${esc(mealName)}</div>
         <div class="meal-card-stats">
-            ${!isMissing && meal.calories ? `<span class="calorie-tag" ${meal.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(meal.calories)} kcal${meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
+            ${!isMissing ? `
+                <span class="calorie-tag" ${meal.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>
+                    ${(meal.calories !== null && meal.calories !== undefined) ? Math.round(meal.calories) : '---'} kcal${meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}
+                </span> • ` : ''}
             ${!isMissing ? (meal.ingredient_count || 0) + ' ingredients' : ''}
             ${!isMissing && meal.cook_time_hours ? ' • ' + formatTime(meal.cook_time_hours) : ''}
         </div>
     `;
-
     const actionsHTML = `
-        ${!isMissing ? `<button class="btn-icon ${meal.is_favorite ? 'fav-active' : ''}" onclick="event.stopPropagation();toggleFav('${meal.id}',this)" title="Favorite">${favIcon}</button>` : ''}
-        <button class="btn-icon" onclick="event.stopPropagation();refreshMealSlot('${dateStr}', '${mealTypeStr}')" title="Refresh Meal">${refreshIcon}</button>
+        ${!isMissing ? `
+            <button class="btn-icon ${meal.is_favorite ? 'fav-active' : ''}" onclick="event.stopPropagation();toggleFav('${meal.id}',this)" title="Favorite">${favIcon}</button>
+        ` : ''}
+        <button class="btn-icon" onclick="event.stopPropagation();toggleRefreshPopover(event, '${meal ? meal.id : ''}', '${dateStr}', '${mealTypeStr}')" title="Refresh Meal">${refreshIcon}</button>
     `;
 
     if (isCompact) {
@@ -487,7 +491,7 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
                 <div class="meal-card-gradient meal-card-gradient-top"></div>
                 <div class="meal-card-gradient meal-card-gradient-bottom"></div>
                 
-                ${!isMissing ? `<button class="meal-card-overlay-edit" onclick="event.stopPropagation();openEditMealFromHome(event, '${meal.id}', '${dateStr}', '${mealTypeStr}')" title="Edit">${editIcon}</button>` : ''}
+                ${!isMissing ? `<button class="meal-card-overlay-edit" onclick="event.stopPropagation();openMealModal('edit', '${meal.id}')" title="Edit Meal">${editIcon}</button>` : ''}
                 
                 ${!isMissing && sourceDomain ? `
                     <a class="meal-card-overlay-link" href="${esc(meal.source_url)}" target="_blank" onclick="event.stopPropagation()">
@@ -508,29 +512,27 @@ function createMealCard(meal, type, dateStr, mealTypeStr) {
 }
 
 // ─── Meal Plan Interactions ────────────────────────
-window.openEditMealFromHome = (event, mealId, dateStr, mealTypeStr) => {
-    toggleMealEditPopover(event, mealId, dateStr, mealTypeStr);
-};
+window.toggleRefreshPopover = (event, mealId, dateStr, mealTypeStr) => {
+    const button = event.currentTarget;
+    const isSameButton = activePopover && activePopover._trigger === button;
 
-function toggleMealEditPopover(event, mealId, dateStr, mealTypeStr) {
     if (activePopover) {
         closePopover();
-        return;
+        if (isSameButton) return;
     }
 
-    const button = event.currentTarget;
     const rect = button.getBoundingClientRect();
-
     const popover = document.createElement('div');
+    popover._trigger = button;
     popover.className = 'popover-menu';
     popover.innerHTML = `
         <div class="popover-item" id="btn-select-another">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19.9381 13C19.979 12.6724 20 12.3387 20 12C20 7.58172 16.4183 4 12 4C9.49942 4 7.26681 5.14727 5.7998 6.94416M4.06189 11C4.02104 11.3276 4 11.6613 4 12C4 16.4183 7.58172 20 12 20C14.3894 20 16.5341 18.9525 18 17.2916M15 17H18V17.2916M5.7998 4V6.94416M5.7998 6.94416V6.99993L8.7998 7M18 20V17.2916"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             Select another meal
         </div>
-        <div class="popover-item" id="btn-edit-details">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M 15.9087 3.8735 C 16.4681 3.3142 17.2266 3 18.0176 3 C 18.4093 3 18.7971 3.0771 19.1589 3.227 C 19.5208 3.3769 19.8495 3.5966 20.1265 3.8735 C 20.4034 4.1505 20.6231 4.4792 20.773 4.8411 C 20.9229 5.2029 21 5.5907 21 5.9824 C 21 6.374 20.9229 6.7619 20.773 7.1237 C 20.6231 7.4855 20.4034 7.8143 20.1265 8.0913 L 19.0231 9.1947 C 18.6326 9.5852 17.9994 9.5852 17.6089 9.1947 L 14.8053 6.3911 C 14.4148 6.0006 14.4148 5.3674 14.8053 4.9769 L 15.9087 3.8735 Z M 13.3911 7.8054 C 13.0006 7.4148 12.3674 7.4148 11.9769 7.8054 L 5.0108 14.7714 C 4.37 15.4122 3.9154 16.2151 3.6957 17.0943 L 3.0299 19.7575 C 2.9447 20.0982 3.0445 20.4587 3.2929 20.7071 C 3.5413 20.9555 3.9018 21.0553 4.2425 20.9701 L 6.9057 20.3043 C 7.7849 20.0846 8.5878 19.63 9.2286 18.9892 L 16.1946 12.0231 C 16.5852 11.6326 16.5852 10.9994 16.1946 10.6089 L 13.3911 7.8054Z"/></svg>
-            Edit meal details
+        <div class="popover-item" id="btn-random-refresh">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19.9381 13C19.979 12.6724 20 12.3387 20 12C20 7.58172 16.4183 4 12 4C9.49942 4 7.26681 5.14727 5.7998 6.94416M4.06189 11C4.02104 11.3276 4 11.6613 4 12C4 16.4183 7.58172 20 12 20C14.3894 20 16.5341 18.9525 18 17.2916M15 17H18V17.2916M5.7998 4V6.94416M5.7998 6.94416V6.99993L8.7998 7M18 20V17.2916"/></svg>
+            Random refresh
         </div>
     `;
 
@@ -538,19 +540,19 @@ function toggleMealEditPopover(event, mealId, dateStr, mealTypeStr) {
     activePopover = popover;
 
     // Position logic
-    const popoverWidth = 180; // Estimated
+    const popoverWidth = 220;
     popover.style.top = (rect.bottom + window.scrollY + 8) + 'px';
     popover.style.left = (rect.right + window.scrollX - popoverWidth) + 'px';
 
     // Handlers
     popover.querySelector('#btn-select-another').onclick = () => openMealLibraryCommand(mealId, dateStr, mealTypeStr);
-    popover.querySelector('#btn-edit-details').onclick = () => {
+    popover.querySelector('#btn-random-refresh').onclick = () => {
         closePopover();
-        openMealModal('edit', mealId);
+        refreshMealSlot(dateStr, mealTypeStr);
     };
 
     event.stopPropagation();
-}
+};
 
 async function openMealLibraryCommand(currentMealId, dateStr, mealTypeStr) {
     closePopover();
@@ -680,7 +682,7 @@ function showTooltip(e, meal) {
     document.getElementById('tooltip-img').src = meal.image_url || DEFAULT_IMG;
     document.getElementById('tooltip-name').textContent = meal.name;
     document.getElementById('tooltip-details').innerHTML =
-        `${meal.calories ? Math.round(meal.calories) + ' kcal' + (meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : '') : 'N/A'} · ${meal.ingredient_count || 0} ingredients · ${meal.cook_time_hours || 0}h<br>${meal.source_site || ''}${meal.language === 'vi' ? ' 🇻🇳' : ''}`;
+        `${(meal.calories !== null && meal.calories !== undefined) ? Math.round(meal.calories) + ' kcal' + (meal.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : '') : 'N/A'} · ${meal.ingredient_count || 0} ingredients · ${meal.cook_time_hours || 0}h<br>${meal.source_site || ''}${meal.language === 'vi' ? ' 🇻🇳' : ''}`;
     tooltip.classList.add('visible');
     moveTooltip(e);
 }
@@ -700,25 +702,25 @@ window.initShadcnSelect = (selectId, options = {}) => {
     if (!select) return;
 
     const wrapper = document.createElement('div');
-    wrapper.className = `combobox-wrapper ${options.className || ''}`;
+    wrapper.className = `cb-wrapper ${options.className || ''}`;
 
     const trigger = document.createElement('div');
-    trigger.className = 'combobox-trigger';
+    trigger.className = 'cb-trigger';
     trigger.innerHTML = `
         <span></span>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round" class="combobox-chevron">
+            stroke-linejoin="round" class="cb-chevron">
             <path d="m6 9 6 6 6-6" />
         </svg>
     `;
     const displayValue = trigger.querySelector('span');
 
     const content = document.createElement('div');
-    content.className = 'combobox-content';
+    content.className = 'cb-content';
 
     const list = document.createElement('div');
-    list.className = 'command-list';
+    list.className = 'cb-list';
     content.appendChild(list);
 
     wrapper.appendChild(trigger);
@@ -731,7 +733,7 @@ window.initShadcnSelect = (selectId, options = {}) => {
         const isOpen = wrapper.classList.toggle('open', force);
         if (isOpen) {
             // Close other open selects
-            document.querySelectorAll('.combobox-wrapper.open').forEach(w => {
+            document.querySelectorAll('.cb-wrapper.open').forEach(w => {
                 if (w !== wrapper) w.classList.remove('open');
             });
         }
@@ -785,7 +787,7 @@ window.initShadcnSelect = (selectId, options = {}) => {
 
 // ─── Combobox Helper ───────────────────────────────
 function initCategoryCombobox() {
-    const wrapper = document.getElementById('food-category-combobox');
+    const wrapper = document.getElementById('category-combobox');
     const trigger = document.getElementById('combobox-trigger');
     const searchInput = document.getElementById('combobox-search');
     const list = document.getElementById('combobox-list');
@@ -795,11 +797,18 @@ function initCategoryCombobox() {
     const hiddenInput = document.getElementById('food-form-category');
     const displayValue = document.getElementById('combobox-value');
 
-    const toggle = (force) => {
+    const toggle = async (force) => {
+        if (availableCategories.length === 0) {
+            try {
+                availableCategories = await API.get('/api/foods/categories');
+            } catch (err) {
+                console.error("Failed to load categories:", err);
+            }
+        }
         const isOpen = wrapper.classList.toggle('open', force);
         if (isOpen) {
             // Close other open selects/comboboxes
-            document.querySelectorAll('.combobox-wrapper.open').forEach(w => {
+            document.querySelectorAll('.cb-wrapper.open').forEach(w => {
                 if (w !== wrapper) w.classList.remove('open');
             });
             searchInput.value = '';
@@ -1029,7 +1038,7 @@ function renderMealLibrary() {
         };
 
         return `
-        <div class="meal-lib-card ${m.avoid_percentage > 20 ? 'has-avoid' : ''}">
+        <div class="meal-lib-card ${m.avoid_percentage > 25 ? 'has-avoid' : ''}">
             <div class="meal-lib-card-img-wrapper" onclick="openViewMeal('${m.id}')">
                 <img class="meal-lib-card-img" src="${esc(m.image_url || DEFAULT_IMG)}" alt="${esc(m.name)}" onerror="this.src='${DEFAULT_IMG}'">
                 ${sourceDomain ? `
@@ -1041,7 +1050,7 @@ function renderMealLibrary() {
             <div class="meal-lib-card-body">
                 <div class="meal-lib-card-title" onclick="openViewMeal('${m.id}')">${esc(m.name)}</div>
                 <div class="meal-lib-card-stats">
-                    ${m.calories ? `<span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(m.calories)} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
+                    <span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${(m.calories !== null && m.calories !== undefined) ? Math.round(m.calories) : '---'} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • 
                     ${(m.ingredient_count || 0)} ingredients
                     ${m.cook_time_hours ? ' • ' + formatTime(m.cook_time_hours) : ''}
                     ${m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>'}
@@ -1279,7 +1288,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
             const incIndicator = document.getElementById('meal-form-calories-incomplete');
             if (meal.calories_incomplete) {
                 incIndicator.style.display = 'inline-flex';
-                incIndicator.innerHTML = '<span class="incomplete-tag">(!)</span>';
+                incIndicator.innerHTML = '<span class="incomplete-tag">(!) Incomplete Data</span>';
                 incIndicator.title = "Some ingredients missing kcal data";
             } else {
                 incIndicator.style.display = 'none';
@@ -1303,7 +1312,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                 return h + 'h';
             };
 
-            const kcalText = meal.calories ? `${Math.round(meal.calories)} kcal` : '--- kcal';
+            const kcalText = (meal.calories !== null && meal.calories !== undefined) ? `${Math.round(meal.calories)} kcal` : '--- kcal';
             const kcalWarning = meal.calories_incomplete ? ' <span class="incomplete-tag" title="Some ingredients missing kcal data">(!)</span>' : '';
 
             const hasServings = !!meal.servings && !isNaN(parseInt(meal.servings));
@@ -1348,8 +1357,8 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="view-ingredient-name-cell">
-                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}">
-                                ${esc(ing.name)}${!ing.fdc_id ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
+                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}" title="${ing.calories_incomplete ? 'No matching FDC food' : `${esc(ing.fdc_name)}, ${ing.calories} kcal`}">
+                                ${esc(ing.name)}${ing.calories_incomplete ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
                             </div>
                             ${ing.comment ? `<div class="view-ingredient-comment" title="${esc(ing.comment)}">${esc(ing.comment)}</div>` : ''}
                         </td>
@@ -1463,9 +1472,9 @@ function addIngredientRow(name = '', qty = '', unit = '', comment = '', isReadon
 }
 
 document.getElementById('btn-add-ingredient').addEventListener('click', () => addIngredientRow());
+// Close button (X) for the modal
 document.getElementById('meal-modal-close').addEventListener('click', () => document.getElementById('meal-modal').classList.remove('visible'));
-document.getElementById('meal-modal-cancel').addEventListener('click', () => document.getElementById('meal-modal').classList.remove('visible'));
-document.getElementById('meal-modal-save').addEventListener('click', saveMeal);
+
 
 // Live image preview
 document.getElementById('meal-form-image').addEventListener('input', function () {
@@ -1549,7 +1558,7 @@ function renderFavorites() {
             <div class="meal-lib-card-body">
                 <div class="meal-lib-card-title" onclick="openViewMeal('${m.id}')">${esc(m.name)}</div>
                 <div class="meal-lib-card-stats">
-                    ${m.calories ? `<span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${Math.round(m.calories)} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • ` : ''}
+                    <span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${(m.calories !== null && m.calories !== undefined) ? Math.round(m.calories) : '---'} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • 
                     ${(m.ingredient_count || 0)} ingredients
                     ${m.cook_time_hours ? ' • ' + formatTime(m.cook_time_hours) : ''}
                     ${m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>'}

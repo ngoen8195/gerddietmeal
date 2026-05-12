@@ -240,7 +240,7 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
     Checks local cache first (with fuzzy matching), then FDC API if use_api is True.
     """
     if not query:
-        return 0.0, 0, "", []
+        return 0.0, 0, "", [], False
 
     original_query = query
     # Translate to English if ingredient is Vietnamese for better FDC matching
@@ -267,13 +267,13 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
             for e in cached_entries:
                 if e.description == matched_desc:
                     portions = json.loads(e.portions_json) if e.portions_json else []
-                    print(f"DEBUG: Portions from cache: {len(portions)} items")
-                    return e.calories, e.fdc_id, e.description, portions
+                    print(f"DEBUG: Found {query} in local cache: {e.description} ({e.calories} kcal)")
+                    return e.calories, e.fdc_id, e.description, portions, True
         else:
             print(f"DEBUG: No local match for {query} (Best: {best_match[0] if best_match else 'None'} {best_match[1] if best_match else 0})")
 
     if not use_api:
-        return 0.0, 0, "", []
+        return 0.0, 0, "", [], False
 
     # 2. Search FDC API using usda-fdc library
     try:
@@ -301,11 +301,25 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
             food_detail = await loop.run_in_executor(None, lambda: client.get_food(fdc_id))
             
             calories = 0
+            energy_found = False
             if food_detail and food_detail.nutrients:
+                # Try to find the best energy nutrient
+                # Priority: 1. "Energy" (KCAL), 2. "Energy (Atwater...)" (KCAL)
+                energy_nutrients = []
                 for nutrient in food_detail.nutrients:
-                    if nutrient.name.lower() == "energy" and nutrient.unit_name.upper() == "KCAL":
-                        calories = nutrient.amount
-                        break
+                    n_name = nutrient.name.lower()
+                    if "energy" in n_name and nutrient.unit_name.upper() == "KCAL":
+                        energy_nutrients.append(nutrient)
+                
+                if energy_nutrients:
+                    # Prefer exact "energy" match
+                    exact_match = next((n for n in energy_nutrients if n.name.lower() == "energy"), None)
+                    if exact_match:
+                        calories = exact_match.amount
+                    else:
+                        # Take the first one (usually Atwater General Factors)
+                        calories = energy_nutrients[0].amount
+                    energy_found = True
             
             portions = []
             if food_detail and hasattr(food_detail, 'food_portions'):
@@ -336,12 +350,12 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
                 await session.flush()
                 await session.commit()
             
-            return calories, fdc_id, desc, portions
+            return calories, fdc_id, desc, portions, energy_found
             
     except Exception as e:
         print(f"FDC API Error: {e}")
-
-    return 0.0, 0, "", []
+    
+    return 0.0, 0, "", [], False
 
 async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: bool = True) -> dict:
     """Calculate total calories for a meal based on its ingredients."""
@@ -364,7 +378,7 @@ async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: 
     
     for ing in meal.ingredients:
         # 1. Get calories and portions from FDC first
-        kcal_100g, fdc_id, fdc_desc, portions = await get_calories_for_food(
+        kcal_100g, fdc_id, fdc_desc, portions, energy_found = await get_calories_for_food(
             ing.name, session, use_api=use_api, cached_entries=cached_entries, language=meal.language
         )
 
@@ -449,11 +463,27 @@ async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: 
             
         ing.metric_weight_grams = weight
         
-        if fdc_id is not None:
+        # We consider it complete ONLY if:
+        # 1. FDC ID was found
+        # 2. Energy was successfully found in FDC (energy_found)
+        # 3. Weight was successfully calculated (weight > 0)
+        # Exception: if kcal_100g is exactly 0 and it was found, we still allow it (e.g. water)
+        
+        if fdc_id and energy_found and weight > 0:
             ing.fdc_id = fdc_id
-            ing_kcal = (weight / 100.0) * kcal_100g
+            ing.fdc_name = fdc_desc
+            ing.calories_incomplete = False
+            ing_kcal = round((weight / 100.0) * kcal_100g, 1)
+            ing.calories = ing_kcal
             total_kcal += ing_kcal
         else:
+            if fdc_id:
+                ing.fdc_id = fdc_id
+                ing.fdc_name = fdc_desc
+            else:
+                ing.fdc_name = None
+            ing.calories = 0.0
+            ing.calories_incomplete = True
             incomplete = True
             
     meal.calories = round(total_kcal, 1)
@@ -467,16 +497,20 @@ async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: 
     }
 
 @router.post("/calculate/{meal_id}")
-async def trigger_meal_calculation(meal_id: int, session: AsyncSession = Depends(get_session)):
+async def trigger_meal_calculation(meal_id: int, use_api: bool = True, session: AsyncSession = Depends(get_session)):
     """API endpoint to trigger calorie calculation for a specific meal."""
-    return await calculate_meal_calories(meal_id, session)
+    return await calculate_meal_calories(meal_id, session, use_api=use_api)
 
 @router.post("/calculate-all")
 async def calculate_all_meals(use_api: bool = True, session: AsyncSession = Depends(get_session)):
     """Calculate calories for all meals that don't have them yet."""
     from app.models.models import Meal
-    # Select meals where calories are 0 or were previously incomplete
-    result = await session.execute(select(Meal.id).where((Meal.calories == 0) | (Meal.calories_incomplete == True)))
+    # Select meals where calories are 0, were incomplete, or are suspiciously high (>10000 kcal)
+    result = await session.execute(select(Meal.id).where(
+        (Meal.calories == 0) | 
+        (Meal.calories_incomplete == True) |
+        (Meal.calories > 10000)
+    ))
     meal_ids = [r[0] for r in result.fetchall()]
     
     results = []

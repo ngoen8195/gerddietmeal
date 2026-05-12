@@ -137,6 +137,9 @@ def format_meal_out(meal: Meal, fav_ids: Set[int], avoid_names: Set[str]) -> Dic
             "comment": i.comment or "",
             "metric_weight_grams": i.metric_weight_grams or 0.0,
             "fdc_id": i.fdc_id,
+            "fdc_name": getattr(i, 'fdc_name', None),
+            "calories": getattr(i, 'calories', 0.0),
+            "calories_incomplete": getattr(i, 'calories_incomplete', False),
             "is_avoid": is_avoid
         })
     

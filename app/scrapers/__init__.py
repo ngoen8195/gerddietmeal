@@ -98,7 +98,7 @@ class BaseScraper(ABC):
             if not html:
                 return details
             
-            scraper = scrape_html(html=html, org_url=url, wild_mode=True)
+            scraper = scrape_html(html=html, org_url=url, supported_only=False)
             
             # Extract name and image
             try:
@@ -136,6 +136,11 @@ class BaseScraper(ABC):
                 total_time = scraper.total_time()
                 if total_time:
                     details["cook_time_hours"] = round(total_time / 60.0, 2)
+            except Exception:
+                pass
+            # Extract description
+            try:
+                details["description"] = scraper.description()
             except Exception:
                 pass
                 
@@ -189,6 +194,9 @@ class BaseScraper(ABC):
             r'\bchén\b': 'cup',
             r'\bbát\b': 'cup',
             r'\bmuỗng\b': 'tablespoon',
+            r'\bqt\b': 'quart',
+            r'\bqts\b': 'quart',
+            r'\bquart\b': 'quart',
             r'\bổ\b': 'piece',
             r'\bbó\b': 'bunch',
             r'\bgói\b': 'packet',
