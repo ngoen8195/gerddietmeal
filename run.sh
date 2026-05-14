@@ -10,36 +10,38 @@ echo ""
 
 # 1. Check for Python
 echo "[1/3] Checking for Python..."
-if ! command -v python3 &> /dev/null
-then
+PYTHON_EXE=""
+
+if command -v python3 &> /dev/null; then
+    PYTHON_EXE="python3"
+elif command -v python &> /dev/null; then
+    PYTHON_EXE="python"
+else
     echo ""
-    echo "ERROR: Python 3 is not installed."
-    echo "Please install Python 3.9 or newer using your package manager."
-    echo ""
+    echo "ERROR: Python was not found."
+    echo "Please install Python 3.9 or newer."
     exit 1
 fi
+echo "Found Python: $PYTHON_EXE"
 
 # 2. Setup Virtual Environment
 if [ ! -d ".venv" ]; then
     echo "[2/3] First time setup: Creating virtual environment..."
-    python3 -m venv .venv
+    $PYTHON_EXE -m venv .venv
     if [ $? -ne 0 ]; then
-        echo ""
         echo "ERROR: Failed to create virtual environment."
         exit 1
     fi
     
-    echo ""
     echo "Installing dependencies (this may take a minute)..."
     .venv/bin/python -m pip install --upgrade pip
     .venv/bin/pip install -r requirements.txt
     if [ $? -ne 0 ]; then
-        echo ""
         echo "ERROR: Failed to install dependencies."
         exit 1
     fi
 else
-    echo "[2/3] Virtual environment found."
+    echo "[2/3] Virtual environment ready."
 fi
 
 # 3. Run Application
@@ -49,12 +51,20 @@ echo "The app will open in your browser shortly."
 echo "To stop the server, press Ctrl+C."
 echo ""
 
-# Open browser (handles macOS and Linux)
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    open "http://127.0.0.1:8000"
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    xdg-open "http://127.0.0.1:8000" 2>/dev/null
-fi
+# Open browser after a 2-second delay in the background
+echo "Opening browser at http://127.0.0.1:8000..."
+(
+    sleep 2
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        open "http://127.0.0.1:8000"
+    elif command -v xdg-open &> /dev/null; then
+        xdg-open "http://127.0.0.1:8000" &> /dev/null
+    else
+        # Fallback to python webbrowser module
+        .venv/bin/python -m webbrowser "http://127.0.0.1:8000" &> /dev/null
+    fi
+) &
 
 # Run the server
-.venv/bin/python -m uvicorn app.main:app
+echo "Starting Uvicorn server..."
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000

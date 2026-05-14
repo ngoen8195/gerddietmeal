@@ -13,58 +13,76 @@ echo.
 
 :: 1. Check for Python
 echo [1/3] Checking for Python...
-where python >nul 2>&1
+
+py --version >nul 2>&1
+if %errorlevel% equ 0 (
+    set "PYTHON_EXE=py"
+    goto :found_python
+)
+
+python --version >nul 2>&1
+if %errorlevel% equ 0 (
+    set "PYTHON_EXE=python"
+    goto :found_python
+)
+
+echo.
+echo ERROR: Python was not found (checked 'py' and 'python').
+echo Please install Python 3.9+ and ensure it's in your PATH.
+pause
+exit /b
+
+:found_python
+echo Found Python: %PYTHON_EXE%
+
+:: 2. Setup Virtual Environment
+if exist ".venv\Scripts\python.exe" goto :venv_exists
+
+echo [2/3] First time setup: Creating virtual environment...
+%PYTHON_EXE% -m venv .venv
 if %errorlevel% neq 0 (
     echo.
-    echo ERROR: Python is not installed or not in your PATH.
-    echo Please install Python 3.9 or newer from https://www.python.org/
-    echo Make sure to check "Add Python to PATH" during installation.
-    echo.
+    echo ERROR: Failed to create virtual environment.
     pause
     exit /b
 )
 
-:: 2. Setup Virtual Environment
-if not exist ".venv" (
-    echo [2/3] First time setup: Creating virtual environment...
-    python -m venv .venv
-    if !errorlevel! neq 0 (
-        echo.
-        echo ERROR: Failed to create virtual environment.
-        pause
-        exit /b
-    )
-    
+echo.
+echo Installing dependencies (this may take a minute)...
+".venv\Scripts\python.exe" -m pip install --upgrade pip
+".venv\Scripts\pip.exe" install -r requirements.txt
+if %errorlevel% neq 0 (
     echo.
-    echo Installing dependencies (this may take a minute)...
-    .venv\Scripts\python -m pip install --upgrade pip
-    .venv\Scripts\pip install -r requirements.txt
-    if !errorlevel! neq 0 (
-        echo.
-        echo ERROR: Failed to install dependencies.
-        pause
-        exit /b
-    )
-) else (
-    echo [2/3] Virtual environment found.
+    echo ERROR: Failed to install dependencies.
+    pause
+    exit /b
 )
+
+:venv_exists
+echo [2/3] Virtual environment ready.
 
 :: 3. Run Application
 echo [3/3] Starting the application...
 echo.
+
 echo The app will open in your browser shortly.
 echo To stop the server, close this window or press Ctrl+C.
 echo.
 
-:: Start browser after a short delay
+:: Start browser
+echo Opening browser at http://127.0.0.1:8000...
 start "" "http://127.0.0.1:8000"
 
 :: Run the server
-.venv\Scripts\python -m uvicorn app.main:app
+echo Starting Uvicorn server...
+".venv\Scripts\python.exe" -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+
 if %errorlevel% neq 0 (
     echo.
-    echo ERROR: Application crashed or failed to start.
+    echo ERROR: Application stopped unexpectedly (Exit Code: %errorlevel%).
+    pause
+) else (
+    echo.
+    echo Server shut down normally.
     pause
 )
-
-pause
