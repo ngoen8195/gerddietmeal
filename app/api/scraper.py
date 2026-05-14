@@ -318,10 +318,16 @@ async def scrape_search(
 
 @router.post("/url")
 async def scrape_from_url(
-    url: str
+    url: str,
+    session: AsyncSession = Depends(get_session)
 ):
     """Scrape a single recipe from a specific URL."""
     try:
+        # Check for existing URL duplicate first
+        existing = await session.execute(select(Meal).where(Meal.source_url == url))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="This recipe URL is already in your library.")
+
         from recipe_scrapers import scrape_html
         from curl_cffi.requests import AsyncSession
         import re

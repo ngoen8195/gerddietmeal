@@ -98,6 +98,12 @@ async def get_meal(meal_id: int, session: AsyncSession = Depends(get_session)):
 @router.post("/", response_model=MealOut, status_code=201)
 async def create_meal(meal_data: MealCreate, session: AsyncSession = Depends(get_session)):
     """Add a new meal manually."""
+    # Duplicate URL check
+    if meal_data.source_url:
+        existing = await session.execute(select(Meal).where(Meal.source_url == meal_data.source_url))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="A recipe with this URL already exists in your library.")
+
     db_meal = Meal(
         name=meal_data.name,
         description=meal_data.description,

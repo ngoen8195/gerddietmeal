@@ -2094,6 +2094,27 @@ main {
     color: var(--text);
 }
 
+.alert-shadcn-progress {
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    height: 3px;
+    background: var(--gradient-primary);
+    border-radius: 0 0 0 var(--radius-lg);
+    animation: alertProgress 15s linear forwards;
+    width: 0;
+}
+
+@keyframes alertProgress {
+    from {
+        width: 90%;
+    }
+
+    to {
+        width: 0%;
+    }
+}
+
 @keyframes slideInRight {
     from {
         opacity: 0;

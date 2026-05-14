@@ -42,11 +42,20 @@ function showNotification(title, message) {
         <div class="alert-shadcn-description">${message}</div>
     `;
 
-    const closeBtn = alert.querySelector('.alert-shadcn-close');
     const dismiss = () => {
+        if (autoDismissTimer) clearTimeout(autoDismissTimer);
         alert.classList.add('fade-out');
         setTimeout(() => alert.remove(), 300);
     };
+
+    // Add progress bar for 15s timeout
+    const progress = document.createElement('div');
+    progress.className = 'alert-shadcn-progress';
+    alert.appendChild(progress);
+
+    let autoDismissTimer = setTimeout(dismiss, 15000);
+
+    const closeBtn = alert.querySelector('.alert-shadcn-close');
     closeBtn.onclick = dismiss;
 
     container.appendChild(alert);
@@ -1536,7 +1545,7 @@ async function loadFavorites(page = 1) {
     const search = searchEl ? searchEl.value : '';
     let url = `/api/favorites/?page=${favPage}&page_size=${PAGE_SIZE}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
-    
+
     try {
         const data = await API.get(url);
         allFavorites = data.items;
@@ -1657,10 +1666,10 @@ function updateGuidePopover() {
     guideTitle.textContent = step.title;
     guideContent.textContent = step.content;
     guideProgress.textContent = `${currentGuideStep + 1} / ${guideSteps.length}`;
-    
+
     guideBack.style.visibility = currentGuideStep === 0 ? 'hidden' : 'visible';
     guideNext.textContent = currentGuideStep === guideSteps.length - 1 ? 'Finish' : 'Next';
-    
+
     // Switch tabs automatically based on guide step
     if (currentGuideStep === 0) switchTab('home');
     if (currentGuideStep === 1) switchTab('food-library');
