@@ -1087,6 +1087,7 @@ main {
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -1096,6 +1097,8 @@ main {
 
 .modal-overlay.visible {
     display: flex;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .modal {
@@ -1295,6 +1298,7 @@ main {
 }
 
 @media (max-width: 768px) {
+
     /* Header & Navigation */
     .app-header {
         padding: 10px 16px 0;
@@ -1316,12 +1320,13 @@ main {
         padding-bottom: 2px;
         -webkit-overflow-scrolling: touch;
     }
-    
+
     .tab-nav::-webkit-scrollbar {
         height: 4px;
     }
+
     .tab-nav::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.2);
+        background: rgba(255, 255, 255, 0.2);
         border-radius: 4px;
     }
 
@@ -1366,7 +1371,7 @@ main {
         align-items: stretch;
         width: 100%;
     }
-    
+
     .food-filters .search-wrapper,
     .meal-lib-search .search-wrapper,
     .food-filters .cb-wrapper,
@@ -1383,22 +1388,22 @@ main {
         max-height: 90vh;
         margin: auto;
     }
-    
+
     .modal-body {
         padding-inline: 16px;
         padding-block: 16px;
     }
-    
+
     .modal-header {
         padding-inline: 16px;
         padding-block: 12px;
     }
-    
+
     .modal-footer {
         padding: 16px;
         flex-direction: column;
     }
-    
+
     .modal-footer .btn {
         width: 100%;
         justify-content: center;
@@ -1410,29 +1415,30 @@ main {
 
     /* Form specific adjustments */
     .ingredient-header {
-        display: none !important; /* Hide the table-like header on mobile */
+        display: none !important;
+        /* Hide the table-like header on mobile */
     }
-    
+
     .ingredient-row {
         flex-wrap: wrap;
-        background: rgba(255,255,255,0.03);
+        background: rgba(255, 255, 255, 0.03);
         padding: 10px;
         border-radius: var(--radius);
         gap: 8px;
     }
-    
-    .ingredient-row > input[type="text"]:first-child {
+
+    .ingredient-row>input[type="text"]:first-child {
         width: 100% !important;
         flex: none !important;
     }
-    
-    .ingredient-row > input[type="number"], 
-    .ingredient-row > input[type="text"]:nth-child(3) {
+
+    .ingredient-row>input[type="number"],
+    .ingredient-row>input[type="text"]:nth-child(3) {
         flex: 1 !important;
         width: auto !important;
     }
 
-    .ingredient-row > input[type="text"]:nth-child(4) {
+    .ingredient-row>input[type="text"]:nth-child(4) {
         width: 100% !important;
         flex: none !important;
     }
@@ -1447,13 +1453,13 @@ main {
     .view-recipe-name {
         font-size: 1.5rem;
     }
-    
+
     .view-stats-row {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
-    
+
     .stats-divider {
         display: none;
     }
@@ -1464,7 +1470,7 @@ main {
         right: 16px;
         top: 16px;
     }
-    
+
     /* Popovers and Command Box */
     .cb-content.cb-popover {
         width: 95vw;
@@ -1476,8 +1482,8 @@ main {
         height: auto;
         min-height: 250px;
     }
-    
-    .meal-card-full.breakfast, 
+
+    .meal-card-full.breakfast,
     .meal-card-full.lunch-dinner {
         height: auto;
     }
@@ -1486,13 +1492,89 @@ main {
     .meal-card-full.lunch-dinner .meal-card-img-wrapper {
         height: 200px;
     }
-    
+
     .meal-lib-card {
         height: auto;
         min-height: 320px;
     }
 }
 
+
+/* ─── User Guide Popover ────────────────────────── */
+#guide-overlay.visible {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.guide-popover {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 350px;
+    max-width: calc(100vw - 48px);
+    background: var(--surface);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--text);
+}
+
+.guide-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.guide-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.guide-body {
+    padding: 20px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.guide-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom-left-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
+}
+
+.guide-progress {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 /* ─── Combobox & Command Component ──────────────── */
 .cb-wrapper {
