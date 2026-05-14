@@ -1294,6 +1294,206 @@ main {
     }
 }
 
+@media (max-width: 768px) {
+    /* Header & Navigation */
+    .app-header {
+        padding: 10px 16px 0;
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+    }
+
+    .app-header .logo {
+        margin-bottom: 4px;
+        font-size: 1.2rem;
+    }
+
+    .tab-nav {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        justify-content: flex-start;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-nav::-webkit-scrollbar {
+        height: 4px;
+    }
+    .tab-nav::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.2);
+        border-radius: 4px;
+    }
+
+    .tab-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    /* Layout Spacing */
+    .tab-content {
+        padding: 16px;
+    }
+
+    /* Planners & Filters */
+    .planner-header {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .planner-header #btn-generate-plan {
+        justify-self: stretch;
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+    }
+
+    .week-navigation {
+        grid-column: 1;
+        justify-self: stretch;
+    }
+
+    .food-grid-header,
+    .meal-lib-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .food-filters,
+    .meal-lib-search {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+    
+    .food-filters .search-wrapper,
+    .meal-lib-search .search-wrapper,
+    .food-filters .cb-wrapper,
+    .meal-lib-search .cb-wrapper,
+    .food-filters select,
+    .food-filters button,
+    .meal-lib-search button {
+        width: 100%;
+    }
+
+    /* Modals */
+    .modal {
+        max-width: 95vw !important;
+        max-height: 90vh;
+        margin: auto;
+    }
+    
+    .modal-body {
+        padding-inline: 16px;
+        padding-block: 16px;
+    }
+    
+    .modal-header {
+        padding-inline: 16px;
+        padding-block: 12px;
+    }
+    
+    .modal-footer {
+        padding: 16px;
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .modal-img-preview {
+        height: 200px;
+    }
+
+    /* Form specific adjustments */
+    .ingredient-header {
+        display: none !important; /* Hide the table-like header on mobile */
+    }
+    
+    .ingredient-row {
+        flex-wrap: wrap;
+        background: rgba(255,255,255,0.03);
+        padding: 10px;
+        border-radius: var(--radius);
+        gap: 8px;
+    }
+    
+    .ingredient-row > input[type="text"]:first-child {
+        width: 100% !important;
+        flex: none !important;
+    }
+    
+    .ingredient-row > input[type="number"], 
+    .ingredient-row > input[type="text"]:nth-child(3) {
+        flex: 1 !important;
+        width: auto !important;
+    }
+
+    .ingredient-row > input[type="text"]:nth-child(4) {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    /* View Mode Modal adjustments */
+    .view-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .view-recipe-name {
+        font-size: 1.5rem;
+    }
+    
+    .view-stats-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .stats-divider {
+        display: none;
+    }
+
+    /* Notification */
+    .notification-container {
+        width: calc(100vw - 32px);
+        right: 16px;
+        top: 16px;
+    }
+    
+    /* Popovers and Command Box */
+    .cb-content.cb-popover {
+        width: 95vw;
+        max-width: 95vw;
+    }
+
+    /* Meal Card Adjustments */
+    .meal-card-full {
+        height: auto;
+        min-height: 250px;
+    }
+    
+    .meal-card-full.breakfast, 
+    .meal-card-full.lunch-dinner {
+        height: auto;
+    }
+
+    .meal-card-full.breakfast .meal-card-img-wrapper,
+    .meal-card-full.lunch-dinner .meal-card-img-wrapper {
+        height: 200px;
+    }
+    
+    .meal-lib-card {
+        height: auto;
+        min-height: 320px;
+    }
+}
+
+
 /* ─── Combobox & Command Component ──────────────── */
 .cb-wrapper {
     position: relative;
