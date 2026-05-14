@@ -649,8 +649,6 @@ main {
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 400px;
-    /* Fixed height to ensure scrolling with 10 items */
     max-height: 80vh;
     transition: all var(--transition);
 }
