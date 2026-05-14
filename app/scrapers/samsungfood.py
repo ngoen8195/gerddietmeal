@@ -1,11 +1,100 @@
 """Samsung Food (formerly Whisk) scraper plugin."""
 from bs4 import BeautifulSoup
 from app.scrapers import BaseScraper, ScrapedMeal
+from app.core.logger import logger
 
 
 class SamsungFoodScraper(BaseScraper):
     SITE_NAME = "samsungfood.com"
     BASE_URL = "https://app.samsungfood.com"
+
+    async def _scrape_recipe_details(self, client, url: str) -> dict:
+        """Fetch recipe details with a custom fallback for Samsung Food's dynamic pages."""
+        # Try the default logic first
+        details = await super()._scrape_recipe_details(client, url)
+        
+        # If the default logic failed (name is empty), try manual extraction from the 'hydrate' JSON
+        if not details.get("name"):
+            logger.info(f"[{self.SITE_NAME}] Manual extraction fallback for {url}")
+            from curl_cffi.requests import AsyncSession
+            import json
+            import re
+            
+            html = ""
+            try:
+                async with AsyncSession() as s:
+                    resp = await s.get(url, impersonate="chrome120", timeout=15)
+                    if resp.status_code == 200:
+                        html = resp.text
+            except Exception as e:
+                logger.error(f"[{self.SITE_NAME}] Fallback fetch failed for {url}: {e}")
+
+            if html:
+                try:
+                    # Look for var hydrate = { ... }
+                    # It can end with ; or </script> or another var
+                    match = re.search(r'var hydrate\s*=\s*(\{.*?\})(?:;|</script>|\s*var)', html, re.DOTALL)
+                    if not match:
+                        # Even more aggressive fallback
+                        match = re.search(r'var hydrate\s*=\s*(\{.*)', html, re.DOTALL)
+                        if match:
+                            # Try to find the end by balancing braces or just taking until </script>
+                            content = match.group(1)
+                            end_idx = content.find('</script>')
+                            if end_idx != -1:
+                                content = content[:end_idx].strip()
+                                if content.endswith(';'):
+                                    content = content[:-1].strip()
+                                data = json.loads(content)
+                            else:
+                                data = None
+                        else:
+                            data = None
+                    else:
+                        data = json.loads(match.group(1))
+                    
+                    if data:
+                        # Find the recipe key (it usually starts with whisk.x.recipe.v1.RecipeAPI/GetRecipe_)
+                        recipe_data = None
+                        for key, value in data.items():
+                            if "RecipeAPI/GetRecipe" in key and isinstance(value, dict) and "recipe" in value:
+                                recipe_data = value["recipe"]
+                                break
+                        
+                        if recipe_data:
+                            details["name"] = recipe_data.get("name", "")
+                            details["description"] = recipe_data.get("description", "")
+                            
+                            # Extract ingredients
+                            raw_ingredients = recipe_data.get("ingredients", [])
+                            if raw_ingredients:
+                                details["ingredients"] = []
+                                for ing in raw_ingredients:
+                                    text = ing.get("text", "")
+                                    if text:
+                                        details["ingredients"].append(self._parse_ingredient(text))
+                            
+                            # Extract image
+                            images = recipe_data.get("images", [])
+                            if images and isinstance(images, list) and len(images) > 0:
+                                details["image_url"] = images[0].get("original", {}).get("url", "")
+                            elif "source" in recipe_data and "image" in recipe_data["source"]:
+                                details["image_url"] = recipe_data["source"]["image"].get("responsive", {}).get("url", "")
+                            
+                            # Extract time
+                            durations = recipe_data.get("durations", {})
+                            total_mins = durations.get("cookTime", 0) + durations.get("prepTime", 0)
+                            if total_mins > 0:
+                                details["cook_time_hours"] = round(total_mins / 60.0, 2)
+                            
+                            # Extract servings
+                            details["servings"] = self._clean_servings(recipe_data.get("servings", ""))
+                            
+                            logger.info(f"[{self.SITE_NAME}] Successfully extracted '{details['name']}' via manual fallback.")
+                except Exception as e:
+                    logger.warning(f"[{self.SITE_NAME}] Manual extraction failed for {url}: {e}")
+
+        return details
 
     async def _search(self, client, query: str, max_results: int) -> list[ScrapedMeal]:
         results = []
