@@ -20,43 +20,52 @@ router = APIRouter(prefix="/api/favorites", tags=["favorites"])
 async def list_favorites(
     page: int = 1,
     page_size: int = 50,
+    search: str = None,
     session: AsyncSession = Depends(get_session)
 ):
-    """List favorited meals with pagination."""
+    """List favorited meals with pagination and optional search."""
     try:
-        # Base query to count
-        count_stmt = select(func.count()).select_from(FavoriteMeal)
-        total = await session.scalar(count_stmt) or 0
+        # We want to return Meals that are in the FavoriteMeal table
+        from app.models.models import MealIngredient
         
-        # Query with pagination and relations
+        # Base query: Start with Meal, join FavoriteMeal to filter for favorites
         stmt = (
-            select(FavoriteMeal)
-            .options(selectinload(FavoriteMeal.meal).selectinload(Meal.ingredients))
-            .order_by(FavoriteMeal.created_at.desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
+            select(Meal)
+            .join(FavoriteMeal, Meal.id == FavoriteMeal.meal_id)
+            .options(selectinload(Meal.ingredients))
         )
         
-        result = await session.execute(stmt)
-        favs = result.scalars().all()
+        if search:
+            # Search by meal name or ingredient name
+            stmt = stmt.outerjoin(MealIngredient).where(
+                Meal.name.ilike(f"%{search}%") | MealIngredient.name.ilike(f"%{search}%")
+            ).distinct()
+
+        # Get total count
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total_result = await session.execute(count_stmt)
+        total = total_result.scalar() or 0
         
-        # Format
-        fav_ids = {f.meal_id for f in favs}
+        # Apply sorting (by when it was favorited) and pagination
+        stmt = stmt.order_by(FavoriteMeal.created_at.desc())
+        stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+        
+        result = await session.execute(stmt)
+        meals = result.unique().scalars().all()
+        
+        # Format for output
+        # In this view, we know they are all favorited
+        fav_ids = {m.id for m in meals}
         avoid_names = await get_avoid_food_names(session)
         
-        items = []
-        for f in favs:
-            if f.meal:
-                items.append(format_meal_out(f.meal, fav_ids, avoid_names))
-            else:
-                logger.warning(f"LIST_FAVORITES: FavoriteMeal {f.id} has no associated meal (meal_id: {f.meal_id})")
+        items = [format_meal_out(m, fav_ids, avoid_names) for m in meals]
                 
         return {
             "items": items,
             "total": total,
             "page": page,
             "page_size": page_size,
-            "total_pages": math.ceil(total / page_size) if page_size > 0 else 1
+            "total_pages": math.ceil(total / page_size) if total > 0 else 1
         }
     except Exception as e:
         logger.error(f"LIST_FAVORITES ERROR: {str(e)}\n{traceback.format_exc()}")

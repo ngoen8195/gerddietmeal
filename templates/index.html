@@ -23,6 +23,11 @@
                 <button class="tab-btn" data-tab="food-library" role="tab">Food Library</button>
                 <button class="tab-btn" data-tab="meal-library" role="tab">Meal Library</button>
                 <button class="tab-btn" data-tab="favorites" role="tab">Favorite Meals</button>
+                <button class="btn-icon" id="btn-user-guide" title="User Guide" style="margin-left: 8px; align-self: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,16a1,1,0,1,1,1-1A1,1,0,0,1,12,18Zm1.71-4.61c-.71.34-.71.39-.71.61a1,1,0,0,1-2,0,2.6,2.6,0,0,1,1.84-2.42C13.61,11.21,14,11,14,10a1,1,0,0,0-.49-.86A2.82,2.82,0,0,0,12,8.75c-.69,0-2,.26-2,1.25a1,1,0,0,1-2,0c0-1.88,1.68-3.25,4-3.25S16,8.12,16,10A3.41,3.41,0,0,1,13.71,13.39Z"/>
+                    </svg>
+                </button>
             </nav>
         </header>
 
@@ -121,7 +126,20 @@
 
             <!-- ═══ FAVORITES TAB ═══ -->
             <section id="tab-favorites" class="tab-content" role="tabpanel">
-                <h2 style="margin-bottom:20px">Favorite Meals</h2>
+                <div class="meal-lib-header">
+                    <h2>Favorite Meals</h2>
+                    <div class="meal-lib-search">
+                        <div class="search-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
+                            <input type="text" id="fav-search" class="input-shadcn"
+                                placeholder="Search favorites...">
+                        </div>
+                    </div>
+                </div>
                 <div id="fav-grid" class="fav-grid"></div>
                 <div id="fav-pagination" class="pagination-container"></div>
             </section>
@@ -461,6 +479,26 @@
                     <button class="btn btn-secondary" id="confirm-modal-cancel">Cancel</button>
                     <button class="btn btn-destructive" id="confirm-modal-confirm">Delete</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ USER GUIDE POPOVER ═══ -->
+    <div id="guide-overlay" class="modal-overlay">
+        <div id="guide-popover" class="guide-popover">
+            <div class="guide-header">
+                <h4 id="guide-title">Guide Title</h4>
+                <button class="btn-icon" id="guide-close" title="Close Guide" style="padding: 2px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <div class="guide-body">
+                <p id="guide-content">Guide Content</p>
+            </div>
+            <div class="guide-footer">
+                <button class="btn btn-secondary" id="guide-back" style="padding: 6px 12px; font-size: 0.8rem;">Back</button>
+                <div class="guide-progress" id="guide-progress">1 / 5</div>
+                <button class="btn btn-primary" id="guide-next" style="padding: 6px 12px; font-size: 0.8rem;">Next</button>
             </div>
         </div>
     </div>

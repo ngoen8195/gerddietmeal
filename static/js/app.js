@@ -1067,6 +1067,7 @@ function renderMealLibrary() {
 }
 
 document.getElementById('btn-search-meals').addEventListener('click', () => loadMeals(1));
+document.getElementById('meal-search').addEventListener('input', debounce(() => loadMeals(1), 300));
 document.getElementById('meal-search').addEventListener('keydown', e => { if (e.key === 'Enter') loadMeals(1); });
 
 // Scrape button
@@ -1324,7 +1325,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                 <span class="stats-divider"></span>
                 <span id="view-servings-display">🍚 ${meal.servings ? meal.servings + ' servings' : 'N/A'}</span>
                 <span class="stats-divider"></span>
-                <span>⚡ ${kcalText}${kcalWarning}</span>
+                <span id="view-kcal-display">⚡ ${kcalText}${kcalWarning}</span>
             `;
 
             // Servings Adjuster Logic
@@ -1368,9 +1369,16 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                     tbody.appendChild(tr);
                 });
 
-                // Update the stats display as well
+                // Update the stats display
                 const servingsText = hasServings ? `${servings} servings` : 'N/A';
                 document.getElementById('view-servings-display').innerText = `🍚 ${servingsText}`;
+
+                const scaledKcal = (meal.calories !== null && meal.calories !== undefined) ? Math.round(meal.calories * multiplier) : null;
+                const updatedKcalText = scaledKcal !== null ? `${scaledKcal} kcal` : '--- kcal';
+                const kcalDisplay = document.getElementById('view-kcal-display');
+                if (kcalDisplay) {
+                    kcalDisplay.innerHTML = `⚡ ${updatedKcalText}${kcalWarning}`;
+                }
             };
 
             minusBtn.onclick = (e) => {
@@ -1524,11 +1532,19 @@ window.deleteMeal = async (id) => {
 // ─── FAVORITES ─────────────────────────────────────
 async function loadFavorites(page = 1) {
     favPage = page;
-    const url = `/api/favorites/?page=${favPage}&page_size=${PAGE_SIZE}`;
-    const data = await API.get(url);
-    allFavorites = data.items;
-    renderFavorites();
-    renderPagination('fav-pagination', data.total_pages, data.page, 'loadFavorites');
+    const searchEl = document.getElementById('fav-search');
+    const search = searchEl ? searchEl.value : '';
+    let url = `/api/favorites/?page=${favPage}&page_size=${PAGE_SIZE}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    
+    try {
+        const data = await API.get(url);
+        allFavorites = data.items;
+        renderFavorites();
+        renderPagination('fav-pagination', data.total_pages, data.page, 'loadFavorites');
+    } catch (err) {
+        console.error("Failed to load favorites:", err);
+    }
 }
 
 function renderFavorites() {
@@ -1590,6 +1606,70 @@ window.removeFav = async (mealId) => {
     loadFavorites();
 };
 
+// ─── User Guide Popover ────────────────────────────
+const guideSteps = [
+    { title: "Home Tab", content: "Welcome to GERD Diet Meal Planner. The Home tab is where you can generate and manage your weekly GERD-safe meal schedule. You can refresh individual meals to find something else." },
+    { title: "Food Library", content: "Track individual ingredients here, categorizing them as Safe, Avoid, or Remedy for your acid reflux. This helps calculate the safety score of your meals." },
+    { title: "Meal Library", content: "Store all your recipes here. You can manually add them or automatically scrape them from websites. Click on a meal to edit servings, ingredients, or check calories." },
+    { title: "Favorite Meals", content: "Your go-to collection. Star your favorite meals so they are easy to find and more likely to be selected when generating your weekly plan." },
+    { title: "Step 1: Add Meals", content: "To start using the app properly, go to the Meal Library and add or scrape some recipes you like. Make sure to review the ingredients so the app can calculate if they are GERD-safe." },
+    { title: "Step 2: Generate Plan", content: "Once you have some meals, go back to the Home tab and click 'Generate Meal Plan'. The app will automatically build a balanced week for you." },
+    { title: "Step 3: Adjust & Enjoy", content: "You can click on any meal card in your plan to see its details. Adjust the servings up or down, and the calories will update automatically. Enjoy your GERD-safe journey!" }
+];
+
+let currentGuideStep = 0;
+const guideOverlay = document.getElementById('guide-overlay');
+const guidePopover = document.getElementById('guide-popover');
+const guideTitle = document.getElementById('guide-title');
+const guideContent = document.getElementById('guide-content');
+const guideProgress = document.getElementById('guide-progress');
+const guideBack = document.getElementById('guide-back');
+const guideNext = document.getElementById('guide-next');
+
+document.getElementById('btn-user-guide')?.addEventListener('click', () => {
+    currentGuideStep = 0;
+    updateGuidePopover();
+    guideOverlay.classList.add('visible');
+});
+
+document.getElementById('guide-close')?.addEventListener('click', () => {
+    guideOverlay.classList.remove('visible');
+});
+
+guideBack?.addEventListener('click', () => {
+    if (currentGuideStep > 0) {
+        currentGuideStep--;
+        updateGuidePopover();
+    }
+});
+
+guideNext?.addEventListener('click', () => {
+    if (currentGuideStep < guideSteps.length - 1) {
+        currentGuideStep++;
+        updateGuidePopover();
+    } else {
+        guideOverlay.classList.remove('visible');
+    }
+});
+
+function updateGuidePopover() {
+    const step = guideSteps[currentGuideStep];
+    guideTitle.textContent = step.title;
+    guideContent.textContent = step.content;
+    guideProgress.textContent = `${currentGuideStep + 1} / ${guideSteps.length}`;
+    
+    guideBack.style.visibility = currentGuideStep === 0 ? 'hidden' : 'visible';
+    guideNext.textContent = currentGuideStep === guideSteps.length - 1 ? 'Finish' : 'Next';
+    
+    // Switch tabs automatically based on guide step
+    if (currentGuideStep === 0) switchTab('home');
+    if (currentGuideStep === 1) switchTab('food-library');
+    if (currentGuideStep === 2) switchTab('meal-library');
+    if (currentGuideStep === 3) switchTab('favorites');
+    if (currentGuideStep === 4) switchTab('meal-library');
+    if (currentGuideStep >= 5) switchTab('home');
+}
+
 // ─── Init: Seed data on first load ─────────────────
 async function init() {
     try {
@@ -1605,6 +1685,12 @@ async function init() {
     document.querySelectorAll('.select-shadcn, .week-dropdown').forEach(s => {
         if (s.id) initShadcnSelect(s.id);
     });
+
+    // Add search listener for Favorites
+    const favSearch = document.getElementById('fav-search');
+    if (favSearch) {
+        favSearch.addEventListener('input', debounce(() => loadFavorites(1), 300));
+    }
 
     // Restore previously selected tab or default to home
     const savedTab = sessionStorage.getItem('selectedTab') || 'home';
