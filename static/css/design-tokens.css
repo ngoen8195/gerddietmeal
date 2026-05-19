@@ -2247,3 +2247,68 @@ main {
     font-size: 1rem;
     padding: 0 4px;
 }
+
+/* ─── Image Container and Floating Upload Button ─── */
+.modal-img-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    margin-bottom: 16px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.modal-img-container .modal-img-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.meal-image-upload-btn {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: rgba(11, 43, 38, 0.85);
+    border: 1px solid var(--border);
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    z-index: 10;
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 0;
+}
+
+.meal-image-upload-btn:hover {
+    background: var(--cta-hover);
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.meal-image-upload-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 768px) {
+    .modal-img-container {
+        height: 200px;
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

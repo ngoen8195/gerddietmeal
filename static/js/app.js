@@ -1249,6 +1249,15 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
     document.getElementById('view-ingredients-list').innerHTML = '';
     document.getElementById('meal-modal-img').src = DEFAULT_IMG;
 
+    // Toggle image upload button and reset popover state
+    const uploadBtnEl = document.getElementById('btn-meal-image-upload');
+    if (uploadBtnEl) {
+        uploadBtnEl.style.display = (mode === 'view') ? 'none' : 'flex';
+    }
+    if (window.resetPopoverState) {
+        window.resetPopoverState();
+    }
+
     const viewContent = document.getElementById('meal-modal-view-content');
     const editContent = document.getElementById('meal-modal-edit-content');
     const saveBtn = document.getElementById('meal-modal-save');
@@ -1497,6 +1506,132 @@ document.getElementById('meal-modal-close').addEventListener('click', () => docu
 document.getElementById('meal-form-image').addEventListener('input', function () {
     document.getElementById('meal-modal-img').src = this.value || DEFAULT_IMG;
 });
+
+// ─── Image Options Popover & Upload Logic ───
+const popoverMenu = document.getElementById('meal-image-options-popover');
+const optionInputUrl = document.getElementById('option-input-url');
+const optionUploadImage = document.getElementById('option-upload-image');
+const popoverUrlPanel = document.getElementById('popover-url-panel');
+const popoverUrlInput = document.getElementById('popover-url-input');
+const btnPopoverUrlOk = document.getElementById('btn-popover-url-ok');
+const btnPopoverUrlCancel = document.getElementById('btn-popover-url-cancel');
+const fileInput = document.getElementById('meal-image-file-input');
+
+function resetPopoverState() {
+    if (popoverMenu) popoverMenu.style.display = 'none';
+    if (optionInputUrl) optionInputUrl.style.display = 'flex';
+    if (optionUploadImage) optionUploadImage.style.display = 'flex';
+    if (popoverUrlPanel) popoverUrlPanel.style.display = 'none';
+    if (popoverUrlInput) popoverUrlInput.value = '';
+}
+window.resetPopoverState = resetPopoverState;
+
+const uploadBtn = document.getElementById('btn-meal-image-upload');
+if (uploadBtn && popoverMenu) {
+    uploadBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = popoverMenu.style.display === 'flex';
+        if (isOpen) {
+            resetPopoverState();
+        } else {
+            popoverMenu.style.display = 'flex';
+        }
+    });
+
+    // Close popover when clicking anywhere else
+    document.addEventListener('click', (e) => {
+        if (!popoverMenu.contains(e.target) && e.target !== uploadBtn) {
+            resetPopoverState();
+        }
+    });
+}
+
+if (optionInputUrl && popoverUrlPanel) {
+    optionInputUrl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        optionInputUrl.style.display = 'none';
+        optionUploadImage.style.display = 'none';
+        popoverUrlPanel.style.display = 'flex';
+        const currentImgUrl = document.getElementById('meal-form-image').value;
+        popoverUrlInput.value = currentImgUrl || '';
+        setTimeout(() => popoverUrlInput.focus(), 50);
+    });
+}
+
+if (btnPopoverUrlOk) {
+    btnPopoverUrlOk.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const newUrl = popoverUrlInput.value.trim();
+        document.getElementById('meal-form-image').value = newUrl;
+        document.getElementById('meal-modal-img').src = newUrl || DEFAULT_IMG;
+        resetPopoverState();
+    });
+}
+
+if (btnPopoverUrlCancel) {
+    btnPopoverUrlCancel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resetPopoverState();
+    });
+}
+
+if (optionUploadImage && fileInput) {
+    optionUploadImage.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
+}
+
+if (fileInput) {
+    fileInput.addEventListener('change', async function () {
+        if (!this.files || !this.files[0]) return;
+        const file = this.files[0];
+        
+        // Show spinner / loading feedback in the upload button
+        const originalContent = uploadBtn.innerHTML;
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `
+            <svg class="animate-spin" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" style="animation: spin 1s linear infinite;">
+                <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                <path d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+            </svg>
+        `;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        if (editingMealId) {
+            formData.append('meal_id', editingMealId);
+        }
+        const currentImgUrl = document.getElementById('meal-form-image').value;
+        if (currentImgUrl) {
+            formData.append('previous_url', currentImgUrl);
+        }
+
+        try {
+            const response = await fetch('/api/meals/upload-image', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            
+            if (response.ok && result.status === 'success') {
+                document.getElementById('meal-form-image').value = result.url;
+                document.getElementById('meal-modal-img').src = result.url;
+                showNotification('Image Uploaded', 'Your meal image has been successfully uploaded.');
+            } else {
+                alert(result.detail || 'Failed to upload image. Please try again.');
+            }
+        } catch (e) {
+            console.error("Upload error:", e);
+            alert('An error occurred while uploading the image.');
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = originalContent;
+            fileInput.value = ''; // Reset file input
+            resetPopoverState();
+        }
+    });
+}
 
 async function saveMeal() {
     const ingredients = [];

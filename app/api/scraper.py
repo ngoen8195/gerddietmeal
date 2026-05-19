@@ -194,7 +194,7 @@ async def save_scraped_results(
     duplicate_count = 0
     saved_list = []
     
-    confectionery_keywords = ["kẹo", "candy", "dessert", "confectionery", "marshmallow", "bánh ngọt", "ice cream", "bánh kem"]
+    confectionery_keywords = ["kẹo", "candy", "dessert", "confectionery", "marshmallow", "bánh ngọt", "ice cream", "bánh kem", "soda", "popsicle"]
 
     for meal_data in results:
         if scrape_manager.should_terminate:
