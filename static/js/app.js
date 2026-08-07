@@ -1586,7 +1586,7 @@ if (fileInput) {
     fileInput.addEventListener('change', async function () {
         if (!this.files || !this.files[0]) return;
         const file = this.files[0];
-        
+
         // Show spinner / loading feedback in the upload button
         const originalContent = uploadBtn.innerHTML;
         uploadBtn.disabled = true;
@@ -1613,7 +1613,7 @@ if (fileInput) {
                 body: formData
             });
             const result = await response.json();
-            
+
             if (response.ok && result.status === 'success') {
                 document.getElementById('meal-form-image').value = result.url;
                 document.getElementById('meal-modal-img').src = result.url;
