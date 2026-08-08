@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy import select, func
 from app.core.database import get_session
+from app.core.logger import logger
 from app.models.models import CalorieEntry
 from rapidfuzz import process, fuzz
 from usda_fdc import FdcClient
@@ -32,7 +33,262 @@ SEED_QUERIES = [
     "green bean", "pea", "fennel", "papaya", "melon", "fig", "coconut",
     "almond", "walnut", "pineapple", "peach", "grape", "strawberry",
     "blueberry", "raspberry", "noodle", "pasta", "bread",
+    # Asian and global staple additions
+    "egg whole", "duck egg", "seaweed", "nori", "fish sauce", "msg",
+    "seasoning powder", "bouillon", "soy sauce", "sesame oil", "oyster sauce",
+    "chili paste", "black pepper", "spring onion", "shallot"
 ]
+
+import re
+
+def clean_query_text(query: str) -> str:
+    """Clean measurement units, quantities, and noise words from query prior to matching."""
+    if not query:
+        return ""
+    q = query.lower().strip()
+    # Strip common measurement prefixes and filler words like 'teaspoon of', 'tablespoon of', 'gr', 'of'
+    q = re.sub(r'\b(teaspoon|tablespoon|tsp|tbsp|cup|piece|gram|g|gr|kg|ml|l|of|in|with|and|or)\b', ' ', q, flags=re.IGNORECASE)
+    q = re.sub(r'^(muỗng|thìa|chén|bát|gói|hộp|chai|lon|túi|bó|quả|trái|tép|nhánh|củ|nửa|1/2|½|1/4|¼)\b\s*', '', q, flags=re.IGNORECASE)
+    q = re.sub(r'\s+', ' ', q).strip()
+    return q
+
+def hybrid_fdc_rerank(query: str, candidate_fdc_list: list, query_vector: np.ndarray = None):
+    """
+    Hybrid Scoring & Heuristic Re-ranker on candidate FDC entries.
+    Combines 70% Semantic (Cosine Similarity) + 30% Lexical (RapidFuzz) + USDA Structural Bonuses.
+    candidate_fdc_list: List of dicts or CalorieEntry/Food objects with 'description', 'data_type', and optional 'vector'.
+    """
+    query_lower = clean_query_text(query)
+    query_words = set(query_lower.split())
+    if "drink" in query_words: query_words.update(["beverage", "beverages"])
+    if "yogurt" in query_words: query_words.update(["yoghurt", "yogurts"])
+    if "egg" in query_words or "eggs" in query_words: query_words.update(["egg", "eggs"])
+    
+    scored_results = []
+
+    for item in candidate_fdc_list:
+        desc = getattr(item, "description", None) or item.get("description", "")
+        data_type = getattr(item, "data_type", None) or item.get("data_type", "")
+        item_vec = getattr(item, "vector", None) or (item.get("vector") if isinstance(item, dict) else None)
+        
+        if item_vec is None and query_vector is not None:
+            item_vec = get_text_embedding(desc)
+
+        desc_lower = desc.lower().strip()
+        segments = [s.strip() for s in desc_lower.split(',')]
+        
+        # 1. Semantic Similarity (Base Score scaled 0-100)
+        if query_vector is not None and item_vec is not None:
+            cosine_sim = float(np.dot(query_vector, item_vec))
+            semantic_score = max(0.0, cosine_sim) * 100
+        else:
+            semantic_score = 0.0
+        
+        # 2. Lexical Token Match (0-100)
+        lexical_score = fuzz.token_set_ratio(query_lower, desc_lower)
+        
+        # Combine base score: if dense vector is available use 70/30 split, else fallback to 100% lexical
+        if query_vector is not None and item_vec is not None:
+            base_score = (semantic_score * 0.7) + (lexical_score * 0.3)
+        else:
+            base_score = lexical_score
+        
+        bonus = 0
+        match_count = sum(1 for word in query_words if word in desc_lower)
+        if len(query_words) > 1:
+            bonus += match_count * 20
+
+        # 3. Structural Segment Priority (FDC standard: Name, Form, State)
+        first_seg_matched = False
+        if len(segments) > 0:
+            first_seg = segments[0]
+            if query_lower == first_seg:
+                bonus += 80
+                first_seg_matched = True
+            elif any(w in first_seg for w in query_words):
+                bonus += 50
+                first_seg_matched = True
+                
+        if len(segments) > 1:
+            second_seg = segments[1]
+            if any(w in second_seg for w in query_words) and not first_seg_matched:
+                bonus += 25
+
+        # 4. Keyword Priority
+        if "raw" in desc_lower: bonus += 20
+        if "whole" in desc_lower: bonus += 15
+        if "plain" in desc_lower: bonus += 15
+
+        # 5. Foundation Boost (only if primary segment or significant core word match)
+        if data_type == "Foundation" and (first_seg_matched or lexical_score >= 60):
+            bonus += 150
+
+        total_score = base_score + bonus
+        scored_results.append((total_score, item))
+
+    # Sort candidates by total score descending
+    scored_results.sort(key=lambda x: x[0], reverse=True)
+    return scored_results
+
+# Custom scorer legacy alias
+def fdc_scorer(q, choice_text, data_type=None, **kwargs):
+    res = hybrid_fdc_rerank(q, [{"description": choice_text, "data_type": data_type}])
+    return res[0][0] if res else 0.0
+
+async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool = True, cached_entries=None, language: str = "en") -> tuple:
+    """
+    Find calories per 100g for a given food name.
+    Checks local cache first (with fuzzy matching), then FDC API if use_api is True.
+    """
+    if not query:
+        return 0.0, 0, "", [], False
+
+    original_query = query
+    # Translate to English if ingredient is Vietnamese for better FDC matching
+    if language == "vi":
+        from app.api.utils import translate_food_name
+        translated = await translate_food_name(query, "en")
+        if translated:
+            logger.info(f"Translated '{query}' to '{translated}' for FDC matching.")
+            query = translated
+
+    # Clean measurement unit noise
+    query = clean_query_text(query)
+
+
+    # 1. Search local cache with dense vector candidate retrieval + hybrid re-ranking
+    if cached_entries is None:
+        result = await session.execute(select(CalorieEntry))
+        cached_entries = result.scalars().all()
+    
+    if cached_entries:
+        query_vec = get_text_embedding(query)
+        
+        if query_vec is not None:
+            # Step A: Dense vector candidate selection (Top-50 by Cosine Similarity)
+            vec_candidates = []
+            for e in cached_entries:
+                e_vec = get_text_embedding(e.description)
+                sim = float(np.dot(query_vec, e_vec)) if e_vec is not None else 0.0
+                vec_candidates.append((e, sim, e_vec))
+            
+            vec_candidates.sort(key=lambda x: x[1], reverse=True)
+            top_50_candidates = vec_candidates[:50]
+            
+            # Step B: Hybrid Scoring & Heuristic Re-ranker on Top-50 candidates
+            candidate_list = []
+            for e, sim, e_vec in top_50_candidates:
+                candidate_list.append({
+                    "entry": e,
+                    "description": e.description,
+                    "data_type": e.data_type,
+                    "vector": e_vec
+                })
+            
+            reranked = hybrid_fdc_rerank(query, candidate_list, query_vector=query_vec)
+            best_match = (reranked[0][1]["entry"], reranked[0][0]) if reranked else None
+        else:
+            # Fallback if SentenceTransformer is unavailable
+            scored_entries = []
+            for e in cached_entries:
+                score = fdc_scorer(query, e.description, data_type=e.data_type)
+                scored_entries.append((e, score))
+            scored_entries.sort(key=lambda x: x[1], reverse=True)
+            best_match = scored_entries[0] if scored_entries else None
+
+        if best_match and best_match[1] >= 180:  # Require high confidence threshold (Base + Structural/Foundation Boost)
+            entry = best_match[0]
+            score = best_match[1]
+            print(f"DEBUG: Local match found: {entry.description} (Score: {score:.2f}, Type: {entry.data_type})")
+            portions = json.loads(entry.portions_json) if entry.portions_json else []
+            return entry.calories, entry.fdc_id, entry.description, portions, True
+        else:
+            print(f"DEBUG: No strong local match for '{query}' (Best: {best_match[0].description if best_match else 'None'} {best_match[1] if best_match else 0:.2f})")
+
+    if not use_api:
+        return 0.0, 0, "", [], False
+
+    # 2. Search FDC API using usda-fdc library
+    try:
+        client = FdcClient(FDC_API_KEY)
+        loop = asyncio.get_event_loop()
+        # Search for top 10 results to find the best fuzzy match
+        search_result = await loop.run_in_executor(None, lambda: client.search(query, page_size=10))
+        
+        if search_result and search_result.foods:
+            query_vec = get_text_embedding(query)
+            api_candidates = []
+            for f in search_result.foods:
+                api_candidates.append({
+                    "food": f,
+                    "description": f.description,
+                    "data_type": f.data_type,
+                    "vector": get_text_embedding(f.description)
+                })
+            
+            reranked_api = hybrid_fdc_rerank(query, api_candidates, query_vector=query_vec)
+            best_api_match = (reranked_api[0][1]["food"], reranked_api[0][0]) if reranked_api else None
+            
+            if best_api_match and best_api_match[1] >= 70:
+                best_food = best_api_match[0]
+            else:
+                best_food = search_result.foods[0]
+                
+            fdc_id = best_food.fdc_id
+            desc = best_food.description
+            
+            # Fetch full details to get nutrients
+            food_detail = await loop.run_in_executor(None, lambda: client.get_food(fdc_id))
+            
+            calories = 0
+            energy_found = False
+            if food_detail and food_detail.nutrients:
+                energy_nutrients = []
+                for nutrient in food_detail.nutrients:
+                    n_name = nutrient.name.lower()
+                    if "energy" in n_name and nutrient.unit_name.upper() == "KCAL":
+                        energy_nutrients.append(nutrient)
+                
+                if energy_nutrients:
+                    exact_match = next((n for n in energy_nutrients if n.name.lower() == "energy"), None)
+                    if exact_match:
+                        calories = exact_match.amount
+                    else:
+                        calories = energy_nutrients[0].amount
+                    energy_found = True
+            
+            portions = []
+            if food_detail and hasattr(food_detail, 'food_portions'):
+                if hasattr(food_detail, 'api_data'):
+                    portions = food_detail.api_data.get("foodPortions", [])
+                else:
+                    for p in getattr(food_detail, 'food_portions', []):
+                        portions.append({
+                            "amount": getattr(p, 'amount', 0),
+                            "modifier": getattr(p, 'modifier', ''),
+                            "gramWeight": getattr(p, 'gram_weight', 0)
+                        })
+            
+            # Cache locally
+            existing = await session.execute(select(CalorieEntry).where(CalorieEntry.fdc_id == fdc_id))
+            if not existing.scalar_one_or_none():
+                new_entry = CalorieEntry(
+                    fdc_id=fdc_id, 
+                    description=desc, 
+                    calories=calories, 
+                    data_type=best_food.data_type,
+                    portions_json=json.dumps(portions)
+                )
+                session.add(new_entry)
+                await session.flush()
+                await session.commit()
+
+            return calories, fdc_id, desc, portions, energy_found
+            
+    except Exception as e:
+        print(f"FDC API Error: {e}")
+    
+    return 0.0, 0, "", [], False
 
 
 @router.get("/status")
@@ -213,183 +469,41 @@ async def seed_fdc(session: AsyncSession = Depends(get_session)):
                 errors.append(f"{query}: {str(e)}")
                 continue
 
-# Custom scorer to prioritize FDC naming conventions
-def fdc_scorer(q, choice_text, data_type=None, **kwargs):
-    # s1 is query, s2 is the choice text
-    s1 = q.lower().strip()
-    s2 = choice_text.lower().strip()
-    
-    parts = [p.strip() for p in s2.split(',')]
-    
-    # Base fuzzy score
-    base_score = fuzz.token_set_ratio(s1, s2)
-    
-    bonus = 0
-    # 1. Word matching priority with aliases
-    query_words = set(s1.split())
-    if "drink" in query_words: query_words.update(["beverage", "beverages"])
-    if "yogurt" in query_words: query_words.update(["yoghurt", "yogurts"])
-    
-    match_count = sum(1 for w in query_words if w in s2)
-    if len(query_words) > 1:
-        bonus += match_count * 20
-    
-    # 2. Segment priority (FDC standard: Name, Form, State)
-    # We check if ANY query word matches the first segment for a boost
-    first_segment = parts[0] if parts else ""
-    if any(w in first_segment for w in query_words):
-        if s1 == first_segment: bonus += 80  # Even higher for exact match
-        else: bonus += 50
-    elif len(parts) > 1 and any(w in parts[1] for w in query_words):
-        bonus += 25
-        
-    # 3. Keyword priorities
-    if "raw" in s2:
-        bonus += 20
-    if "whole" in s2:
-        bonus += 15
-    if "plain" in s2:
-        bonus += 15
-    
-    # 4. Foundation Priority (User Request)
-    # Give Foundation foods a massive boost to ensure they are prioritized,
-    # but only if there's at least one keyword match to avoid irrelevant results.
-    if data_type == "Foundation" and match_count > 0:
-        bonus += 150
-        
-    return base_score + bonus
+import numpy as np
 
-async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool = True, cached_entries=None, language: str = "en") -> tuple:
-    """
-    Find calories per 100g for a given food name.
-    Checks local cache first (with fuzzy matching), then FDC API if use_api is True.
-    """
-    if not query:
-        return 0.0, 0, "", [], False
+# Global cache for sentence transformer model and entry embeddings
+_MODEL = None
+_EMBEDDINGS_CACHE = {}  # description -> np.ndarray embedding
 
-    original_query = query
-    # Translate to English if ingredient is Vietnamese for better FDC matching
-    if language == "vi":
-        from app.api.utils import translate_food_name
-        translated = await translate_food_name(query, "en")
-        if translated:
-            print(f"DEBUG: Translated '{query}' to '{translated}' for FDC matching.")
-            query = translated
+def get_embedding_model():
+    """Lazy load SentenceTransformer model (~80MB) strictly from local cache."""
+    global _MODEL
+    if _MODEL is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            # Enforce local offline model loading first without making remote HF requests
+            try:
+                _MODEL = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2', local_files_only=True)
+            except Exception:
+                # If model files are not yet in local cache, download once
+                _MODEL = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2', local_files_only=False)
+        except Exception as e:
+            print(f"WARNING: Could not load SentenceTransformer model: {e}")
+            _MODEL = False
+    return _MODEL if _MODEL is not False else None
 
-
-    # 1. Search local cache with fuzzy matching
-    if cached_entries is None:
-        result = await session.execute(select(CalorieEntry))
-        cached_entries = result.scalars().all()
+def get_text_embedding(text: str) -> np.ndarray:
+    """Get or compute normalized dense vector embedding for text."""
+    if text in _EMBEDDINGS_CACHE:
+        return _EMBEDDINGS_CACHE[text]
     
-    if cached_entries:
-        # Calculate scores manually to incorporate data_type into the scoring logic
-        scored_entries = []
-        for e in cached_entries:
-            score = fdc_scorer(query, e.description, data_type=e.data_type)
-            scored_entries.append((e, score))
-        
-        # Sort by score descending
-        scored_entries.sort(key=lambda x: x[1], reverse=True)
-        best_match = scored_entries[0] if scored_entries else None
-
-        if best_match and best_match[1] >= 85:  # Threshold remains 85
-            entry = best_match[0]
-            score = best_match[1]
-            print(f"DEBUG: Local match found: {entry.description} (Score: {score}, Type: {entry.data_type})")
-            portions = json.loads(entry.portions_json) if entry.portions_json else []
-            return entry.calories, entry.fdc_id, entry.description, portions, True
-        else:
-            print(f"DEBUG: No local match for {query} (Best: {best_match[0].description if best_match else 'None'} {best_match[1] if best_match else 0})")
-
-    if not use_api:
-        return 0.0, 0, "", [], False
-
-    # 2. Search FDC API using usda-fdc library
-    try:
-        client = FdcClient(FDC_API_KEY)
-        loop = asyncio.get_event_loop()
-        # Search for top 10 results to find the best fuzzy match
-        search_result = await loop.run_in_executor(None, lambda: client.search(query, page_size=10))
-        
-        if search_result and search_result.foods:
-            # Calculate scores manually for API results
-            scored_api = []
-            for f in search_result.foods:
-                score = fdc_scorer(query, f.description, data_type=f.data_type)
-                scored_api.append((f, score))
-            
-            scored_api.sort(key=lambda x: x[1], reverse=True)
-            best_api_match = scored_api[0] if scored_api else None
-            
-            # If we find a decent match, use it. Otherwise fallback to the first one.
-            if best_api_match and best_api_match[1] >= 70:
-                best_food = best_api_match[0]
-            else:
-                best_food = search_result.foods[0]
-                
-            fdc_id = best_food.fdc_id
-            desc = best_food.description
-            
-            # Fetch full details to get nutrients
-            food_detail = await loop.run_in_executor(None, lambda: client.get_food(fdc_id))
-            
-            calories = 0
-            energy_found = False
-            if food_detail and food_detail.nutrients:
-                # Try to find the best energy nutrient
-                # Priority: 1. "Energy" (KCAL), 2. "Energy (Atwater...)" (KCAL)
-                energy_nutrients = []
-                for nutrient in food_detail.nutrients:
-                    n_name = nutrient.name.lower()
-                    if "energy" in n_name and nutrient.unit_name.upper() == "KCAL":
-                        energy_nutrients.append(nutrient)
-                
-                if energy_nutrients:
-                    # Prefer exact "energy" match
-                    exact_match = next((n for n in energy_nutrients if n.name.lower() == "energy"), None)
-                    if exact_match:
-                        calories = exact_match.amount
-                    else:
-                        # Take the first one (usually Atwater General Factors)
-                        calories = energy_nutrients[0].amount
-                    energy_found = True
-            
-            portions = []
-            if food_detail and hasattr(food_detail, 'food_portions'):
-                # Note: usda-fdc objects might have different attribute names than raw API
-                # but we'll try to get it from api_data if possible or just the object
-                if hasattr(food_detail, 'api_data'):
-                    portions = food_detail.api_data.get("foodPortions", [])
-                else:
-                    # Fallback to reconstructing from attributes if possible
-                    for p in getattr(food_detail, 'food_portions', []):
-                        portions.append({
-                            "amount": getattr(p, 'amount', 0),
-                            "modifier": getattr(p, 'modifier', ''),
-                            "gramWeight": getattr(p, 'gram_weight', 0)
-                        })
-            
-            # Cache locally
-            existing = await session.execute(select(CalorieEntry).where(CalorieEntry.fdc_id == fdc_id))
-            if not existing.scalar_one_or_none():
-                new_entry = CalorieEntry(
-                    fdc_id=fdc_id, 
-                    description=desc, 
-                    calories=calories, 
-                    data_type=best_food.data_type,
-                    portions_json=json.dumps(portions)
-                )
-                session.add(new_entry)
-                await session.flush()
-                await session.commit()
-            
-            return calories, fdc_id, desc, portions, energy_found
-            
-    except Exception as e:
-        print(f"FDC API Error: {e}")
+    model = get_embedding_model()
+    if model is None:
+        return None
     
-    return 0.0, 0, "", [], False
+    vec = model.encode(text, convert_to_numpy=True, normalize_embeddings=True)
+    _EMBEDDINGS_CACHE[text] = vec
+    return vec
 
 async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: bool = True) -> dict:
     """Calculate total calories for a meal based on its ingredients."""
@@ -421,16 +535,9 @@ async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: 
         found_portion = False
         
         if fdc_id and portions:
-            from app.core.units import ureg
+            from app.core.units import ureg, parse_quantity
             ing_unit = (ing.unit or "").lower().strip()
-            
-            # Parse quantity once
-            try:
-                qty_val = float(ureg.parse_expression(ing.quantity.replace(' ', '+')))
-            except:
-                import re
-                nums = re.findall(r"[-+]?\d*\.\d+|\d+", ing.quantity)
-                qty_val = float(nums[0]) if nums else 0.0
+            qty_val = parse_quantity(ing.quantity)
 
             if ing_unit and qty_val > 0:
                 print(f"DEBUG: Checking portions for {ing.name} (Unit: {ing_unit}, Qty: {qty_val})")

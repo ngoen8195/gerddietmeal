@@ -36,26 +36,44 @@ def get_density(ingredient_name: str) -> float:
             return val
     return 1.0 # Default to density of water
 
+VULGAR_FRACTIONS = {
+    '½': ' 1/2', '⅓': ' 1/3', '⅔': ' 2/3', '¼': ' 1/4', '¾': ' 3/4',
+    '⅕': ' 1/5', '⅖': ' 2/5', '⅗': ' 3/5', '⅘': ' 4/5', '⅙': ' 1/6',
+    '⅚': ' 5/6', '⅛': ' 1/8', '⅜': ' 3/8', '⅝': ' 5/8', '⅞': ' 7/8'
+}
+
+def parse_quantity(quantity: str) -> float:
+    """Parse quantity string including fractions (1/2, 1.5) and unicode vulgar fractions (½, ¼)."""
+    if not quantity:
+        return 0.0
+    s = str(quantity).strip()
+    for char, repl in VULGAR_FRACTIONS.items():
+        s = s.replace(char, repl)
+    s = s.replace(' ', '+')
+    try:
+        return float(ureg.parse_expression(s))
+    except Exception:
+        nums = re.findall(r"(\d+(?:\.\d+)?(?:\s*/\s*\d+)?)", s)
+        if nums:
+            total = 0.0
+            for n in nums:
+                if '/' in n:
+                    p = n.split('/')
+                    if float(p[1]) != 0:
+                        total += float(p[0]) / float(p[1])
+                else:
+                    total += float(n)
+            return total
+    return 0.0
+
 def convert_to_grams(quantity: str, unit: str, ingredient_name: str = "") -> float:
     """
     Convert a quantity and unit to metric weight (grams).
     Uses density mapping for volume-to-mass conversion.
     """
-    if not quantity:
+    qty_val = parse_quantity(quantity)
+    if qty_val <= 0:
         return 0.0
-    
-    # Clean quantity (e.g. "1 1/2" -> 1.5)
-    qty_str = quantity.replace(' ', '+')
-    try:
-        # Use pint's expression evaluator for fractions
-        qty_val = float(ureg.parse_expression(qty_str))
-    except Exception:
-        # Fallback for simple digits
-        nums = re.findall(r"[-+]?\d*\.\d+|\d+", quantity)
-        if nums:
-            qty_val = float(nums[0])
-        else:
-            return 0.0
 
     result = 0.0
     if not unit:
@@ -65,9 +83,12 @@ def convert_to_grams(quantity: str, unit: str, ingredient_name: str = "") -> flo
         else:
             result = qty_val # Default to grams if unknown
     else:
+        unit_clean = unit.lower().strip()
+        unit_singular = unit_clean.rstrip('s') if len(unit_clean) > 1 and unit_clean != 'glass' else unit_clean
+
         try:
             # Standardize unit using pint
-            u = ureg(unit)
+            u = ureg(unit_singular)
             
             # Check if it's already a mass unit
             if u.check('[mass]'):
@@ -81,25 +102,31 @@ def convert_to_grams(quantity: str, unit: str, ingredient_name: str = "") -> flo
                 result = ml * density
             
             else:
-                # Handle "piece", "can", "packet" etc.
-                # These are dimensionless in pint, we need custom logic
-                unit_lower = unit.lower()
-                if unit_lower in ['can', 'tin']:
+                if unit_singular in ['can', 'tin']:
                     result = qty_val * 400.0 # Average can weight
-                elif unit_lower in ['piece', 'slice', 'clove']:
-                    if 'garlic' in ingredient_name.lower(): result = qty_val * 5.0
-                    elif 'bread' in ingredient_name.lower(): result = qty_val * 30.0
+                elif unit_singular in ['piece', 'slice', 'clove']:
+                    ing_lower = ingredient_name.lower()
+                    if 'garlic' in ing_lower: result = qty_val * 5.0
+                    elif 'bread' in ing_lower: result = qty_val * 30.0
+                    elif any(k in ing_lower for k in ['thơm', 'dứa', 'pineapple', 'dưa hấu', 'watermelon', 'bí']): result = qty_val * 500.0
                     else: result = qty_val * 100.0 # High fallback
                 else:
                     result = qty_val # Fallback
                 
         except UndefinedUnitError:
             # Check for common units not in pint or misspelled
-            unit_lower = unit.lower()
-            if 'muỗng' in unit_lower: # Vietnamese units
-                if 'canh' in unit_lower: result = qty_val * 15.0 # 1 tbsp
+            if unit_singular in ['can', 'tin']:
+                result = qty_val * 400.0
+            elif unit_singular in ['piece', 'slice', 'clove', 'trái', 'quả', 'củ']:
+                ing_lower = ingredient_name.lower()
+                if 'garlic' in ing_lower: result = qty_val * 5.0
+                elif 'bread' in ing_lower: result = qty_val * 30.0
+                elif any(k in ing_lower for k in ['thơm', 'dứa', 'pineapple', 'dưa hấu', 'watermelon', 'bí']): result = qty_val * 500.0
+                else: result = qty_val * 100.0
+            elif 'muỗng' in unit_clean: # Vietnamese units
+                if 'canh' in unit_clean: result = qty_val * 15.0 # 1 tbsp
                 else: result = qty_val * 5.0 # 1 tsp
-            elif 'bát' in unit_lower or 'chén' in unit_lower:
+            elif 'bát' in unit_clean or 'chén' in unit_clean:
                 result = qty_val * 200.0
             else:
                 result = qty_val # Final fallback

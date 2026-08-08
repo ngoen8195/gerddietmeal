@@ -175,12 +175,15 @@ class BaseScraper(ABC):
         import re
         # Mapping (case-insensitive)
         mappings = {
+            r'\bgr\b': 'g',
             r'\bgam\b': 'g',
             r'\bkilôgam\b': 'kg',
             r'\blít\b': 'l',
             r'\bmililít\b': 'ml',
             r'\bthìa cà phê\b': 'tsp',
             r'\bmuỗng cà phê\b': 'tsp',
+            r'\bmuỗng cafe\b': 'tsp',
+            r'\bmuỗng cafe\b': 'tsp',
             r'\bmcf\b': 'tsp',
             r'\bthìa canh\b': 'tbsp',
             r'\bmuỗng canh\b': 'tbsp',
@@ -314,12 +317,13 @@ class BaseScraper(ABC):
                 if m:
                     r_qty, r_unit, r_name = m.groups()
                     if r_qty and r_name:
-                        return {
-                            "name": r_name.strip(),
-                            "quantity": self._humanize_quantity(r_qty.strip()),
-                            "unit": r_unit.strip() if r_unit else "",
-                            "comment": comment
-                        }
+                        name = r_name.strip()
+                        qty = self._humanize_quantity(r_qty.strip())
+                        unit = r_unit.strip() if r_unit else ""
+
+            # Clean residual measurement noise from name
+            if name:
+                name = re.sub(r'^(g|gr|gram|kg|l|ml|tsp|tbsp|cup|piece|clove|sprig|bulb|bunch|packet|can|box|bottle|bag)\b\s*', '', name, flags=re.IGNORECASE).strip()
 
             return {
                 "name": name or item,

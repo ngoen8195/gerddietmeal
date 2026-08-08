@@ -1372,11 +1372,19 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                 meal.ingredients.forEach(ing => {
                     const baseQty = parseQtyJS(ing.quantity);
                     const scaledQty = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
+                    const scaledKcal = (ing.calories !== null && ing.calories !== undefined) ? Math.round(ing.calories * multiplier) : 0;
+
+                    let tooltipText = 'No matching FDC food';
+                    if (ing.fdc_name) {
+                        tooltipText = ing.calories_incomplete 
+                            ? `${esc(ing.fdc_name)} (Missing weight/portion data)` 
+                            : `${esc(ing.fdc_name)}, ${scaledKcal} kcal`;
+                    }
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="view-ingredient-name-cell">
-                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}" title="${ing.calories_incomplete ? 'No matching FDC food' : `${esc(ing.fdc_name)}, ${ing.calories} kcal`}">
+                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}" title="${tooltipText}">
                                 ${esc(ing.name)}${ing.calories_incomplete ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
                             </div>
                             ${ing.comment ? `<div class="view-ingredient-comment" title="${esc(ing.comment)}">${esc(ing.comment)}</div>` : ''}
