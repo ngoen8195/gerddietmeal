@@ -6,13 +6,14 @@ Endpoint: https://api.nal.usda.gov/fdc/v1/foods/search
 """
 import httpx
 import asyncio
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy import select, func
-from app.core.database import get_session
+from app.core.database import get_session, async_session_factory
 from app.core.logger import logger
-from app.models.models import CalorieEntry
+from app.models.models import CalorieEntry, SystemSetting
 from rapidfuzz import process, fuzz
 from usda_fdc import FdcClient
 import json
@@ -36,7 +37,8 @@ SEED_QUERIES = [
     # Asian and global staple additions
     "egg whole", "duck egg", "seaweed", "nori", "fish sauce", "msg",
     "seasoning powder", "bouillon", "soy sauce", "sesame oil", "oyster sauce",
-    "chili paste", "black pepper", "spring onion", "shallot"
+    "chili paste", "black pepper", "spring onion", "shallot",
+    "bitter melon", "balsam-pear", "bok choy", "lemongrass"
 ]
 
 import re
@@ -97,6 +99,10 @@ def hybrid_fdc_rerank(query: str, candidate_fdc_list: list, query_vector: np.nda
         match_count = sum(1 for word in query_words if word in desc_lower)
         if len(query_words) > 1:
             bonus += match_count * 20
+        
+        # Missing word penalty
+        missing_count = len(query_words) - match_count
+        bonus -= missing_count * 50
 
         # 3. Structural Segment Priority (FDC standard: Name, Form, State)
         first_seg_matched = False
@@ -120,7 +126,7 @@ def hybrid_fdc_rerank(query: str, candidate_fdc_list: list, query_vector: np.nda
         if "plain" in desc_lower: bonus += 15
 
         # 5. Foundation Boost (only if primary segment or significant core word match)
-        if data_type == "Foundation" and (first_seg_matched or lexical_score >= 60):
+        if data_type == "Foundation" and missing_count == 0 and (first_seg_matched or lexical_score >= 85):
             bonus += 150
 
         total_score = base_score + bonus
@@ -321,9 +327,10 @@ async def search_calories(query: str, session: AsyncSession = Depends(get_sessio
 
 
 @router.post("/seed-foundation")
-async def seed_foundation_foods(session: AsyncSession = Depends(get_session)):
+async def seed_foundation_foods(force_refresh: bool = False, session: AsyncSession = Depends(get_session)):
     """Fetch Foundation foods from FDC and cache them."""
     new_entries = 0
+    updated_entries = 0
     page_size = 200
     
     async with httpx.AsyncClient(timeout=60.0) as client:
@@ -370,8 +377,16 @@ async def seed_foundation_foods(session: AsyncSession = Depends(get_session)):
                                 energy_found = True
                     
                     # Check if already exists
-                    exists = await session.execute(select(CalorieEntry).where(CalorieEntry.fdc_id == fdc_id))
-                    if exists.scalar_one_or_none(): continue
+                    exists = (await session.execute(select(CalorieEntry).where(CalorieEntry.fdc_id == fdc_id))).scalar_one_or_none()
+                    if exists:
+                        if force_refresh:
+                            exists.description = food.get("description", "")
+                            exists.calories = calories
+                            exists.data_type = "Foundation"
+                            exists.portions_json = json.dumps(food.get("foodPortions", []))
+                            exists.fetched_at = datetime.now(timezone.utc)
+                            updated_entries += 1
+                        continue
                     
                     entry = CalorieEntry(
                         fdc_id=fdc_id,
@@ -388,22 +403,24 @@ async def seed_foundation_foods(session: AsyncSession = Depends(get_session)):
                 print(f"Error seeding page {page}: {e}")
                 continue
                 
-    return {"message": f"Added {new_entries} foundation foods."}
+    return {"message": f"Added {new_entries} new, updated {updated_entries} foundation foods."}
 
 
 @router.post("/seed")
-async def seed_fdc(session: AsyncSession = Depends(get_session)):
-    """One-time fetch: download common food calorie data from USDA FDC API.
+async def seed_fdc(force_refresh: bool = False, session: AsyncSession = Depends(get_session)):
+    """Fetch SR Legacy food calorie data from USDA FDC API.
     
-    This fetches ~500 entries covering common staple foods and caches them locally.
-    Safe to call multiple times (idempotent — skips already-fetched items).
+    Searches for common staple foods (SR Legacy) and caches them locally.
+    Foundation foods are excluded here as they are fetched by /seed-foundation.
     """
-    count_result = await session.execute(select(func.count(CalorieEntry.id)))
-    existing_count = count_result.scalar()
-    if existing_count >= 400:
-        return {"message": f"Already have {existing_count} entries, skipping.", "seeded": False}
+    if not force_refresh:
+        count_result = await session.execute(select(func.count(CalorieEntry.id)))
+        existing_count = count_result.scalar()
+        if existing_count >= 400:
+            return {"message": f"Already have {existing_count} entries, skipping.", "seeded": False}
 
     new_entries = 0
+    updated_entries = 0
     errors = []
 
     async with httpx.AsyncClient(timeout=30.0) as client:
@@ -415,7 +432,7 @@ async def seed_fdc(session: AsyncSession = Depends(get_session)):
                         "api_key": FDC_API_KEY,
                         "query": query,
                         "pageSize": 10,
-                        "dataType": ["Foundation", "SR Legacy"],
+                        "dataType": ["SR Legacy"],
                     },
                 )
                 if resp.status_code != 200:
@@ -426,13 +443,6 @@ async def seed_fdc(session: AsyncSession = Depends(get_session)):
                 for food in data.get("foods", []):
                     fdc_id = food.get("fdcId")
                     if not fdc_id:
-                        continue
-
-                    # Check if already exists
-                    exists = await session.execute(
-                        select(CalorieEntry).where(CalorieEntry.fdc_id == fdc_id)
-                    )
-                    if exists.scalar_one_or_none():
                         continue
 
                     # Extract calories from nutrients
@@ -453,6 +463,21 @@ async def seed_fdc(session: AsyncSession = Depends(get_session)):
                                 calories = nutrient.get("value", 0)
                                 energy_found = True
 
+                    # Check if already exists
+                    exists = (await session.execute(
+                        select(CalorieEntry).where(CalorieEntry.fdc_id == fdc_id)
+                    )).scalar_one_or_none()
+
+                    if exists:
+                        if force_refresh:
+                            exists.description = food.get("description", "")
+                            exists.calories = calories
+                            exists.data_type = food.get("dataType", "")
+                            exists.portions_json = json.dumps(food.get("foodPortions", []))
+                            exists.fetched_at = datetime.now(timezone.utc)
+                            updated_entries += 1
+                        continue
+
                     entry = CalorieEntry(
                         fdc_id=fdc_id,
                         description=food.get("description", ""),
@@ -468,6 +493,53 @@ async def seed_fdc(session: AsyncSession = Depends(get_session)):
             except Exception as e:
                 errors.append(f"{query}: {str(e)}")
                 continue
+
+    return {"message": f"Added {new_entries} new, updated {updated_entries} SR Legacy entries."}
+
+
+async def check_and_trigger_fdc_auto_sync():
+    """Non-blocking background task: checks if FDC database needs periodic sync (older than 90 days or never synced)."""
+    try:
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(SystemSetting).where(SystemSetting.key == "last_fdc_seed_timestamp")
+            )
+            setting = result.scalar_one_or_none()
+
+            needs_sync = False
+            now = datetime.now(timezone.utc)
+
+            if not setting or not setting.value:
+                needs_sync = True
+                logger.info("FDC Auto-Sync: No previous sync timestamp found. Initiating background sync...")
+            else:
+                try:
+                    last_sync = datetime.fromisoformat(setting.value)
+                    if now - last_sync > timedelta(days=90):
+                        needs_sync = True
+                        logger.info(f"FDC Auto-Sync: Cache is {(now - last_sync).days} days old (>90 days). Initiating 3-month periodic update...")
+                    else:
+                        days_left = 90 - (now - last_sync).days
+                        logger.info(f"FDC Auto-Sync: Cache is up to date (last synced {last_sync.date()}, next sync in ~{days_left} days).")
+                except Exception as parse_err:
+                    needs_sync = True
+                    logger.warning(f"FDC Auto-Sync: Error parsing last sync timestamp '{setting.value}': {parse_err}. Triggering sync...")
+
+            if needs_sync:
+                res_foundation = await seed_foundation_foods(force_refresh=True, session=session)
+                res_fdc = await seed_fdc(force_refresh=True, session=session)
+
+                if not setting:
+                    setting = SystemSetting(key="last_fdc_seed_timestamp", value=now.isoformat())
+                    session.add(setting)
+                else:
+                    setting.value = now.isoformat()
+
+                await session.commit()
+                logger.info(f"FDC Auto-Sync complete: {res_foundation.get('message')} | {res_fdc.get('message')}")
+    except Exception as e:
+        logger.error(f"FDC Auto-Sync background task failed: {e}")
+
 
 import numpy as np
 
