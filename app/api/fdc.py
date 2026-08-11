@@ -71,6 +71,7 @@ def hybrid_fdc_rerank(query: str, candidate_fdc_list: list, query_vector: np.nda
     for item in candidate_fdc_list:
         desc = getattr(item, "description", None) or item.get("description", "")
         data_type = getattr(item, "data_type", None) or item.get("data_type", "")
+        calories = getattr(item, "calories", 0.0) if hasattr(item, "calories") else item.get("calories", 0.0)
         item_vec = getattr(item, "vector", None) or (item.get("vector") if isinstance(item, dict) else None)
         
         if item_vec is None and query_vector is not None:
@@ -96,7 +97,10 @@ def hybrid_fdc_rerank(query: str, candidate_fdc_list: list, query_vector: np.nda
             base_score = lexical_score
         
         bonus = 0
-        match_count = sum(1 for word in query_words if word in desc_lower)
+        # Require full word boundary match to prevent "water" matching "watermelon"
+        matched_words = [w for w in query_words if re.search(r'\b' + re.escape(w) + r'\b', desc_lower)]
+        match_count = len(matched_words)
+
         if len(query_words) > 1:
             bonus += match_count * 20
         
@@ -109,15 +113,18 @@ def hybrid_fdc_rerank(query: str, candidate_fdc_list: list, query_vector: np.nda
         if len(segments) > 0:
             first_seg = segments[0]
             if query_lower == first_seg:
-                bonus += 80
+                bonus += 120
                 first_seg_matched = True
-            elif any(w in first_seg for w in query_words):
+            elif any(re.search(r'\b' + re.escape(w) + r'\b', first_seg) for w in query_words):
                 bonus += 50
                 first_seg_matched = True
                 
         if len(segments) > 1:
             second_seg = segments[1]
-            if any(w in second_seg for w in query_words) and not first_seg_matched:
+            if query_lower == second_seg and not first_seg_matched:
+                bonus += 100
+                first_seg_matched = True
+            elif any(re.search(r'\b' + re.escape(w) + r'\b', second_seg) for w in query_words) and not first_seg_matched:
                 bonus += 25
 
         # 4. Keyword Priority
@@ -125,9 +132,16 @@ def hybrid_fdc_rerank(query: str, candidate_fdc_list: list, query_vector: np.nda
         if "whole" in desc_lower: bonus += 15
         if "plain" in desc_lower: bonus += 15
 
-        # 5. Foundation Boost (only if primary segment or significant core word match)
-        if data_type == "Foundation" and missing_count == 0 and (first_seg_matched or lexical_score >= 85):
-            bonus += 150
+        # 5. Exact water & zero-calorie generic water handling
+        if query_lower == "water":
+            if "water" in desc_lower and (calories is None or calories == 0):
+                bonus += 80
+            if data_type == "Branded" and calories and calories > 0:
+                bonus -= 100
+
+        # 6. Foundation & SR Legacy Standard Boost
+        if data_type in ("Foundation", "SR Legacy") and missing_count == 0 and (first_seg_matched or lexical_score >= 85):
+            bonus += 100
 
         total_score = base_score + bonus
         scored_results.append((total_score, item))
