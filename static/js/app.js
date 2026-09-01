@@ -1301,17 +1301,7 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
             document.getElementById('meal-form-image').value = meal.image_url || '';
             document.getElementById('meal-form-time').value = meal.cook_time_hours || '';
             document.getElementById('meal-form-servings').value = meal.servings || '';
-            document.getElementById('meal-form-calories').value = meal.calories || '';
             document.getElementById('meal-form-link').value = meal.source_url || '';
-
-            const incIndicator = document.getElementById('meal-form-calories-incomplete');
-            if (meal.calories_incomplete) {
-                incIndicator.style.display = 'inline-flex';
-                incIndicator.innerHTML = '<span class="incomplete-tag">(!) Incomplete Data</span>';
-                incIndicator.title = "Some ingredients missing kcal data";
-            } else {
-                incIndicator.style.display = 'none';
-            }
 
             // Update Modal Image
             const modalImg = document.getElementById('meal-modal-img');
@@ -1376,8 +1366,8 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
 
                     let tooltipText = 'No matching FDC food';
                     if (ing.fdc_name) {
-                        tooltipText = ing.calories_incomplete 
-                            ? `${esc(ing.fdc_name)} (Missing weight/portion data)` 
+                        tooltipText = ing.calories_incomplete
+                            ? `${esc(ing.fdc_name)} (Missing weight/portion data)`
                             : `${esc(ing.fdc_name)}, ${scaledKcal} kcal`;
                     }
 
@@ -1660,7 +1650,6 @@ async function saveMeal() {
         description: document.getElementById('meal-form-desc').value.trim(),
         image_url: document.getElementById('meal-form-image').value.trim(),
         source_url: document.getElementById('meal-form-link').value.trim(),
-        calories: parseFloat(document.getElementById('meal-form-calories').value) || 0,
         cook_time_hours: parseFloat(document.getElementById('meal-form-time').value) || 0,
         servings: document.getElementById('meal-form-servings').value.trim(),
         ingredients,
