@@ -222,6 +222,9 @@ async def update_meal(meal_id: int, meal_data: MealUpdate, session: AsyncSession
         # Add new
         for ing in meal_data.ingredients:
             session.add(MealIngredient(meal_id=meal_id, name=ing.name, quantity=ing.quantity, unit=ing.unit, comment=ing.comment))
+        # Flush new ingredients into the DB identity map BEFORE committing so that
+        # calculate_meal_calories reads the updated rows, not the old cached collection.
+        await session.flush()
 
     # Clean up old image if it was local and the URL changed or is set to empty
     if old_image_url and old_image_url != db_meal.image_url and old_image_url.startswith("/static/uploads/"):
@@ -234,11 +237,17 @@ async def update_meal(meal_id: int, meal_data: MealUpdate, session: AsyncSession
                 print(f"Failed to delete old image {old_file_path} on update: {e}")
 
     await session.commit()
-    
+
+    # Expire all cached objects so that calculate_meal_calories issues a genuine
+    # fresh SELECT and picks up the newly committed ingredient rows, not any
+    # stale identity-map entry from earlier in this request.
+    session.expire_all()
+
     # Recalculate calories after saving
     from app.api.fdc import calculate_meal_calories
     await calculate_meal_calories(meal_id, session)
     await session.commit()
+
 
     result = await session.execute(
         select(Meal).options(selectinload(Meal.ingredients)).where(Meal.id == meal_id)

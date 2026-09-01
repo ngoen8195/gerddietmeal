@@ -17,6 +17,7 @@ from app.models.models import CalorieEntry, SystemSetting
 from rapidfuzz import process, fuzz
 from usda_fdc import FdcClient
 import json
+import numpy as np
 
 router = APIRouter(prefix="/api/fdc", tags=["fdc"])
 
@@ -42,6 +43,100 @@ SEED_QUERIES = [
 ]
 
 import re
+
+# ---------------------------------------------------------------------------
+# S2: Query alias map — reorders common query strings to match USDA FDC's
+# canonical "Name, Descriptor, Form" naming convention so structural segment
+# scoring aligns correctly (e.g. "greek yogurt" → "yogurt greek" maps to
+# "Yogurt, Greek, plain, whole milk" first segment).
+# ---------------------------------------------------------------------------
+QUERY_ALIASES: dict[str, str] = {
+    # Yogurt variants
+    "greek yogurt": "yogurt greek",
+    "plain yogurt": "yogurt plain",
+    "low fat yogurt": "yogurt lowfat",
+    "nonfat yogurt": "yogurt nonfat",
+    # Zucchini / squash
+    "baby zucchini": "zucchini baby",
+    "zucchini squash": "squash zucchini",
+    # Pepper
+    "ground black pepper": "pepper black ground",
+    "ground pepper": "pepper black ground",
+    "ground peppercorn": "pepper black ground",
+    "ground peppercorns": "pepper black ground",
+    "black peppercorn": "pepper black",
+    "black peppercorns": "pepper black",
+    "black pepper": "pepper black",
+    "white peppercorn": "pepper white",
+    "white peppercorns": "pepper white",
+    "red pepper flakes": "pepper red crushed",
+    # Spices / seasonings
+    "ground cinnamon": "cinnamon ground",
+    "ground cumin": "cumin ground",
+    "ground sumac": "sumac ground",
+    "ground turmeric": "turmeric ground",
+    "ground ginger": "ginger ground",
+    "ground coriander": "coriander ground",
+    "ground cardamom": "cardamom ground",
+    "ground cloves": "cloves ground",
+    "ground nutmeg": "nutmeg ground",
+    # Nuts
+    "chopped walnuts": "walnuts chopped",
+    "sliced almonds": "almonds sliced",
+    "roasted peanuts": "peanuts roasted",
+    # Oils
+    "olive oil": "oil olive",
+    "extra-virgin olive oil": "oil olive extra virgin",
+    "coconut oil": "oil coconut",
+    "sesame oil": "oil sesame",
+    # Other common reorders
+    "fresh mint": "mint fresh",
+    "chopped fresh mint": "mint fresh chopped",
+    "fresh parsley": "parsley fresh",
+    "fresh basil": "basil fresh",
+    "lemon zest": "peel lemon",
+    "orange zest": "peel orange",
+    "cream cheese": "cheese cream",
+    "goat cheese": "cheese goat",
+    "feta cheese": "cheese feta",
+    "cottage cheese": "cheese cottage",
+    "whole milk": "milk whole",
+    "skim milk": "milk skim",
+    "soy milk": "milk soy",
+    "almond milk": "milk almond",
+    "brown sugar": "sugar brown",
+    "powdered sugar": "sugar powdered",
+    "maple syrup": "syrup maple",
+    "soy sauce": "sauce soy",
+    "hot sauce": "sauce hot",
+    "fish sauce": "sauce fish",
+    "sweet potato": "potato sweet",
+    "baby spinach": "spinach baby",
+    "baby carrots": "carrots baby",
+    "green onion": "onions green",
+    "spring onion": "onions green",
+    "red onion": "onions red",
+    "cherry tomatoes": "tomatoes cherry",
+    "sun-dried tomatoes": "tomatoes sun dried",
+    "black beans": "beans black",
+    "kidney beans": "beans kidney",
+    "chickpeas": "chickpeas",  # already canonical
+    "white rice": "rice white",
+    "brown rice": "rice brown",
+    "wild rice": "rice wild",
+    "chicken breast": "chicken breast",  # already canonical
+    "ground beef": "beef ground",
+    "ground turkey": "turkey ground",
+    "ground chicken": "chicken ground",
+}
+
+def normalize_query(query: str) -> str:
+    """Apply QUERY_ALIASES to reorder query tokens to match FDC's canonical naming.
+    
+    Only the exact lowercased query is looked up — partial/substring matches are
+    intentionally avoided to prevent accidental mis-reordering.
+    """
+    return QUERY_ALIASES.get(query.lower().strip(), query)
 
 def clean_query_text(query: str) -> str:
     """Clean measurement units, quantities, and noise words from query prior to matching."""
@@ -172,9 +267,11 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
             logger.info(f"Translated '{query}' to '{translated}' for FDC matching.")
             query = translated
 
+    # S2: Apply alias normalization BEFORE cleaning so the canonical reordering is preserved
+    query = normalize_query(query)
+
     # Clean measurement unit noise
     query = clean_query_text(query)
-
 
     # 1. Search local cache with dense vector candidate retrieval + hybrid re-ranking
     if cached_entries is None:
@@ -182,6 +279,13 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
         cached_entries = result.scalars().all()
     
     if cached_entries:
+        # Pre-batch compute embeddings for all cached entries to avoid 500+ sequential single-item encode calls
+        # S3: also warm the embedding for the normalized query string
+        descs = [e.description for e in cached_entries if e.description]
+        if query:
+            descs.append(query)
+        ensure_embeddings_cached(descs)
+
         query_vec = get_text_embedding(query)
         
         if query_vec is not None:
@@ -216,14 +320,24 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
             scored_entries.sort(key=lambda x: x[1], reverse=True)
             best_match = scored_entries[0] if scored_entries else None
 
-        if best_match and best_match[1] >= 180:  # Require high confidence threshold (Base + Structural/Foundation Boost)
+        # S1: Dynamic confidence threshold — relax to 140 for USDA Foundation/SR Legacy entries
+        # whose structural naming (e.g. "Squash, zucchini, baby, raw") penalizes queries that
+        # omit parent category words ("squash") even when the match is semantically correct.
+        if best_match:
+            best_entry = best_match[0]
+            best_data_type = getattr(best_entry, 'data_type', '') or ''
+            confidence_threshold = 140 if best_data_type in ("Foundation", "SR Legacy") else 180
+        else:
+            confidence_threshold = 180
+
+        if best_match and best_match[1] >= confidence_threshold:
             entry = best_match[0]
             score = best_match[1]
-            print(f"DEBUG: Local match found: {entry.description} (Score: {score:.2f}, Type: {entry.data_type})")
+            print(f"DEBUG: Local match found: {entry.description} (Score: {score:.2f}, Type: {entry.data_type}, Threshold: {confidence_threshold})")
             portions = json.loads(entry.portions_json) if entry.portions_json else []
             return entry.calories, entry.fdc_id, entry.description, portions, True
         else:
-            print(f"DEBUG: No strong local match for '{query}' (Best: {best_match[0].description if best_match else 'None'} {best_match[1] if best_match else 0:.2f})")
+            print(f"DEBUG: No strong local match for '{query}' (Best: {best_match[0].description if best_match else 'None'} {best_match[1] if best_match else 0:.2f}, Threshold: {confidence_threshold})")
 
     if not use_api:
         return 0.0, 0, "", [], False
@@ -236,6 +350,11 @@ async def get_calories_for_food(query: str, session: AsyncSession, use_api: bool
         search_result = await loop.run_in_executor(None, lambda: client.search(query, page_size=10))
         
         if search_result and search_result.foods:
+            api_descs = [f.description for f in search_result.foods if f.description]
+            if query:
+                api_descs.append(query)
+            ensure_embeddings_cached(api_descs)
+
             query_vec = get_text_embedding(query)
             api_candidates = []
             for f in search_result.foods:
@@ -578,6 +697,21 @@ def get_embedding_model():
             _MODEL = False
     return _MODEL if _MODEL is not False else None
 
+def ensure_embeddings_cached(texts: list):
+    """Batch compute normalized dense vector embeddings for missing texts to minimize CPU overhead."""
+    missing = [t for t in texts if t and t not in _EMBEDDINGS_CACHE]
+    if not missing:
+        return
+    model = get_embedding_model()
+    if model is None:
+        return
+    try:
+        vectors = model.encode(missing, batch_size=64, convert_to_numpy=True, normalize_embeddings=True, show_progress_bar=False)
+        for text, vec in zip(missing, vectors):
+            _EMBEDDINGS_CACHE[text] = vec
+    except Exception as e:
+        logger.warning(f"Batch embedding generation failed: {e}")
+
 def get_text_embedding(text: str) -> np.ndarray:
     """Get or compute normalized dense vector embedding for text."""
     if text in _EMBEDDINGS_CACHE:
@@ -587,7 +721,7 @@ def get_text_embedding(text: str) -> np.ndarray:
     if model is None:
         return None
     
-    vec = model.encode(text, convert_to_numpy=True, normalize_embeddings=True)
+    vec = model.encode(text, convert_to_numpy=True, normalize_embeddings=True, show_progress_bar=False)
     _EMBEDDINGS_CACHE[text] = vec
     return vec
 
@@ -704,11 +838,19 @@ async def calculate_meal_calories(meal_id: int, session: AsyncSession, use_api: 
             ing.calories = ing_kcal
             total_kcal += ing_kcal
         else:
-            if fdc_id:
+            # Only write fdc_name/fdc_id when we have a confident, energy-verified match.
+            # If energy was not found or weight could not be calculated, preserve any
+            # previously stored fdc_name so the UI doesn't regress to a wrong API pick.
+            if fdc_id and energy_found:
+                # FDC match confirmed nutrients but weight conversion failed — keep IDs
                 ing.fdc_id = fdc_id
                 ing.fdc_name = fdc_desc
-            else:
+            elif not fdc_id:
+                # No match at all — clear stale fdc_name from a previous wrong match
                 ing.fdc_name = None
+                ing.fdc_id = None
+            # else: fdc_id exists but energy_found=False (unit mismatch / no KCAL nutrient)
+            #        — leave fdc_name untouched; don't overwrite with a bad partial result
             ing.calories = 0.0
             ing.calories_incomplete = True
             incomplete = True
