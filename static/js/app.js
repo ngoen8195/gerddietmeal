@@ -1295,17 +1295,21 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
         try {
             const meal = await API.get(`/api/meals/${mealId}`);
 
-            // Populate Edit Form
-            document.getElementById('meal-form-name').value = meal.name || '';
-            document.getElementById('meal-form-desc').value = meal.description || '';
-            document.getElementById('meal-form-image').value = meal.image_url || '';
-            document.getElementById('meal-form-time').value = meal.cook_time_hours || '';
-            document.getElementById('meal-form-servings').value = meal.servings || '';
-            document.getElementById('meal-form-link').value = meal.source_url || '';
+            // Populate Edit Form safely
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = (val !== null && val !== undefined) ? val : '';
+            };
+            setVal('meal-form-name', meal.name);
+            setVal('meal-form-desc', meal.description);
+            setVal('meal-form-image', meal.image_url);
+            setVal('meal-form-time', meal.cook_time_hours);
+            setVal('meal-form-servings', meal.servings);
+            setVal('meal-form-link', meal.source_url);
 
             // Update Modal Image
             const modalImg = document.getElementById('meal-modal-img');
-            modalImg.src = meal.image_url || DEFAULT_IMG;
+            if (modalImg) modalImg.src = meal.image_url || DEFAULT_IMG;
 
             // Populate View Content
             document.getElementById('view-meal-name').innerText = meal.name || 'Unnamed Recipe';
@@ -1366,8 +1370,8 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
 
                     let tooltipText = 'No matching FDC food';
                     if (ing.fdc_name) {
-                        tooltipText = ing.calories_incomplete
-                            ? `${esc(ing.fdc_name)} (Missing weight/portion data)`
+                        tooltipText = ing.calories_incomplete 
+                            ? `${esc(ing.fdc_name)} (Missing weight/portion data)` 
                             : `${esc(ing.fdc_name)}, ${scaledKcal} kcal`;
                     }
 
@@ -1456,13 +1460,18 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
             console.error("Error loading meal details:", e);
         }
     } else if (prefillData) {
-        document.getElementById('meal-form-name').value = prefillData.name || '';
-        document.getElementById('meal-form-desc').value = prefillData.description || '';
-        document.getElementById('meal-form-image').value = prefillData.image_url || '';
-        document.getElementById('meal-form-time').value = prefillData.cook_time_hours || '';
-        document.getElementById('meal-form-servings').value = prefillData.servings || '';
-        document.getElementById('meal-form-link').value = prefillData.source_url || '';
-        document.getElementById('meal-modal-img').src = prefillData.image_url || DEFAULT_IMG;
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = (val !== null && val !== undefined) ? val : '';
+        };
+        setVal('meal-form-name', prefillData.name);
+        setVal('meal-form-desc', prefillData.description);
+        setVal('meal-form-image', prefillData.image_url);
+        setVal('meal-form-time', prefillData.cook_time_hours);
+        setVal('meal-form-servings', prefillData.servings);
+        setVal('meal-form-link', prefillData.source_url);
+        const modalImg = document.getElementById('meal-modal-img');
+        if (modalImg) modalImg.src = prefillData.image_url || DEFAULT_IMG;
         (prefillData.ingredients || []).forEach(ing => addIngredientRow(ing.name, ing.quantity, ing.unit, ing.comment, false));
     }
 
