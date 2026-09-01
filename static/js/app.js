@@ -1340,6 +1340,39 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                 <span id="view-kcal-display">⚡ ${kcalText}${kcalWarning}</span>
             `;
 
+            let viewUnitsMode = 'origin';
+
+            const btnOrigin = document.getElementById('unit-switch-origin');
+            const btnMetric = document.getElementById('unit-switch-metric');
+            if (btnOrigin && btnMetric) {
+                // reset to origin initially
+                viewUnitsMode = 'origin';
+                btnOrigin.style.background = 'var(--primary)';
+                btnOrigin.style.color = 'white';
+                btnMetric.style.background = 'transparent';
+                btnMetric.style.color = 'var(--text-muted)';
+
+                btnOrigin.onclick = (e) => {
+                    e.stopPropagation();
+                    viewUnitsMode = 'origin';
+                    btnOrigin.style.background = 'var(--primary)';
+                    btnOrigin.style.color = 'white';
+                    btnMetric.style.background = 'transparent';
+                    btnMetric.style.color = 'var(--text-muted)';
+                    renderScaledIngredients(currentServings);
+                };
+                btnMetric.onclick = (e) => {
+                    e.stopPropagation();
+                    viewUnitsMode = 'metric';
+                    btnMetric.style.background = 'var(--primary)';
+                    btnMetric.style.color = 'white';
+                    btnOrigin.style.background = 'transparent';
+                    btnOrigin.style.color = 'var(--text-muted)';
+                    renderScaledIngredients(currentServings);
+                };
+            }
+
+
             // Servings Adjuster Logic
             const adjContainer = document.getElementById('view-servings-adj');
             const minusBtn = document.getElementById('adj-servings-minus');
@@ -1365,13 +1398,28 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
 
                 meal.ingredients.forEach(ing => {
                     const baseQty = parseQtyJS(ing.quantity);
-                    const scaledQty = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
+                    const unitRaw = (ing.unit || '').trim();
+                    const unitLower = unitRaw.toLowerCase();
+                    let finalQtyStr;
+                    let finalUnitStr = ing.unit || '';
+
+                    if (viewUnitsMode === 'metric' && ing.metric_weight_grams > 0 && unitRaw !== '') {
+                        if (['tsp', 't', 'teaspoon', 'teaspoons', 'tbsp', 'tbs', 'tablespoon', 'tablespoons'].includes(unitLower)) {
+                            finalQtyStr = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
+                        } else {
+                            finalQtyStr = Math.round(ing.metric_weight_grams * multiplier);
+                            finalUnitStr = 'g';
+                        }
+                    } else {
+                        finalQtyStr = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
+                    }
+
                     const scaledKcal = (ing.calories !== null && ing.calories !== undefined) ? Math.round(ing.calories * multiplier) : 0;
 
                     let tooltipText = 'No matching FDC food';
                     if (ing.fdc_name) {
-                        tooltipText = ing.calories_incomplete 
-                            ? `${esc(ing.fdc_name)} (Missing weight/portion data)` 
+                        tooltipText = ing.calories_incomplete
+                            ? `${esc(ing.fdc_name)} (Missing weight/portion data)`
                             : `${esc(ing.fdc_name)}, ${scaledKcal} kcal`;
                     }
 
@@ -1383,8 +1431,8 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                             </div>
                             ${ing.comment ? `<div class="view-ingredient-comment" title="${esc(ing.comment)}">${esc(ing.comment)}</div>` : ''}
                         </td>
-                        <td class="view-ingredient-qty">${esc(scaledQty)}</td>
-                        <td class="view-ingredient-unit">${esc(ing.unit)}</td>
+                        <td class="view-ingredient-qty">${esc(finalQtyStr)}</td>
+                        <td class="view-ingredient-unit">${esc(finalUnitStr)}</td>
                     `;
                     tbody.appendChild(tr);
                 });

@@ -226,7 +226,13 @@
                         <div class="view-section">
                             <div class="view-section-header">
                                 <div class="view-section-title">Ingredients</div>
-                                <div id="view-ingredient-count" class="view-ingredients-count">0</div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
+                                    <div class="unit-switch-container" style="display: flex; background: var(--surface); border-radius: 5px; overflow: hidden; padding: 2px; font-size: 0.75rem; font-weight: 500;">
+                                        <div id="unit-switch-origin" style="padding: 0px 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; background: var(--primary); color: white;">Origin</div>
+                                        <div id="unit-switch-metric" style="padding: 0px 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; color: var(--text-muted);">Metric</div>
+                                    </div>
+                                    <div id="view-ingredient-count" class="view-ingredients-count">0</div>
+                                </div>
                             </div>
                             <table class="view-ingredients-table">
                                 <thead>
@@ -534,7 +540,7 @@
         </div>
     </div>
 
-    <script src="/static/js/app.js?v=20260901_2" type="module"></script>
+    <script src="/static/js/app.js?v=20260901_3" type="module"></script>
 </body>
 
 </html>
