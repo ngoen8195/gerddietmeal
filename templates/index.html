@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GERD Diet Meal Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <meta name="description"
         content="Sophisticated meal planning for acid reflux management. Plan GERD-safe meals weekly.">
     <link rel="icon" type="image/x-icon" href="/resources/icons/gerddietmeal.ico">
@@ -31,7 +32,12 @@
             </nav>
         </header>
 
-        <main>
+        <main style="position: relative; overflow: hidden;">
+            <div class="decorative-circle" style="position: absolute; top: 10%; right: -10%; width: 40vw; height: 40vw; background: rgba(59, 130, 246, 0.03); border-radius: 50%; pointer-events: none; z-index: 0;"></div>
+            <div class="decorative-circle" style="position: absolute; bottom: 5%; left: -10%; width: 30vw; height: 30vw; background: rgba(16, 185, 129, 0.03); border-radius: 50%; pointer-events: none; z-index: 0;"></div>
+
+            
+            
             <!-- ═══ HOME TAB ═══ -->
             <section id="tab-home" class="tab-content active" role="tabpanel">
                 <div class="planner-header">
@@ -165,7 +171,37 @@
             </div>
             <div class="modal-content">
                 <div class="modal-body">
-                    <img id="meal-modal-img" class="modal-img-preview" src="/resources/default_meal_img.jpg" alt="Meal">
+                    <div class="modal-img-container">
+                        <img id="meal-modal-img" class="modal-img-preview" src="/resources/default_meal_img.jpg" alt="Meal">
+                        <button type="button" id="btn-meal-image-upload" class="meal-image-upload-btn" title="Image Options">
+                            <svg viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M2 12.4142V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V8.4142C14 8.149 13.8946 7.8946 13.7071 7.7071L12.7071 6.7071C12.3166 6.3166 11.6834 6.3166 11.2929 6.7071L8.7071 9.2929C8.3166 9.6834 7.6834 9.6834 7.2929 9.2929L6.7071 8.7071C6.3166 8.3166 5.68342 8.3166 5.29289 8.7071L2.29289 11.7071C2.10536 11.8946 2 12.149 2 12.4142zM4.5 6C5.32843 6 6 5.32843 6 4.5C6 3.67157 5.32843 3 4.5 3C3.67157 3 3 3.67157 3 4.5C3 5.32843 3.67157 6 4.5 6zM3 0H13C14.6569 0 16 1.34315 16 3V13C16 14.6569 14.6569 16 13 16H3C1.34315 16 0 14.6569 0 13V3C0 1.34315 1.34315 0 3 0z"/>
+                            </svg>
+                        </button>
+                        
+                        <!-- Image options popover menu -->
+                        <div id="meal-image-options-popover" class="popover-menu" style="display: none; bottom: 62px; right: 16px; width: 220px;">
+                            <div class="popover-item" id="option-input-url">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                <span>Input image URL</span>
+                            </div>
+                            <div class="popover-item" id="option-upload-image">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                <span>Upload image</span>
+                            </div>
+                            
+                            <!-- URL Input sub-panel inside the popover -->
+                            <div id="popover-url-panel" style="display: none; padding: 8px; flex-direction: column; gap: 8px;">
+                                <input type="text" id="popover-url-input" class="input-shadcn" placeholder="https://..." style="font-size: 0.8rem; padding: 6px 10px; width: 100%;">
+                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                    <button type="button" id="btn-popover-url-cancel" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 8px;">Cancel</button>
+                                    <button type="button" id="btn-popover-url-ok" class="btn btn-primary" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 8px;">OK</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Hidden file input -->
+                    <input type="file" id="meal-image-file-input" accept="image/*" style="display: none;">
 
                     <!-- ═══ VIEW MODE CONTENT ═══ -->
                     <div id="meal-modal-view-content" class="meal-view-container" style="display: none;">
@@ -190,7 +226,13 @@
                         <div class="view-section">
                             <div class="view-section-header">
                                 <div class="view-section-title">Ingredients</div>
-                                <div id="view-ingredient-count" class="view-ingredients-count">0</div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
+                                    <div class="unit-switch-container" style="display: flex; background: var(--surface); border-radius: 5px; overflow: hidden; padding: 2px; font-size: 0.75rem; font-weight: 500;">
+                                        <div id="unit-switch-origin" style="padding: 0px 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; background: var(--primary); color: white;">Origin</div>
+                                        <div id="unit-switch-metric" style="padding: 0px 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; color: var(--text-muted);">Metric</div>
+                                    </div>
+                                    <div id="view-ingredient-count" class="view-ingredients-count">0</div>
+                                </div>
                             </div>
                             <table class="view-ingredients-table">
                                 <thead>
@@ -257,11 +299,6 @@
                             <div class="form-group">
                                 <label for="meal-form-servings">Number of Servings</label>
                                 <input type="text" id="meal-form-servings" placeholder="e.g. 4">
-                            </div>
-                            <div class="form-group">
-                                <label for="meal-form-calories">Calories (kcal) <span id="meal-form-calories-incomplete"
-                                        class="calorie-tag" style="display:none; margin-left: 5px;"></span></label>
-                                <input type="number" id="meal-form-calories" min="0" placeholder="350">
                             </div>
                         </div>
                     </form>
@@ -371,7 +408,7 @@
                         <button class="btn btn-secondary" id="btn-choice-manual"
                             style="flex: 1; flex-direction: column; padding: 24px; height: auto; gap: 16px; border-radius: var(--radius-lg); transition: all 0.3s ease;">
                             <div
-                                style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
+                                style="background: var(--surface); padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="currentColor">
                                     <path
@@ -390,7 +427,7 @@
                         <button class="btn btn-secondary" id="btn-choice-url"
                             style="flex: 1; flex-direction: column; padding: 24px; height: auto; gap: 16px; border-radius: var(--radius-lg); transition: all 0.3s ease;">
                             <div
-                                style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
+                                style="background: var(--surface); padding: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                     stroke-linejoin="round">
@@ -451,7 +488,7 @@
                     <div id="scrape-status-msg" style="margin-bottom:20px; font-weight:500; color: var(--text-muted);">
                         Initializing...</div>
                     <div class="progress-container"
-                        style="background: rgba(255,255,255,0.05); border-radius: var(--radius); height: 12px; overflow: hidden; margin-bottom: 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                        style="background: var(--surface); border-radius: var(--radius); height: 12px; overflow: hidden; margin-bottom: 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
                         <div id="scrape-progress-bar"
                             style="width: 0%; height: 100%; background: var(--gradient-primary); transition: width 0.4s ease; box-shadow: 0 0 15px var(--primary-light);">
                         </div>
@@ -503,7 +540,7 @@
         </div>
     </div>
 
-    <script src="/static/js/app.js" type="module"></script>
+    <script src="/static/js/app.js?v=20260901_4" type="module"></script>
 </body>
 
 </html>

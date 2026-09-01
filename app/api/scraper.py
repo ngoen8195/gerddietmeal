@@ -194,7 +194,7 @@ async def save_scraped_results(
     duplicate_count = 0
     saved_list = []
     
-    confectionery_keywords = ["kẹo", "candy", "dessert", "confectionery", "marshmallow", "bánh ngọt", "ice cream", "bánh kem"]
+    confectionery_keywords = ["kẹo", "candy", "dessert", "confectionery", "marshmallow", "bánh ngọt", "ice cream", "bánh kem", "soda", "popsicle"]
 
     for meal_data in results:
         if scrape_manager.should_terminate:
@@ -318,10 +318,16 @@ async def scrape_search(
 
 @router.post("/url")
 async def scrape_from_url(
-    url: str
+    url: str,
+    session: AsyncSession = Depends(get_session)
 ):
     """Scrape a single recipe from a specific URL."""
     try:
+        # Check for existing URL duplicate first
+        existing = await session.execute(select(Meal).where(Meal.source_url == url))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="This recipe URL is already in your library.")
+
         from recipe_scrapers import scrape_html
         from curl_cffi.requests import AsyncSession
         import re
@@ -346,21 +352,43 @@ async def scrape_from_url(
                 logger.error(f"Fetch error for {url}: {e}")
                 raise HTTPException(status_code=400, detail=f"Could not connect to the URL: {str(e)}")
 
+        # Detect which scraper to use
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc
+        scraper_inst = None
+        for s in SCRAPERS:
+            if s.BASE_URL and any(site in url for site in [s.BASE_URL, s.SITE_NAME]):
+                scraper_inst = s
+                break
+        
+        # If we have a custom scraper instance, use its specialized logic
+        if scraper_inst:
+            try:
+                # Use the scraper's built-in details method which includes custom fallbacks
+                async with AsyncSession() as s:
+                    details = await scraper_inst._scrape_recipe_details(s, url)
+                    if details.get("name"):
+                        return {
+                            "status": "success",
+                            "meal": {
+                                "name": details["name"],
+                                "description": details.get("description", ""),
+                                "image_url": details.get("image_url", ""),
+                                "source_url": url,
+                                "source_site": scraper_inst.SITE_NAME,
+                                "cook_time_hours": details.get("cook_time_hours", 0.0),
+                                "servings": details.get("servings", ""),
+                                "ingredients": details.get("ingredients", [])
+                            }
+                        }
+            except Exception as e:
+                logger.error(f"Specialized scraper failed for {url}: {e}")
+
+        # Fallback to generic recipe-scrapers if no custom scraper matched or it failed
         try:
             # We use recipe-scrapers to see if it's supported
-            # scraper = scrape_html(html=html, org_url=url) # Default mode
-            # But we want to know if it's SPECIFICALLY supported
             from recipe_scrapers import scraper_exists_for
-            from urllib.parse import urlparse
             
-            domain = urlparse(url).netloc
-            if not scraper_exists_for(url):
-                # Check if it's one of our custom scrapers that might not be in recipe-scrapers
-                custom_sites = [s.BASE_URL for s in SCRAPERS]
-                is_custom = any(site in url for site in custom_sites if site)
-                if not is_custom:
-                    raise HTTPException(status_code=400, detail=f"The site '{domain}' is not supported for automatic scraping. Please add it manually.")
-
             scraper = scrape_html(html=html, org_url=url, supported_only=False)
             
             # Extract data
@@ -368,6 +396,14 @@ async def scrape_from_url(
             try: name = scraper.title()
             except: pass
             
+            # If still no name, try BeautifulSoup title or meta tags as ultimate fallback
+            if not name:
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(html, 'html.parser')
+                name = (soup.find("meta", property="og:title") or {}).get("content") or \
+                       (soup.find("title").text if soup.find("title") else "")
+                name = name.strip()
+
             if not name:
                 raise HTTPException(status_code=400, detail="Could not extract recipe name from this URL. The site might be protected or unsupported.")
 

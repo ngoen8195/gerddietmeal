@@ -12,3 +12,5 @@ recipe-scrapers
 rapidfuzz
 usda-fdc
 curl-cffi
+sentence-transformers
+numpy

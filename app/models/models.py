@@ -94,3 +94,13 @@ class PlannedMeal(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     meal = relationship("Meal")
+
+
+class SystemSetting(Base):
+    """General system settings and sync timestamps."""
+    __tablename__ = "system_settings"
+
+    key = Column(String(100), primary_key=True)
+    value = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+

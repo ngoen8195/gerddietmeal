@@ -42,11 +42,20 @@ function showNotification(title, message) {
         <div class="alert-shadcn-description">${message}</div>
     `;
 
-    const closeBtn = alert.querySelector('.alert-shadcn-close');
     const dismiss = () => {
+        if (autoDismissTimer) clearTimeout(autoDismissTimer);
         alert.classList.add('fade-out');
         setTimeout(() => alert.remove(), 300);
     };
+
+    // Add progress bar for 15s timeout
+    const progress = document.createElement('div');
+    progress.className = 'alert-shadcn-progress';
+    alert.appendChild(progress);
+
+    let autoDismissTimer = setTimeout(dismiss, 15000);
+
+    const closeBtn = alert.querySelector('.alert-shadcn-close');
     closeBtn.onclick = dismiss;
 
     container.appendChild(alert);
@@ -146,6 +155,65 @@ function humanizeQtyJS(val) {
     }
 
     return val.toFixed(1).replace(/\.0$/, '');
+}
+
+// ─── Metric Conversion Helpers ──────────────────────
+const BYPASS_METRIC_UNITS = new Set([
+    // Spoons
+    'tsp', 't', 'teaspoon', 'teaspoons',
+    'tbsp', 'tbs', 'tablespoon', 'tablespoons',
+    // Metric weight & mass
+    'g', 'gram', 'grams', 'gr',
+    'kg', 'kilogram', 'kilograms',
+    'mg', 'milligram', 'milligrams',
+    // Metric volume
+    'ml', 'milliliter', 'milliliters', 'millilitre', 'millilitres',
+    'l', 'liter', 'liters', 'litre', 'litres',
+    'dl', 'deciliter', 'deciliters',
+    'cl', 'centiliter', 'centiliters',
+    // Count, item, produce, and packaging units
+    'piece', 'pieces', 'pc', 'pcs',
+    'bulb', 'bulbs',
+    'clove', 'cloves',
+    'slice', 'slices',
+    'stalk', 'stalks',
+    'stem', 'stems',
+    'head', 'heads',
+    'bunch', 'bunches',
+    'sprig', 'sprigs',
+    'leaf', 'leaves',
+    'pinch', 'pinches',
+    'dash', 'dashes',
+    'drop', 'drops',
+    'can', 'cans',
+    'jar', 'jars',
+    'packet', 'packets',
+    'pkg', 'pkgs',
+    'package', 'packages',
+    'bottle', 'bottles',
+    'bag', 'bags',
+    'box', 'boxes',
+    'container', 'containers',
+    'item', 'items',
+    'fillet', 'fillets',
+    'strip', 'strips',
+    'stick', 'sticks',
+    'sheet', 'sheets',
+    'cube', 'cubes',
+    'block', 'blocks',
+    'handful', 'handfuls',
+    'portion', 'portions',
+    'serving', 'servings',
+    'ear', 'ears'
+]);
+
+function shouldBypassMetricConversion(unit) {
+    if (!unit) return true;
+    const clean = unit.trim().toLowerCase().replace(/\.$/, '');
+    if (!clean) return true;
+    if (BYPASS_METRIC_UNITS.has(clean)) return true;
+    if (clean.endsWith('s') && BYPASS_METRIC_UNITS.has(clean.slice(0, -1))) return true;
+    return false;
 }
 
 function renderPagination(containerId, totalPages, currentPage, onPageChange) {
@@ -1240,6 +1308,15 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
     document.getElementById('view-ingredients-list').innerHTML = '';
     document.getElementById('meal-modal-img').src = DEFAULT_IMG;
 
+    // Toggle image upload button and reset popover state
+    const uploadBtnEl = document.getElementById('btn-meal-image-upload');
+    if (uploadBtnEl) {
+        uploadBtnEl.style.display = (mode === 'view') ? 'none' : 'flex';
+    }
+    if (window.resetPopoverState) {
+        window.resetPopoverState();
+    }
+
     const viewContent = document.getElementById('meal-modal-view-content');
     const editContent = document.getElementById('meal-modal-edit-content');
     const saveBtn = document.getElementById('meal-modal-save');
@@ -1277,27 +1354,21 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
         try {
             const meal = await API.get(`/api/meals/${mealId}`);
 
-            // Populate Edit Form
-            document.getElementById('meal-form-name').value = meal.name || '';
-            document.getElementById('meal-form-desc').value = meal.description || '';
-            document.getElementById('meal-form-image').value = meal.image_url || '';
-            document.getElementById('meal-form-time').value = meal.cook_time_hours || '';
-            document.getElementById('meal-form-servings').value = meal.servings || '';
-            document.getElementById('meal-form-calories').value = meal.calories || '';
-            document.getElementById('meal-form-link').value = meal.source_url || '';
-
-            const incIndicator = document.getElementById('meal-form-calories-incomplete');
-            if (meal.calories_incomplete) {
-                incIndicator.style.display = 'inline-flex';
-                incIndicator.innerHTML = '<span class="incomplete-tag">(!) Incomplete Data</span>';
-                incIndicator.title = "Some ingredients missing kcal data";
-            } else {
-                incIndicator.style.display = 'none';
-            }
+            // Populate Edit Form safely
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = (val !== null && val !== undefined) ? val : '';
+            };
+            setVal('meal-form-name', meal.name);
+            setVal('meal-form-desc', meal.description);
+            setVal('meal-form-image', meal.image_url);
+            setVal('meal-form-time', meal.cook_time_hours);
+            setVal('meal-form-servings', meal.servings);
+            setVal('meal-form-link', meal.source_url);
 
             // Update Modal Image
             const modalImg = document.getElementById('meal-modal-img');
-            modalImg.src = meal.image_url || DEFAULT_IMG;
+            if (modalImg) modalImg.src = meal.image_url || DEFAULT_IMG;
 
             // Populate View Content
             document.getElementById('view-meal-name').innerText = meal.name || 'Unnamed Recipe';
@@ -1328,6 +1399,39 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                 <span id="view-kcal-display">⚡ ${kcalText}${kcalWarning}</span>
             `;
 
+            let viewUnitsMode = 'origin';
+
+            const btnOrigin = document.getElementById('unit-switch-origin');
+            const btnMetric = document.getElementById('unit-switch-metric');
+            if (btnOrigin && btnMetric) {
+                // reset to origin initially
+                viewUnitsMode = 'origin';
+                btnOrigin.style.background = 'var(--primary)';
+                btnOrigin.style.color = 'white';
+                btnMetric.style.background = 'transparent';
+                btnMetric.style.color = 'var(--text-muted)';
+
+                btnOrigin.onclick = (e) => {
+                    e.stopPropagation();
+                    viewUnitsMode = 'origin';
+                    btnOrigin.style.background = 'var(--primary)';
+                    btnOrigin.style.color = 'white';
+                    btnMetric.style.background = 'transparent';
+                    btnMetric.style.color = 'var(--text-muted)';
+                    renderScaledIngredients(currentServings);
+                };
+                btnMetric.onclick = (e) => {
+                    e.stopPropagation();
+                    viewUnitsMode = 'metric';
+                    btnMetric.style.background = 'var(--primary)';
+                    btnMetric.style.color = 'white';
+                    btnOrigin.style.background = 'transparent';
+                    btnOrigin.style.color = 'var(--text-muted)';
+                    renderScaledIngredients(currentServings);
+                };
+            }
+
+
             // Servings Adjuster Logic
             const adjContainer = document.getElementById('view-servings-adj');
             const minusBtn = document.getElementById('adj-servings-minus');
@@ -1353,18 +1457,35 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
 
                 meal.ingredients.forEach(ing => {
                     const baseQty = parseQtyJS(ing.quantity);
-                    const scaledQty = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
+                    let finalQtyStr;
+                    let finalUnitStr = ing.unit || '';
+
+                    if (viewUnitsMode === 'metric' && ing.metric_weight_grams > 0 && !shouldBypassMetricConversion(ing.unit)) {
+                        finalQtyStr = Math.round(ing.metric_weight_grams * multiplier);
+                        finalUnitStr = 'g';
+                    } else {
+                        finalQtyStr = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
+                    }
+
+                    const scaledKcal = (ing.calories !== null && ing.calories !== undefined) ? Math.round(ing.calories * multiplier) : 0;
+
+                    let tooltipText = 'No matching FDC food';
+                    if (ing.fdc_name) {
+                        tooltipText = ing.calories_incomplete
+                            ? `${esc(ing.fdc_name)} (Missing weight/portion data)`
+                            : `${esc(ing.fdc_name)}, ${scaledKcal} kcal`;
+                    }
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="view-ingredient-name-cell">
-                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}" title="${ing.calories_incomplete ? 'No matching FDC food' : `${esc(ing.fdc_name)}, ${ing.calories} kcal`}">
+                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}" title="${tooltipText}">
                                 ${esc(ing.name)}${ing.calories_incomplete ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
                             </div>
                             ${ing.comment ? `<div class="view-ingredient-comment" title="${esc(ing.comment)}">${esc(ing.comment)}</div>` : ''}
                         </td>
-                        <td class="view-ingredient-qty">${esc(scaledQty)}</td>
-                        <td class="view-ingredient-unit">${esc(ing.unit)}</td>
+                        <td class="view-ingredient-qty">${esc(finalQtyStr)}</td>
+                        <td class="view-ingredient-unit">${esc(finalUnitStr)}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -1440,13 +1561,18 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
             console.error("Error loading meal details:", e);
         }
     } else if (prefillData) {
-        document.getElementById('meal-form-name').value = prefillData.name || '';
-        document.getElementById('meal-form-desc').value = prefillData.description || '';
-        document.getElementById('meal-form-image').value = prefillData.image_url || '';
-        document.getElementById('meal-form-time').value = prefillData.cook_time_hours || '';
-        document.getElementById('meal-form-servings').value = prefillData.servings || '';
-        document.getElementById('meal-form-link').value = prefillData.source_url || '';
-        document.getElementById('meal-modal-img').src = prefillData.image_url || DEFAULT_IMG;
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = (val !== null && val !== undefined) ? val : '';
+        };
+        setVal('meal-form-name', prefillData.name);
+        setVal('meal-form-desc', prefillData.description);
+        setVal('meal-form-image', prefillData.image_url);
+        setVal('meal-form-time', prefillData.cook_time_hours);
+        setVal('meal-form-servings', prefillData.servings);
+        setVal('meal-form-link', prefillData.source_url);
+        const modalImg = document.getElementById('meal-modal-img');
+        if (modalImg) modalImg.src = prefillData.image_url || DEFAULT_IMG;
         (prefillData.ingredients || []).forEach(ing => addIngredientRow(ing.name, ing.quantity, ing.unit, ing.comment, false));
     }
 
@@ -1489,6 +1615,132 @@ document.getElementById('meal-form-image').addEventListener('input', function ()
     document.getElementById('meal-modal-img').src = this.value || DEFAULT_IMG;
 });
 
+// ─── Image Options Popover & Upload Logic ───
+const popoverMenu = document.getElementById('meal-image-options-popover');
+const optionInputUrl = document.getElementById('option-input-url');
+const optionUploadImage = document.getElementById('option-upload-image');
+const popoverUrlPanel = document.getElementById('popover-url-panel');
+const popoverUrlInput = document.getElementById('popover-url-input');
+const btnPopoverUrlOk = document.getElementById('btn-popover-url-ok');
+const btnPopoverUrlCancel = document.getElementById('btn-popover-url-cancel');
+const fileInput = document.getElementById('meal-image-file-input');
+
+function resetPopoverState() {
+    if (popoverMenu) popoverMenu.style.display = 'none';
+    if (optionInputUrl) optionInputUrl.style.display = 'flex';
+    if (optionUploadImage) optionUploadImage.style.display = 'flex';
+    if (popoverUrlPanel) popoverUrlPanel.style.display = 'none';
+    if (popoverUrlInput) popoverUrlInput.value = '';
+}
+window.resetPopoverState = resetPopoverState;
+
+const uploadBtn = document.getElementById('btn-meal-image-upload');
+if (uploadBtn && popoverMenu) {
+    uploadBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = popoverMenu.style.display === 'flex';
+        if (isOpen) {
+            resetPopoverState();
+        } else {
+            popoverMenu.style.display = 'flex';
+        }
+    });
+
+    // Close popover when clicking anywhere else
+    document.addEventListener('click', (e) => {
+        if (!popoverMenu.contains(e.target) && e.target !== uploadBtn) {
+            resetPopoverState();
+        }
+    });
+}
+
+if (optionInputUrl && popoverUrlPanel) {
+    optionInputUrl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        optionInputUrl.style.display = 'none';
+        optionUploadImage.style.display = 'none';
+        popoverUrlPanel.style.display = 'flex';
+        const currentImgUrl = document.getElementById('meal-form-image').value;
+        popoverUrlInput.value = currentImgUrl || '';
+        setTimeout(() => popoverUrlInput.focus(), 50);
+    });
+}
+
+if (btnPopoverUrlOk) {
+    btnPopoverUrlOk.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const newUrl = popoverUrlInput.value.trim();
+        document.getElementById('meal-form-image').value = newUrl;
+        document.getElementById('meal-modal-img').src = newUrl || DEFAULT_IMG;
+        resetPopoverState();
+    });
+}
+
+if (btnPopoverUrlCancel) {
+    btnPopoverUrlCancel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resetPopoverState();
+    });
+}
+
+if (optionUploadImage && fileInput) {
+    optionUploadImage.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
+}
+
+if (fileInput) {
+    fileInput.addEventListener('change', async function () {
+        if (!this.files || !this.files[0]) return;
+        const file = this.files[0];
+
+        // Show spinner / loading feedback in the upload button
+        const originalContent = uploadBtn.innerHTML;
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `
+            <svg class="animate-spin" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" style="animation: spin 1s linear infinite;">
+                <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                <path d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+            </svg>
+        `;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        if (editingMealId) {
+            formData.append('meal_id', editingMealId);
+        }
+        const currentImgUrl = document.getElementById('meal-form-image').value;
+        if (currentImgUrl) {
+            formData.append('previous_url', currentImgUrl);
+        }
+
+        try {
+            const response = await fetch('/api/meals/upload-image', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (response.ok && result.status === 'success') {
+                document.getElementById('meal-form-image').value = result.url;
+                document.getElementById('meal-modal-img').src = result.url;
+                showNotification('Image Uploaded', 'Your meal image has been successfully uploaded.');
+            } else {
+                alert(result.detail || 'Failed to upload image. Please try again.');
+            }
+        } catch (e) {
+            console.error("Upload error:", e);
+            alert('An error occurred while uploading the image.');
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = originalContent;
+            fileInput.value = ''; // Reset file input
+            resetPopoverState();
+        }
+    });
+}
+
 async function saveMeal() {
     const ingredients = [];
     document.querySelectorAll('#meal-form-ingredients .ingredient-row').forEach(row => {
@@ -1508,7 +1760,6 @@ async function saveMeal() {
         description: document.getElementById('meal-form-desc').value.trim(),
         image_url: document.getElementById('meal-form-image').value.trim(),
         source_url: document.getElementById('meal-form-link').value.trim(),
-        calories: parseFloat(document.getElementById('meal-form-calories').value) || 0,
         cook_time_hours: parseFloat(document.getElementById('meal-form-time').value) || 0,
         servings: document.getElementById('meal-form-servings').value.trim(),
         ingredients,
@@ -1536,7 +1787,7 @@ async function loadFavorites(page = 1) {
     const search = searchEl ? searchEl.value : '';
     let url = `/api/favorites/?page=${favPage}&page_size=${PAGE_SIZE}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
-    
+
     try {
         const data = await API.get(url);
         allFavorites = data.items;
@@ -1657,10 +1908,10 @@ function updateGuidePopover() {
     guideTitle.textContent = step.title;
     guideContent.textContent = step.content;
     guideProgress.textContent = `${currentGuideStep + 1} / ${guideSteps.length}`;
-    
+
     guideBack.style.visibility = currentGuideStep === 0 ? 'hidden' : 'visible';
     guideNext.textContent = currentGuideStep === guideSteps.length - 1 ? 'Finish' : 'Next';
-    
+
     // Switch tabs automatically based on guide step
     if (currentGuideStep === 0) switchTab('home');
     if (currentGuideStep === 1) switchTab('food-library');
