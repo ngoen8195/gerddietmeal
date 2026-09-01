@@ -157,6 +157,65 @@ function humanizeQtyJS(val) {
     return val.toFixed(1).replace(/\.0$/, '');
 }
 
+// ─── Metric Conversion Helpers ──────────────────────
+const BYPASS_METRIC_UNITS = new Set([
+    // Spoons
+    'tsp', 't', 'teaspoon', 'teaspoons',
+    'tbsp', 'tbs', 'tablespoon', 'tablespoons',
+    // Metric weight & mass
+    'g', 'gram', 'grams', 'gr',
+    'kg', 'kilogram', 'kilograms',
+    'mg', 'milligram', 'milligrams',
+    // Metric volume
+    'ml', 'milliliter', 'milliliters', 'millilitre', 'millilitres',
+    'l', 'liter', 'liters', 'litre', 'litres',
+    'dl', 'deciliter', 'deciliters',
+    'cl', 'centiliter', 'centiliters',
+    // Count, item, produce, and packaging units
+    'piece', 'pieces', 'pc', 'pcs',
+    'bulb', 'bulbs',
+    'clove', 'cloves',
+    'slice', 'slices',
+    'stalk', 'stalks',
+    'stem', 'stems',
+    'head', 'heads',
+    'bunch', 'bunches',
+    'sprig', 'sprigs',
+    'leaf', 'leaves',
+    'pinch', 'pinches',
+    'dash', 'dashes',
+    'drop', 'drops',
+    'can', 'cans',
+    'jar', 'jars',
+    'packet', 'packets',
+    'pkg', 'pkgs',
+    'package', 'packages',
+    'bottle', 'bottles',
+    'bag', 'bags',
+    'box', 'boxes',
+    'container', 'containers',
+    'item', 'items',
+    'fillet', 'fillets',
+    'strip', 'strips',
+    'stick', 'sticks',
+    'sheet', 'sheets',
+    'cube', 'cubes',
+    'block', 'blocks',
+    'handful', 'handfuls',
+    'portion', 'portions',
+    'serving', 'servings',
+    'ear', 'ears'
+]);
+
+function shouldBypassMetricConversion(unit) {
+    if (!unit) return true;
+    const clean = unit.trim().toLowerCase().replace(/\.$/, '');
+    if (!clean) return true;
+    if (BYPASS_METRIC_UNITS.has(clean)) return true;
+    if (clean.endsWith('s') && BYPASS_METRIC_UNITS.has(clean.slice(0, -1))) return true;
+    return false;
+}
+
 function renderPagination(containerId, totalPages, currentPage, onPageChange) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -1398,18 +1457,12 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
 
                 meal.ingredients.forEach(ing => {
                     const baseQty = parseQtyJS(ing.quantity);
-                    const unitRaw = (ing.unit || '').trim();
-                    const unitLower = unitRaw.toLowerCase();
                     let finalQtyStr;
                     let finalUnitStr = ing.unit || '';
 
-                    if (viewUnitsMode === 'metric' && ing.metric_weight_grams > 0 && unitRaw !== '') {
-                        if (['tsp', 't', 'teaspoon', 'teaspoons', 'tbsp', 'tbs', 'tablespoon', 'tablespoons'].includes(unitLower)) {
-                            finalQtyStr = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
-                        } else {
-                            finalQtyStr = Math.round(ing.metric_weight_grams * multiplier);
-                            finalUnitStr = 'g';
-                        }
+                    if (viewUnitsMode === 'metric' && ing.metric_weight_grams > 0 && !shouldBypassMetricConversion(ing.unit)) {
+                        finalQtyStr = Math.round(ing.metric_weight_grams * multiplier);
+                        finalUnitStr = 'g';
                     } else {
                         finalQtyStr = baseQty > 0 ? humanizeQtyJS(baseQty * multiplier) : ing.quantity;
                     }
