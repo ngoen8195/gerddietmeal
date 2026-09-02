@@ -5,7 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GERD Diet Meal Planner</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:ROND,opsz,slnt,wdth,wght@0..100,6..72,-10..0,25..151,100..1000&display=swap"
+        rel="stylesheet">
     <meta name="description"
         content="Sophisticated meal planning for acid reflux management. Plan GERD-safe meals weekly.">
     <link rel="icon" type="image/x-icon" href="/resources/icons/gerddietmeal.ico">
@@ -24,20 +28,33 @@
                 <button class="tab-btn" data-tab="food-library" role="tab">Food Library</button>
                 <button class="tab-btn" data-tab="meal-library" role="tab">Meal Library</button>
                 <button class="tab-btn" data-tab="favorites" role="tab">Favorite Meals</button>
-                <button class="btn-icon" id="btn-user-guide" title="User Guide" style="margin-left: 8px; align-self: center;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,16a1,1,0,1,1,1-1A1,1,0,0,1,12,18Zm1.71-4.61c-.71.34-.71.39-.71.61a1,1,0,0,1-2,0,2.6,2.6,0,0,1,1.84-2.42C13.61,11.21,14,11,14,10a1,1,0,0,0-.49-.86A2.82,2.82,0,0,0,12,8.75c-.69,0-2,.26-2,1.25a1,1,0,0,1-2,0c0-1.88,1.68-3.25,4-3.25S16,8.12,16,10A3.41,3.41,0,0,1,13.71,13.39Z"/>
+                <button class="btn-icon" id="btn-user-guide" title="User Guide" style="align-self: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path
+                            d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,16a1,1,0,1,1,1-1A1,1,0,0,1,12,18Zm1.71-4.61c-.71.34-.71.39-.71.61a1,1,0,0,1-2,0,2.6,2.6,0,0,1,1.84-2.42C13.61,11.21,14,11,14,10a1,1,0,0,0-.49-.86A2.82,2.82,0,0,0,12,8.75c-.69,0-2,.26-2,1.25a1,1,0,0,1-2,0c0-1.88,1.68-3.25,4-3.25S16,8.12,16,10A3.41,3.41,0,0,1,13.71,13.39Z" />
+                    </svg>
+                </button>
+                <button class="btn-icon" id="btn-home-config" title="Home Configuration" style="align-self: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path
+                            d="M 14.4093 2.29252 C 15.3919 2.53569 16.3171 2.92399 17.1605 3.43303 C 17.5108 3.64448 17.697 4.04803 17.6305 4.45178 C 17.5169 5.14078 17.6882 5.66772 18.0103 5.98974 C 18.3323 6.31176 18.8592 6.48308 19.5482 6.36954 C 19.952 6.30301 20.3555 6.48917 20.567 6.83951 C 21.076 7.68291 21.4643 8.60804 21.7074 9.59069 C 21.8058 9.98806 21.652 10.4052 21.3193 10.6437 C 20.7515 11.0507 20.4999 11.5446 20.4999 12.0001 C 20.4999 12.4556 20.7515 12.9495 21.3193 13.3565 C 21.652 13.5949 21.8058 14.0121 21.7074 14.4095 C 21.4643 15.3922 21.0759 16.3173 20.5669 17.1608 C 20.3555 17.5111 19.9519 17.6973 19.5482 17.6307 C 18.8592 17.5172 18.3323 17.6885 18.0103 18.0105 C 17.6883 18.3325 17.5169 18.8595 17.6305 19.5484 C 17.697 19.9522 17.5108 20.3557 17.1605 20.5672 C 16.3171 21.0762 15.3919 21.4645 14.4092 21.7077 C 14.0119 21.806 13.5947 21.6522 13.3562 21.3195 C 12.9493 20.7517 12.4554 20.5001 11.9999 20.5001 C 11.5443 20.5001 11.0504 20.7517 10.6435 21.3195 C 10.405 21.6522 9.98782 21.806 9.59046 21.7077 C 8.60778 21.4645 7.68263 21.0762 6.83922 20.5672 C 6.48888 20.3557 6.30272 19.9522 6.36925 19.5484 C 6.48277 18.8595 6.31146 18.3325 5.98944 18.0105 C 5.66743 17.6885 5.14051 17.5172 4.45154 17.6307 C 4.04779 17.6973 3.64424 17.5111 3.4328 17.1608 C 2.92375 16.3173 2.53545 15.3922 2.29227 14.4095 C 2.19394 14.0121 2.34772 13.5949 2.68044 13.3565 C 3.24825 12.9495 3.49985 12.4556 3.49985 12.0001 C 3.49985 11.5446 3.24825 11.0507 2.68044 10.6437 C 2.34772 10.4052 2.19394 9.98806 2.29227 9.5907 C 2.53544 8.60804 2.92373 7.68291 3.43274 6.83952 C 3.64419 6.48918 4.04774 6.30301 4.4515 6.36955 C 5.14049 6.48309 5.66743 6.31177 5.98945 5.98975 C 6.31147 5.66772 6.48279 5.14078 6.36924 4.45179 C 6.30271 4.04803 6.48887 3.64447 6.83921 3.43303 C 7.68262 2.92399 8.60777 2.53569 9.59045 2.29252 C 9.98782 2.19418 10.405 2.34797 10.6435 2.68069 C 11.0504 3.24849 11.5443 3.50009 11.9999 3.50009 C 12.4554 3.50009 12.9493 3.24849 13.3562 2.68069 C 13.5947 2.34797 14.0119 2.19418 14.4093 2.29252 Z M 11.9999 7 C 9.23852 7 6.99995 9.23858 6.99995 12 C 6.99995 14.7614 9.23852 17 11.9999 17 C 14.7614 17 16.9999 14.7614 16.9999 12 C 16.9999 9.23858 14.7614 7 11.9999 7 Z M 11.9999 9 C 13.6568 9 14.9999 10.3431 14.9999 12 C 14.9999 13.6569 13.6568 15 11.9999 15 C 10.3431 15 8.99995 13.6569 8.99995 12 C 8.99995 10.3431 10.3431 9 11.9999 9 Z" />
                     </svg>
                 </button>
             </nav>
         </header>
 
         <main style="position: relative; overflow: hidden;">
-            <div class="decorative-circle" style="position: absolute; top: 10%; right: -10%; width: 40vw; height: 40vw; background: rgba(59, 130, 246, 0.03); border-radius: 50%; pointer-events: none; z-index: 0;"></div>
-            <div class="decorative-circle" style="position: absolute; bottom: 5%; left: -10%; width: 30vw; height: 30vw; background: rgba(16, 185, 129, 0.03); border-radius: 50%; pointer-events: none; z-index: 0;"></div>
+            <div class="decorative-circle"
+                style="position: absolute; top: 10%; right: -10%; width: 40vw; height: 40vw; background: rgba(59, 130, 246, 0.03); border-radius: 50%; pointer-events: none; z-index: 0;">
+            </div>
+            <div class="decorative-circle"
+                style="position: absolute; bottom: 5%; left: -10%; width: 30vw; height: 30vw; background: rgba(16, 185, 129, 0.03); border-radius: 50%; pointer-events: none; z-index: 0;">
+            </div>
 
-            
-            
+
+
             <!-- ═══ HOME TAB ═══ -->
             <section id="tab-home" class="tab-content active" role="tabpanel">
                 <div class="planner-header">
@@ -141,8 +158,7 @@
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.3-4.3" />
                             </svg>
-                            <input type="text" id="fav-search" class="input-shadcn"
-                                placeholder="Search favorites...">
+                            <input type="text" id="fav-search" class="input-shadcn" placeholder="Search favorites...">
                         </div>
                     </div>
                 </div>
@@ -172,30 +188,47 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <div class="modal-img-container">
-                        <img id="meal-modal-img" class="modal-img-preview" src="/resources/default_meal_img.jpg" alt="Meal">
-                        <button type="button" id="btn-meal-image-upload" class="meal-image-upload-btn" title="Image Options">
+                        <img id="meal-modal-img" class="modal-img-preview" src="/resources/default_meal_img.jpg"
+                            alt="Meal">
+                        <button type="button" id="btn-meal-image-upload" class="meal-image-upload-btn"
+                            title="Image Options">
                             <svg viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M2 12.4142V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V8.4142C14 8.149 13.8946 7.8946 13.7071 7.7071L12.7071 6.7071C12.3166 6.3166 11.6834 6.3166 11.2929 6.7071L8.7071 9.2929C8.3166 9.6834 7.6834 9.6834 7.2929 9.2929L6.7071 8.7071C6.3166 8.3166 5.68342 8.3166 5.29289 8.7071L2.29289 11.7071C2.10536 11.8946 2 12.149 2 12.4142zM4.5 6C5.32843 6 6 5.32843 6 4.5C6 3.67157 5.32843 3 4.5 3C3.67157 3 3 3.67157 3 4.5C3 5.32843 3.67157 6 4.5 6zM3 0H13C14.6569 0 16 1.34315 16 3V13C16 14.6569 14.6569 16 13 16H3C1.34315 16 0 14.6569 0 13V3C0 1.34315 1.34315 0 3 0z"/>
+                                <path
+                                    d="M2 12.4142V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V8.4142C14 8.149 13.8946 7.8946 13.7071 7.7071L12.7071 6.7071C12.3166 6.3166 11.6834 6.3166 11.2929 6.7071L8.7071 9.2929C8.3166 9.6834 7.6834 9.6834 7.2929 9.2929L6.7071 8.7071C6.3166 8.3166 5.68342 8.3166 5.29289 8.7071L2.29289 11.7071C2.10536 11.8946 2 12.149 2 12.4142zM4.5 6C5.32843 6 6 5.32843 6 4.5C6 3.67157 5.32843 3 4.5 3C3.67157 3 3 3.67157 3 4.5C3 5.32843 3.67157 6 4.5 6zM3 0H13C14.6569 0 16 1.34315 16 3V13C16 14.6569 14.6569 16 13 16H3C1.34315 16 0 14.6569 0 13V3C0 1.34315 1.34315 0 3 0z" />
                             </svg>
                         </button>
-                        
+
                         <!-- Image options popover menu -->
-                        <div id="meal-image-options-popover" class="popover-menu" style="display: none; bottom: 62px; right: 16px; width: 220px;">
+                        <div id="meal-image-options-popover" class="popover-menu"
+                            style="display: none; bottom: 62px; right: 16px; width: 220px;">
                             <div class="popover-item" id="option-input-url">
-                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2"
+                                    fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                </svg>
                                 <span>Input image URL</span>
                             </div>
                             <div class="popover-item" id="option-upload-image">
-                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2"
+                                    fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
                                 <span>Upload image</span>
                             </div>
-                            
+
                             <!-- URL Input sub-panel inside the popover -->
-                            <div id="popover-url-panel" style="display: none; padding: 8px; flex-direction: column; gap: 8px;">
-                                <input type="text" id="popover-url-input" class="input-shadcn" placeholder="https://..." style="font-size: 0.8rem; padding: 6px 10px; width: 100%;">
+                            <div id="popover-url-panel"
+                                style="display: none; padding: 8px; flex-direction: column; gap: 8px;">
+                                <input type="text" id="popover-url-input" class="input-shadcn" placeholder="https://..."
+                                    style="font-size: 0.8rem; padding: 6px 10px; width: 100%;">
                                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                    <button type="button" id="btn-popover-url-cancel" class="btn btn-secondary" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 8px;">Cancel</button>
-                                    <button type="button" id="btn-popover-url-ok" class="btn btn-primary" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 8px;">OK</button>
+                                    <button type="button" id="btn-popover-url-cancel" class="btn btn-secondary"
+                                        style="font-size: 0.75rem; padding: 4px 10px; border-radius: 8px;">Cancel</button>
+                                    <button type="button" id="btn-popover-url-ok" class="btn btn-primary"
+                                        style="font-size: 0.75rem; padding: 4px 10px; border-radius: 8px;">OK</button>
                                 </div>
                             </div>
                         </div>
@@ -214,7 +247,10 @@
                                 <button id="adj-servings-plus" class="adj-btn plus" title="Increase servings">+</button>
                             </div>
                         </div>
-                        <div id="view-meal-source" class="view-source-row"></div>
+                        <div class="view-meta-row">
+                            <div id="view-meal-source" class="view-source-row"></div>
+                            <div id="view-meal-types-wrapper" class="view-meal-types-wrapper"></div>
+                        </div>
                         <div id="view-meal-stats" class="view-stats-row"></div>
 
 
@@ -227,9 +263,14 @@
                             <div class="view-section-header">
                                 <div class="view-section-title">Ingredients</div>
                                 <div style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
-                                    <div class="unit-switch-container" style="display: flex; background: var(--surface); border-radius: 5px; overflow: hidden; padding: 2px; font-size: 0.75rem; font-weight: 500;">
-                                        <div id="unit-switch-origin" style="padding: 0px 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; background: var(--primary); color: white;">Origin</div>
-                                        <div id="unit-switch-metric" style="padding: 0px 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; color: var(--text-muted);">Metric</div>
+                                    <div class="unit-switch-container"
+                                        style="display: flex; background: var(--surface); border-radius: 5px; overflow: hidden; padding: 2px; font-size: 0.75rem; font-weight: 500;">
+                                        <div id="unit-switch-origin"
+                                            style="padding: 0px 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; background: var(--primary); color: white;">
+                                            Origin</div>
+                                        <div id="unit-switch-metric"
+                                            style="padding: 0px 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; color: var(--text-muted);">
+                                            Metric</div>
                                     </div>
                                     <div id="view-ingredient-count" class="view-ingredients-count">0</div>
                                 </div>
@@ -368,15 +409,6 @@
                             <option value="remedy">💊 Remedy</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="food-form-meal-type">Meal Type</label>
-                        <select id="food-form-meal-type" class="select-shadcn">
-                            <option value="breakfast">🍳 Breakfast</option>
-                            <option value="lunch/dinner">🍲 Lunch/Dinner</option>
-                            <option value="both">🍱 Both</option>
-                            <option value="none">✖ None</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" id="food-modal-cancel">Cancel</button>
@@ -501,6 +533,236 @@
         </div>
     </div>
 
+    <!-- ═══ MODAL: Home Page Configuration ═══ -->
+    <div id="home-config-modal" class="modal-overlay">
+        <div class="modal modal-glass" style="max-width: 80vw; width: auto;">
+            <div class="modal-header">
+                <h3><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                        fill="currentColor" style="vertical-align: middle; margin-right: 8px;">
+                        <path
+                            d="M 14.4093 2.29252 C 15.3919 2.53569 16.3171 2.92399 17.1605 3.43303 C 17.5108 3.64448 17.697 4.04803 17.6305 4.45178 C 17.5169 5.14078 17.6882 5.66772 18.0103 5.98974 C 18.3323 6.31176 18.8592 6.48308 19.5482 6.36954 C 19.952 6.30301 20.3555 6.48917 20.567 6.83951 C 21.076 7.68291 21.4643 8.60804 21.7074 9.59069 C 21.8058 9.98806 21.652 10.4052 21.3193 10.6437 C 20.7515 11.0507 20.4999 11.5446 20.4999 12.0001 C 20.4999 12.4556 20.7515 12.9495 21.3193 13.3565 C 21.652 13.5949 21.8058 14.0121 21.7074 14.4095 C 21.4643 15.3922 21.0759 16.3173 20.5669 17.1608 C 20.3555 17.5111 19.9519 17.6973 19.5482 17.6307 C 18.8592 17.5172 18.3323 17.6885 18.0103 18.0105 C 17.6883 18.3325 17.5169 18.8595 17.6305 19.5484 C 17.697 19.9522 17.5108 20.3557 17.1605 20.5672 C 16.3171 21.0762 15.3919 21.4645 14.4092 21.7077 C 14.0119 21.806 13.5947 21.6522 13.3562 21.3195 C 12.9493 20.7517 12.4554 20.5001 11.9999 20.5001 C 11.5443 20.5001 11.0504 20.7517 10.6435 21.3195 C 10.405 21.6522 9.98782 21.806 9.59046 21.7077 C 8.60778 21.4645 7.68263 21.0762 6.83922 20.5672 C 6.48888 20.3557 6.30272 19.9522 6.36925 19.5484 C 6.48277 18.8595 6.31146 18.3325 5.98944 18.0105 C 5.66743 17.6885 5.14051 17.5172 4.45154 17.6307 C 4.04779 17.6973 3.64424 17.5111 3.4328 17.1608 C 2.92375 16.3173 2.53545 15.3922 2.29227 14.4095 C 2.19394 14.0121 2.34772 13.5949 2.68044 13.3565 C 3.24825 12.9495 3.49985 12.4556 3.49985 12.0001 C 3.49985 11.5446 3.24825 11.0507 2.68044 10.6437 C 2.34772 10.4052 2.19394 9.98806 2.29227 9.5907 C 2.53544 8.60804 2.92373 7.68291 3.43274 6.83952 C 3.64419 6.48918 4.04774 6.30301 4.4515 6.36955 C 5.14049 6.48309 5.66743 6.31177 5.98945 5.98975 C 6.31147 5.66772 6.48279 5.14078 6.36924 4.45179 C 6.30271 4.04803 6.48887 3.64447 6.83921 3.43303 C 7.68262 2.92399 8.60777 2.53569 9.59045 2.29252 C 9.98782 2.19418 10.405 2.34797 10.6435 2.68069 C 11.0504 3.24849 11.5443 3.50009 11.9999 3.50009 C 12.4554 3.50009 12.9493 3.24849 13.3562 2.68069 C 13.5947 2.34797 14.0119 2.19418 14.4093 2.29252 Z M 11.9999 7 C 9.23852 7 6.99995 9.23858 6.99995 12 C 6.99995 14.7614 9.23852 17 11.9999 17 C 14.7614 17 16.9999 14.7614 16.9999 12 C 16.9999 9.23858 14.7614 7 11.9999 7 Z M 11.9999 9 C 13.6568 9 14.9999 10.3431 14.9999 12 C 14.9999 13.6569 13.6568 15 11.9999 15 C 10.3431 15 8.99995 13.6569 8.99995 12 C 8.99995 10.3431 10.3431 9 11.9999 9 Z" />
+                    </svg>Home Page Configuration</h3>
+                <button class="btn-icon" id="btn-close-config-modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-content config-modal-body">
+                <!-- Section 1: Meal Slots -->
+                <div class="config-accordion open">
+                    <button class="config-accordion-header">
+                        1. Meal Slots Per Day
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="config-accordion-body">
+                        <div class="stepper-row">
+                            <span>🍳 Breakfast Slots</span>
+                            <div class="stepper-control">
+                                <button class="stepper-btn" data-target="slot_count_breakfast"
+                                    data-action="minus">−</button>
+                                <span class="stepper-value" id="disp_slot_count_breakfast">1</span>
+                                <button class="stepper-btn" data-target="slot_count_breakfast"
+                                    data-action="plus">+</button>
+                            </div>
+                        </div>
+                        <div class="stepper-row">
+                            <span>🍲 Lunch Slots</span>
+                            <div class="stepper-control">
+                                <button class="stepper-btn" data-target="slot_count_lunch"
+                                    data-action="minus">−</button>
+                                <span class="stepper-value" id="disp_slot_count_lunch">3</span>
+                                <button class="stepper-btn" data-target="slot_count_lunch" data-action="plus">+</button>
+                            </div>
+                        </div>
+                        <div class="stepper-row">
+                            <span>🍽️ Dinner Slots</span>
+                            <div class="stepper-control">
+                                <button class="stepper-btn" data-target="slot_count_dinner"
+                                    data-action="minus">−</button>
+                                <span class="stepper-value" id="disp_slot_count_dinner">3</span>
+                                <button class="stepper-btn" data-target="slot_count_dinner"
+                                    data-action="plus">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Card Dimensions -->
+                <div class="config-accordion open">
+                    <button class="config-accordion-header">
+                        2. Card Dimensions
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="config-accordion-body">
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span>Full Card Height (single)</span>
+                                <span class="slider-value-display"><span id="val_card_height_single">420</span>px</span>
+                            </div>
+                            <input type="range" id="input_card_height_single" class="config-slider" min="200" max="800"
+                                step="10">
+                        </div>
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span>Compact Card Height</span>
+                                <span class="slider-value-display"><span id="val_card_height_compact">85</span>px</span>
+                            </div>
+                            <input type="range" id="input_card_height_compact" class="config-slider" min="40" max="200"
+                                step="5">
+                        </div>
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span>Card Gap</span>
+                                <span class="slider-value-display"><span id="val_card_gap">10</span>px</span>
+                            </div>
+                            <input type="range" id="input_card_gap" class="config-slider" min="0" max="40" step="2">
+                        </div>
+                        <div
+                            style="padding: 12px; background: rgba(59, 130, 246, 0.05); border-radius: var(--radius); border: 1px dashed var(--primary-light); font-size: 0.9rem; color: var(--text-muted);">
+                            <strong>Note:</strong> <code>Full Multi</code> card height is auto-calculated dynamically
+                            based on available column space and slot counts.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Categories -->
+                <div class="config-accordion">
+                    <button class="config-accordion-header">
+                        3. Classification Keywords (Pools)
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="config-accordion-body">
+                        <button class="btn btn-primary" id="btn-add-category" style="margin-bottom: 16px;">+ Add
+                            Category</button>
+                        <div id="config-categories-list" class="category-manager">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Slot Configuration -->
+                <div class="config-accordion open">
+                    <button class="config-accordion-header">
+                        4. Slot Configuration (Per-Slot Details)
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="config-accordion-body" style="overflow-x: auto;">
+                        <table class="config-grid">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 90px;">Slot</th>
+                                    <th style="min-width: 120px;">Card Type</th>
+                                    <th style="min-width: 140px;">Pool (Categories)</th>
+                                    <th style="min-width: 140px;">Meal Type Filter</th>
+                                    <th>Include Keywords</th>
+                                    <th>Exclude Keywords</th>
+                                </tr>
+                            </thead>
+                            <tbody id="config-slots-tbody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 5: Generation Parameters -->
+                <div class="config-accordion open">
+                    <button class="config-accordion-header">
+                        5. Generation Parameters
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="config-accordion-body">
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span>Vietnamese Language Bias (Breakfast)</span>
+                                <span class="slider-value-display"><span id="val_vi_bias_breakfast">60</span>%</span>
+                            </div>
+                            <input type="range" id="input_vi_bias_breakfast" class="config-slider" min="0" max="100"
+                                step="5">
+                        </div>
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span>Vietnamese Language Bias (Lunch)</span>
+                                <span class="slider-value-display"><span id="val_vi_bias_lunch">80</span>%</span>
+                            </div>
+                            <input type="range" id="input_vi_bias_lunch" class="config-slider" min="0" max="100"
+                                step="5">
+                        </div>
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span>Vietnamese Language Bias (Dinner)</span>
+                                <span class="slider-value-display"><span id="val_vi_bias_dinner">80</span>%</span>
+                            </div>
+                            <input type="range" id="input_vi_bias_dinner" class="config-slider" min="0" max="100"
+                                step="5">
+                        </div>
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span>Favorite Boost Multiplier</span>
+                                <span class="slider-value-display"><span id="val_fav_boost">1.3</span>×</span>
+                            </div>
+                            <input type="range" id="input_fav_boost" class="config-slider" min="1.0" max="3.0"
+                                step="0.1">
+                        </div>
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span>Remedy Ingredient Boost Multiplier</span>
+                                <span class="slider-value-display"><span id="val_remedy_boost">1.3</span>×</span>
+                            </div>
+                            <input type="range" id="input_remedy_boost" class="config-slider" min="1.0" max="3.0"
+                                step="0.1">
+                        </div>
+                        <div class="slider-row">
+                            <div class="slider-header">
+                                <span class="slider-label-with-info">
+                                    Avoid Ingredient Threshold
+                                    <span class="config-info-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M12 16v-4"></path>
+                                            <path d="M12 8h.01"></path>
+                                        </svg>
+                                        <span class="config-tooltip">Excludes recipes from meal plan generation if their ratio of GERD-trigger ('avoid') ingredients exceeds this threshold (favorites are exempt).</span>
+                                    </span>
+                                </span>
+                                <span class="slider-value-display"><span id="val_avoid_thresh">25</span>%</span>
+                            </div>
+                            <input type="range" id="input_avoid_thresh" class="config-slider" min="0" max="100"
+                                step="5">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer" style="justify-content: space-between;">
+                <button class="btn btn-secondary" id="btn-config-reset" style="color: #e74c3c;">Reset to
+                    Defaults</button>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" id="btn-config-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="btn-config-save">Save Configuration</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ MODAL: Custom Confirm (Shadcn Alert Style) ═══ -->
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal modal-alert">
@@ -526,21 +788,28 @@
             <div class="guide-header">
                 <h4 id="guide-title">Guide Title</h4>
                 <button class="btn-icon" id="guide-close" title="Close Guide" style="padding: 2px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                    </svg>
                 </button>
             </div>
             <div class="guide-body">
                 <p id="guide-content">Guide Content</p>
             </div>
             <div class="guide-footer">
-                <button class="btn btn-secondary" id="guide-back" style="padding: 6px 12px; font-size: 0.8rem;">Back</button>
+                <button class="btn btn-secondary" id="guide-back"
+                    style="padding: 6px 12px; font-size: 0.8rem;">Back</button>
                 <div class="guide-progress" id="guide-progress">1 / 5</div>
-                <button class="btn btn-primary" id="guide-next" style="padding: 6px 12px; font-size: 0.8rem;">Next</button>
+                <button class="btn btn-primary" id="guide-next"
+                    style="padding: 6px 12px; font-size: 0.8rem;">Next</button>
             </div>
         </div>
     </div>
 
     <script src="/static/js/app.js?v=20260901_4" type="module"></script>
+    <script src="/static/js/home-config.js?v=20260902_1" type="module"></script>
 </body>
 
 </html>

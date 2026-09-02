@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse
 
 import asyncio
 from app.core.database import init_db
-from app.api import foods, meals, favorites, meal_plan, fdc, scraper
+from app.api import foods, meals, favorites, meal_plan, fdc, scraper, config
 from app.api.fdc import check_and_trigger_fdc_auto_sync
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,6 +44,7 @@ app.include_router(favorites.router)
 app.include_router(meal_plan.router)
 app.include_router(fdc.router)
 app.include_router(scraper.router)
+app.include_router(config.router)
 
 
 @app.get("/", response_class=HTMLResponse)

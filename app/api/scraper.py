@@ -495,25 +495,13 @@ async def populate_meals():
                 return {"message": "Hard limit reached", "total": total_meals}
 
             # Fetch dynamic queries
-            breakfast_res = await session.execute(
+            food_res = await session.execute(
                 select(Food.name)
                 .where(Food.reflux.in_(["remedy", "ok"]))
-                .where(Food.meal_type.in_(["breakfast", "both"]))
                 .order_by(func.random())
-                .limit(10)
+                .limit(20)
             )
-            breakfast_queries = [row[0] for row in breakfast_res.fetchall()]
-            
-            lunch_res = await session.execute(
-                select(Food.name)
-                .where(Food.reflux.in_(["remedy", "ok"]))
-                .where(Food.meal_type.in_(["lunch/dinner", "both"]))
-                .order_by(func.random())
-                .limit(10)
-            )
-            lunch_queries = [row[0] for row in lunch_res.fetchall()]
-            
-            dynamic_queries = list(set(breakfast_queries + lunch_queries))
+            dynamic_queries = list(set([row[0] for row in food_res.fetchall()]))
             num_queries = len(dynamic_queries)
             
             if num_queries == 0:

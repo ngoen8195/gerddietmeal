@@ -33,6 +33,7 @@ class Meal(Base):
     cook_time_hours = Column(Float, default=0.0)
     servings = Column(String(50), default="")
     language = Column(String(10), default="en")
+    meal_type = Column(String(200), default="none")
     has_avoid_food = Column(Boolean, default=False)
     calories_incomplete = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

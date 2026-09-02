@@ -78,7 +78,7 @@ class MealBase(BaseModel):
     cook_time_hours: Optional[float] = 0.0
     servings: Optional[str] = ""
     language: Optional[str] = "en"
-    meal_type: Optional[str] = "other"
+    meal_type: Optional[str] = "none"
     is_favorite: Optional[bool] = False
 
     class Config:
@@ -98,6 +98,7 @@ class MealUpdate(BaseModel):
     calories: Optional[float] = None
     cook_time_hours: Optional[float] = None
     servings: Optional[str] = None
+    meal_type: Optional[str] = None
     ingredients: Optional[list[IngredientIn]] = None
 
 

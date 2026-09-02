@@ -1,9 +1,9 @@
 """Meal Plan generation API — the core intelligence of the app.
 
 Business Rules:
-- Generates a Mon→Sun plan with Breakfast (1 slot), Lunch (3 slots), Dinner (3 slots) per day.
+- Generates a Mon→Sun plan using user-configured slot layouts.
 - Only includes meals whose ingredients are NOT in the "avoid" food list.
-- Favorites get 1.3x higher probability of appearing (approx).
+- Favorites get higher probability of appearing (configurable).
 - Saves generated plans to the database permanently.
 """
 import random
@@ -14,19 +14,25 @@ from sqlalchemy import select, delete, func
 from sqlalchemy.orm import selectinload
 from app.core.database import get_session
 from app.models.models import Meal, FavoriteMeal, Food, PlannedMeal
+from app.api.config import get_home_config
 
-from app.api.utils import get_avoid_food_names, format_meal_out, check_ingredient_avoid
+from app.api.utils import get_avoid_food_names, get_remedy_food_names, format_meal_out, check_ingredient_avoid, check_ingredient_remedy
 
 router = APIRouter(prefix="/api/meal-plan", tags=["meal-plan"])
 
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-async def _get_meal_pools(session: AsyncSession):
-    # 1. Get avoid food names
+async def _get_meal_pools(session: AsyncSession, config: dict):
+    # 1. Get avoid & remedy food names
     avoid_result = await session.execute(
         select(Food.name).where(Food.reflux == "avoid")
     )
     avoid_names = {row[0].lower() for row in avoid_result.fetchall()}
+
+    remedy_result = await session.execute(
+        select(Food.name).where(Food.reflux == "remedy")
+    )
+    remedy_names = {row[0].lower() for row in remedy_result.fetchall()}
 
     # 2. Get favorite meal IDs for bypass and boost
     fav_result = await session.execute(select(FavoriteMeal.meal_id))
@@ -38,29 +44,25 @@ async def _get_meal_pools(session: AsyncSession):
     )
     all_meals = meals_result.unique().scalars().all()
 
-    # 4. Filter safe meals and split into pools
-    breakfast_keywords = ["breakfast", "smoothie", "yogurt", "scrambled egg", "gluten-free bread", "egg", "toast", "oatmeal", "pancake", "omelet", "bagel", "croissant", "granola", "fruit", "ham", "syrup", "pastry", "bữa sáng", "sữa chua", "sinh tố", "trứng", "bánh mì", "phở", "bún", "miến", "cháo", "xôi", "mì", "bơ", "bánh bao", "bánh cuốn", "bánh giầy", "bánh giò", "trứng", "ngũ cốc", "mứt", "mật ong"]
-    meat_fish_keywords = ["meat", "beef", "pork", "chicken", "fish", "shrimp", "tofu", "egg", "steak", "ham", "sườn", "thịt", "cá", "tôm", "gà", "heo", "bò", "vịt", "đậu hũ", "trứng", "thịt kho", "cá kho", "thịt luộc", "thịt nướng"]
-    soup_keywords = ["soup", "stew", "chowder", "bisque", "bouillon", "consommé", "minestrone", "borscht", "gazpacho", "canh", "phở", "bún", "miến", "lẩu", "súp", "canh chua", "canh cá", "canh rau", "canh cải", "canh bí", "canh mướp", "canh bầu", "canh trứng"]
+    # 4. Filter safe meals and split into pools based on config
+    pools = {"none": []}
+    cat_keywords = config.get("categories", {})
+    for cat in cat_keywords.keys():
+        pools[f"{cat}_vi"] = []
+        pools[f"{cat}_en"] = []
     
-    pools = {
-        "breakfast_vi": [], "breakfast_en": [],
-        "soup_vi": [], "soup_en": [],
-        "veg_vi": [], "veg_en": [],
-        "meat_vi": [], "meat_en": []
-    }
+    avoid_threshold = config.get("avoid_threshold_percent", 25) / 100.0
     
     safe_meals_count = 0
+    meal_remedy_map = {}
 
     for meal in all_meals:
         ingredient_names = [ing.name.lower() for ing in meal.ingredients]
         total_ingredients = len(ingredient_names)
 
-        # Avoid division by zero if a meal has no ingredients
         if total_ingredients == 0:
             continue
 
-        # Count how many ingredients match a word from avoid_names
         avoid_count = sum(
             1 for ing_name in ingredient_names
             if check_ingredient_avoid(ing_name, avoid_names)
@@ -68,42 +70,49 @@ async def _get_meal_pools(session: AsyncSession):
 
         avoid_proportion = avoid_count / total_ingredients
 
-        # Rule: Only allow meals with <= 20% avoid ingredients, UNLESS it is a favorite
-        if avoid_proportion > 0.25 and meal.id not in fav_ids:
+        # Rule: Only allow meals with <= avoid_threshold, UNLESS it is a favorite
+        if avoid_proportion > avoid_threshold and meal.id not in fav_ids:
             continue   
             
         safe_meals_count += 1
         name_lower = meal.name.lower()
         
-        has_meat = any(any(kw in ing for kw in meat_fish_keywords) for ing in ingredient_names) or \
-                   any(kw in name_lower for kw in meat_fish_keywords)
-        
-        is_breakfast = any(kw in name_lower for kw in breakfast_keywords) or \
-                       any(any(kw in ing for kw in breakfast_keywords) for ing in ingredient_names)
+        # Check if meal contains any remedy ingredients
+        has_remedy = any(
+            check_ingredient_remedy(ing_name, remedy_names)
+            for ing_name in ingredient_names
+        )
+        meal_remedy_map[meal.id] = has_remedy
 
-        # Breakfast rule: No meat/fish
-        if is_breakfast and not has_meat:
-            if meal.language == "vi": pools["breakfast_vi"].append(meal)
-            else: pools["breakfast_en"].append(meal)
-        elif not is_breakfast:
-            is_soup = any(kw in name_lower for kw in soup_keywords)
-            
-            if is_soup:
-                if meal.language == "vi": pools["soup_vi"].append(meal)
-                else: pools["soup_en"].append(meal)
-            elif not has_meat:
-                if meal.language == "vi": pools["veg_vi"].append(meal)
-                else: pools["veg_en"].append(meal)
+        # Determine categories this meal matches
+        matched_categories = []
+        for cat, kws in cat_keywords.items():
+            if any(any(kw in ing for kw in kws) for ing in ingredient_names) or any(kw in name_lower for kw in kws):
+                matched_categories.append(cat)
+
+        # Assign to pools
+        for cat in matched_categories:
+            if meal.language == "vi":
+                pools[f"{cat}_vi"].append(meal)
             else:
-                if meal.language == "vi": pools["meat_vi"].append(meal)
-                else: pools["meat_en"].append(meal)
+                pools[f"{cat}_en"].append(meal)
+                
+        # Also always put in the "none" pool (general pool)
+        pools["none"].append(meal)
 
-    # 5. Boost logic: favorites get 1.3x weight (represented by adding more copies)
+    # 5. Boost logic
+    favorite_boost = config.get("favorite_boost_weight", 1.3)
+    remedy_boost = config.get("remedy_boost_weight", 1.3)
+    
     def _apply_weights(pool):
         weighted = []
         for meal in pool:
-            # Base weight 10, favorite gets 13
-            weight = 13 if meal.id in fav_ids else 10
+            multiplier = 1.0
+            if meal.id in fav_ids:
+                multiplier *= favorite_boost
+            if meal_remedy_map.get(meal.id, False):
+                multiplier *= remedy_boost
+            weight = max(1, int(round(10 * multiplier)))
             weighted.extend([meal] * weight)
         return weighted
 
@@ -112,6 +121,34 @@ async def _get_meal_pools(session: AsyncSession):
         
     return pools, fav_ids, safe_meals_count, len(all_meals)
 
+def _filter_pool_by_slot(pool, slot_id, config):
+    inc_kws = config.get("slot_include_keywords", {}).get(slot_id, [])
+    exc_kws = config.get("slot_exclude_keywords", {}).get(slot_id, [])
+    allowed_types = config.get("slot_meal_types", {}).get(slot_id, [])
+    
+    filtered = []
+    for meal in pool:
+        # Meal type check
+        m_types = [t.strip() for t in (meal.meal_type or "none").split(",")] if meal.meal_type else ["none"]
+        
+        if allowed_types and not any(t in allowed_types for t in m_types):
+            continue
+            
+        name_lower = meal.name.lower()
+        ing_names = [i.name.lower() for i in meal.ingredients]
+        
+        # Include check
+        if inc_kws:
+            if not any(kw in name_lower or any(kw in ing for ing in ing_names) for kw in inc_kws):
+                continue
+        
+        # Exclude check
+        if exc_kws:
+            if any(kw in name_lower or any(kw in ing for ing in ing_names) for kw in exc_kws):
+                continue
+                
+        filtered.append(meal)
+    return filtered
 
 def _pick_meal(pool: list, used_ids: set, fav_ids: set):
     """Pick a meal from the weighted pool, preferring unused meals."""
@@ -136,57 +173,83 @@ def _get_pool(vi_pool, en_pool, bias=0.8):
 @router.post("/generate")
 async def generate_meal_plan(start_date: str, session: AsyncSession = Depends(get_session)):
     """Generate a weekly meal plan from the Meal Library and persist to DB."""
-    
+    import traceback
     try:
-        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
-        
-    # Generate the 7 dates
-    week_dates = [(start_dt + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
+        try:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+            
+        config = await get_home_config(session)
+        week_dates = [(start_dt + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
 
-    # 1. Delete existing plan for this week
-    await session.execute(
-        delete(PlannedMeal).where(PlannedMeal.date.in_(week_dates))
-    )
+        # 1. Delete existing plan for this week
+        await session.execute(
+            delete(PlannedMeal).where(PlannedMeal.date.in_(week_dates))
+        )
 
-    pools, fav_ids, safe_count, total_count = await _get_meal_pools(session)
-    used_ids = set()
-    
-    new_planned_meals = []
+        pools, fav_ids, safe_count, total_count = await _get_meal_pools(session, config)
+        used_ids = set()
+        new_planned_meals = []
 
-    for i, day in enumerate(DAYS):
-        current_date = week_dates[i]
-        
-        # Breakfast: 1 slot (60% bias)
-        breakfast = _pick_meal(_get_pool(pools["breakfast_vi"], pools["breakfast_en"], bias=0.6), used_ids, fav_ids)
-        if breakfast:
-            new_planned_meals.append(PlannedMeal(date=current_date, meal_type="breakfast_0", meal_id=breakfast.id))
+        # Get config variables
+        slots_config = {
+            "breakfast": config.get("slot_count_breakfast", 1),
+            "lunch": config.get("slot_count_lunch", 3),
+            "dinner": config.get("slot_count_dinner", 3)
+        }
+        pool_assignments = config.get("slot_pool_assignments", {})
+        bias = {
+            "breakfast": config.get("vi_language_bias_breakfast", 0.6),
+            "lunch": config.get("vi_language_bias_lunch", 0.8),
+            "dinner": config.get("vi_language_bias_dinner", 0.8)
+        }
 
-        # Lunch: 3 slots [Soup, Veg, Meat] (80% bias)
-        lunch_0 = _pick_meal(_get_pool(pools["meat_vi"], pools["meat_en"], bias=0.8), used_ids, fav_ids)
-        if lunch_0: new_planned_meals.append(PlannedMeal(date=current_date, meal_type="lunch_0", meal_id=lunch_0.id))
-        
-        lunch_1 = _pick_meal(_get_pool(pools["veg_vi"], pools["veg_en"], bias=0.8), used_ids, fav_ids)
-        if lunch_1: new_planned_meals.append(PlannedMeal(date=current_date, meal_type="lunch_1", meal_id=lunch_1.id))
-        
-        lunch_2 = _pick_meal(_get_pool(pools["soup_vi"], pools["soup_en"], bias=0.8), used_ids, fav_ids)
-        if lunch_2: new_planned_meals.append(PlannedMeal(date=current_date, meal_type="lunch_2", meal_id=lunch_2.id))
+        for i, day in enumerate(DAYS):
+            current_date = week_dates[i]
+            
+            for meal_cat in ["breakfast", "lunch", "dinner"]:
+                count = slots_config[meal_cat]
+                for slot_idx in range(count):
+                    slot_id = f"{meal_cat}_{slot_idx}"
+                    assigned_pools = pool_assignments.get(slot_id, ["none"])
+                    
+                    # Combine assigned pools
+                    combined_vi = []
+                    combined_en = []
+                    if not assigned_pools or assigned_pools == ["none"]:
+                        combined_vi.extend([m for m in pools["none"] if m.language == "vi"])
+                        combined_en.extend([m for m in pools["none"] if m.language != "vi"])
+                    else:
+                        for p in assigned_pools:
+                            if p == "none":
+                                combined_vi.extend([m for m in pools["none"] if m.language == "vi"])
+                                combined_en.extend([m for m in pools["none"] if m.language != "vi"])
+                            else:
+                                combined_vi.extend(pools.get(f"{p}_vi", []))
+                                combined_en.extend(pools.get(f"{p}_en", []))
+                    
+                    filtered_vi = _filter_pool_by_slot(combined_vi, slot_id, config)
+                    filtered_en = _filter_pool_by_slot(combined_en, slot_id, config)
+                    
+                    final_pool = _get_pool(filtered_vi, filtered_en, bias=bias[meal_cat])
+                    
+                    # Fallback to general pool if empty after filters
+                    if not final_pool:
+                        fallback_vi = _filter_pool_by_slot([m for m in pools["none"] if m.language == "vi"], slot_id, config)
+                        fallback_en = _filter_pool_by_slot([m for m in pools["none"] if m.language != "vi"], slot_id, config)
+                        final_pool = _get_pool(fallback_vi, fallback_en, bias=bias[meal_cat])
+                        
+                    picked = _pick_meal(final_pool, used_ids, fav_ids)
+                    if picked:
+                        new_planned_meals.append(PlannedMeal(date=current_date, meal_type=slot_id, meal_id=picked.id))
 
-        # Dinner: 3 slots [Soup, Veg, Meat]
-        dinner_0 = _pick_meal(_get_pool(pools["meat_vi"], pools["meat_en"]), used_ids, fav_ids)
-        if dinner_0: new_planned_meals.append(PlannedMeal(date=current_date, meal_type="dinner_0", meal_id=dinner_0.id))
+        session.add_all(new_planned_meals)
+        await session.commit()
         
-        dinner_1 = _pick_meal(_get_pool(pools["veg_vi"], pools["veg_en"]), used_ids, fav_ids)
-        if dinner_1: new_planned_meals.append(PlannedMeal(date=current_date, meal_type="dinner_1", meal_id=dinner_1.id))
-        
-        dinner_2 = _pick_meal(_get_pool(pools["soup_vi"], pools["soup_en"]), used_ids, fav_ids)
-        if dinner_2: new_planned_meals.append(PlannedMeal(date=current_date, meal_type="dinner_2", meal_id=dinner_2.id))
-
-    session.add_all(new_planned_meals)
-    await session.commit()
-    
-    return {"status": "success", "message": "Meal plan generated and saved."}
+        return {"status": "success", "message": "Meal plan generated and saved."}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "traceback": traceback.format_exc()}
 
 
 @router.get("/week/{start_date}")
@@ -197,6 +260,7 @@ async def get_weekly_plan(start_date: str, session: AsyncSession = Depends(get_s
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
         
+    config = await get_home_config(session)
     week_dates = [(start_dt + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
     
     # Fetch planned meals with their meal data
@@ -211,13 +275,25 @@ async def get_weekly_plan(start_date: str, session: AsyncSession = Depends(get_s
     
     slots = []
     
+    slots_config = {
+        "breakfast": config.get("slot_count_breakfast", 1),
+        "lunch": config.get("slot_count_lunch", 3),
+        "dinner": config.get("slot_count_dinner", 3)
+    }
+    
+    # Generate expected slots
+    expected_slots = []
+    for cat, count in slots_config.items():
+        for i in range(count):
+            expected_slots.append(f"{cat}_{i}")
+    
     # Reconstruct slots structure
     for i, current_date in enumerate(week_dates):
         day_name = DAYS[i]
         
         day_meals = [pm for pm in planned_meals if pm.date == current_date]
         
-        for meal_type_idx in ["breakfast_0", "lunch_0", "lunch_1", "lunch_2", "dinner_0", "dinner_1", "dinner_2"]:
+        for meal_type_idx in expected_slots:
             parts = meal_type_idx.split("_")
             base_type = parts[0]
             slot_idx = int(parts[1])
@@ -238,7 +314,8 @@ async def get_weekly_plan(start_date: str, session: AsyncSession = Depends(get_s
 @router.post("/refresh")
 async def refresh_single_meal(date: str, meal_type: str, session: AsyncSession = Depends(get_session)):
     """Refresh a single specific meal slot for a date."""
-    pools, fav_ids, _, _ = await _get_meal_pools(session)
+    config = await get_home_config(session)
+    pools, fav_ids, _, _ = await _get_meal_pools(session, config)
     
     # Get current planned meal
     result = await session.execute(
@@ -246,23 +323,42 @@ async def refresh_single_meal(date: str, meal_type: str, session: AsyncSession =
     )
     current_pm = result.scalar_one_or_none()
     
-    # Determine the pool based on meal_type
-    pool_choice = []
-    if meal_type == "breakfast_0":
-        pool_choice = _get_pool(pools["breakfast_vi"], pools["breakfast_en"], bias=0.6)
-    elif meal_type in ["lunch_0", "dinner_0"]:
-        pool_choice = _get_pool(pools["meat_vi"], pools["meat_en"], bias=0.8)
-    elif meal_type in ["lunch_1", "dinner_1"]:
-        pool_choice = _get_pool(pools["veg_vi"], pools["veg_en"], bias=0.8)
-    elif meal_type in ["lunch_2", "dinner_2"]:
-        pool_choice = _get_pool(pools["soup_vi"], pools["soup_en"], bias=0.8)
+    # Determine the pool based on config
+    base_type = meal_type.split("_")[0]
+    assigned_pools = config.get("slot_pool_assignments", {}).get(meal_type, ["none"])
+    bias_map = {
+        "breakfast": config.get("vi_language_bias_breakfast", 0.6),
+        "lunch": config.get("vi_language_bias_lunch", 0.8),
+        "dinner": config.get("vi_language_bias_dinner", 0.8)
+    }
+    
+    combined_vi = []
+    combined_en = []
+    if not assigned_pools or assigned_pools == ["none"]:
+        combined_vi.extend([m for m in pools["none"] if m.language == "vi"])
+        combined_en.extend([m for m in pools["none"] if m.language != "vi"])
+    else:
+        for p in assigned_pools:
+            if p == "none":
+                combined_vi.extend([m for m in pools["none"] if m.language == "vi"])
+                combined_en.extend([m for m in pools["none"] if m.language != "vi"])
+            else:
+                combined_vi.extend(pools.get(f"{p}_vi", []))
+                combined_en.extend(pools.get(f"{p}_en", []))
+            
+    filtered_vi = _filter_pool_by_slot(combined_vi, meal_type, config)
+    filtered_en = _filter_pool_by_slot(combined_en, meal_type, config)
+    
+    pool_choice = _get_pool(filtered_vi, filtered_en, bias=bias_map.get(base_type, 0.8))
         
     if not pool_choice:
-        raise HTTPException(status_code=404, detail="No suitable meals found to refresh.")
+        # Fallback to none pool
+        fallback_vi = _filter_pool_by_slot([m for m in pools["none"] if m.language == "vi"], meal_type, config)
+        fallback_en = _filter_pool_by_slot([m for m in pools["none"] if m.language != "vi"], meal_type, config)
+        pool_choice = _get_pool(fallback_vi, fallback_en, bias=bias_map.get(base_type, 0.8))
         
-    # Exclude current meal only if it still exists (to allow refreshing deleted placeholders)
+    # Exclude current meal only if it still exists
     if current_pm:
-        # Check if the meal actually exists in the database
         meal_exists_result = await session.execute(select(Meal).where(Meal.id == current_pm.meal_id))
         meal_exists = meal_exists_result.scalar_one_or_none() is not None
         
@@ -270,8 +366,7 @@ async def refresh_single_meal(date: str, meal_type: str, session: AsyncSession =
             pool_choice = [m for m in pool_choice if m.id != current_pm.meal_id]
             
         if not pool_choice: # Fallback if only 1 meal exists in pool
-            # Try a generic pool or just allow current if it's the only one
-            pool_choice = pools.get("breakfast_en") or pools.get("meat_en") or []
+            pool_choice = pools.get("none") or []
             
     if not pool_choice:
          raise HTTPException(status_code=404, detail="No alternative meals found to refresh.")
@@ -293,26 +388,17 @@ async def refresh_single_meal(date: str, meal_type: str, session: AsyncSession =
     updated_meal = updated_result.scalar_one_or_none()
     avoid_names = await get_avoid_food_names(session)
     return {"status": "success", "meal": format_meal_out(updated_meal, fav_ids, avoid_names)}
-    
+
 
 @router.post("/cleanup")
 async def cleanup_old_plans(session: AsyncSession = Depends(get_session)):
     """Remove planned meals outside the ±3 week range from current date."""
     now = datetime.now()
-    # Current week start (Monday)
     current_week_start = now - timedelta(days=now.weekday())
     current_week_start = current_week_start.replace(hour=0, minute=0, second=0, microsecond=0)
     
     start_range = (current_week_start - timedelta(weeks=3)).strftime("%Y-%m-%d")
-    end_range = (current_week_start + timedelta(weeks=4)).strftime("%Y-%m-%d") # +3 weeks means 4 weeks of range including current
-    
-    # Actually, the user said "+-3 weeks", so total 7 weeks.
-    # From current week's Monday - 3 weeks to current week's Monday + 3 weeks + 6 days.
-    
-    # Let's be precise:
-    # Visible range: [W-3, W-2, W-1, W, W+1, W+2, W+3]
-    # start_range = current_week_start - 3 weeks
-    # end_range = current_week_start + 4 weeks (exclusive)
+    end_range = (current_week_start + timedelta(weeks=4)).strftime("%Y-%m-%d")
     
     await session.execute(
         delete(PlannedMeal).where(
@@ -326,13 +412,11 @@ async def cleanup_old_plans(session: AsyncSession = Depends(get_session)):
 @router.post("/replace-specific")
 async def replace_specific_meal(date: str, meal_type: str, meal_id: int, session: AsyncSession = Depends(get_session)):
     """Replace a single specific meal slot with a chosen meal ID."""
-    # Check if meal exists
     meal_result = await session.execute(select(Meal).where(Meal.id == meal_id))
     meal = meal_result.scalar_one_or_none()
     if not meal:
         raise HTTPException(status_code=404, detail="Meal not found.")
         
-    # Get current planned meal
     result = await session.execute(
         select(PlannedMeal).where(PlannedMeal.date == date, PlannedMeal.meal_type == meal_type)
     )
@@ -346,4 +430,3 @@ async def replace_specific_meal(date: str, meal_type: str, meal_id: int, session
         
     await session.commit()
     return {"status": "success"}
-

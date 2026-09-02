@@ -173,6 +173,7 @@ async def create_meal(meal_data: MealCreate, session: AsyncSession = Depends(get
         cook_time_hours=meal_data.cook_time_hours,
         servings=_clean_servings(meal_data.servings),
         language=meal_data.language,
+        meal_type=meal_data.meal_type,
     )
     session.add(db_meal)
     await session.flush()
@@ -238,15 +239,14 @@ async def update_meal(meal_id: int, meal_data: MealUpdate, session: AsyncSession
 
     await session.commit()
 
-    # Expire all cached objects so that calculate_meal_calories issues a genuine
-    # fresh SELECT and picks up the newly committed ingredient rows, not any
-    # stale identity-map entry from earlier in this request.
+    # Expire all cached objects so that fresh data is retrieved
     session.expire_all()
 
-    # Recalculate calories after saving
-    from app.api.fdc import calculate_meal_calories
-    await calculate_meal_calories(meal_id, session)
-    await session.commit()
+    # Recalculate calories only if ingredients were updated
+    if meal_data.ingredients is not None:
+        from app.api.fdc import calculate_meal_calories
+        await calculate_meal_calories(meal_id, session)
+        await session.commit()
 
 
     result = await session.execute(

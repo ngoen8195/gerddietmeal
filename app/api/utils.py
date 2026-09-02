@@ -28,6 +28,15 @@ async def get_avoid_food_names(session: AsyncSession) -> Set[str]:
         if row[1]: avoid_set.add(row[1].lower())
     return avoid_set
 
+async def get_remedy_food_names(session: AsyncSession) -> Set[str]:
+    """Fetch all remedy food names (EN and VI) from the database."""
+    result = await session.execute(select(Food.name, Food.name_vi).where(Food.reflux == "remedy"))
+    remedy_set = set()
+    for row in result.fetchall():
+        if row[0]: remedy_set.add(row[0].lower())
+        if row[1]: remedy_set.add(row[1].lower())
+    return remedy_set
+
 CROSS_LANG_MAPPING = {
     "garlic": ["tỏi"],
     "onion": ["hành", "hành tây"],
@@ -119,6 +128,8 @@ def check_ingredient_avoid(ingredient_name: str, avoid_names: Set[str]) -> bool:
         
     return False
 
+check_ingredient_remedy = check_ingredient_avoid
+
 def format_meal_out(meal: Meal, fav_ids: Set[int], avoid_names: Set[str]) -> Dict:
     """Consolidated meal formatting for API responses."""
     ingredients_out = []
@@ -159,6 +170,7 @@ def format_meal_out(meal: Meal, fav_ids: Set[int], avoid_names: Set[str]) -> Dic
         "servings": meal.servings or "",
         "ingredient_count": total_ingredients,
         "language": meal.language or "en",
+        "meal_type": meal.meal_type or "none",
         "has_avoid_food": avoid_count > 0,
         "avoid_percentage": avoid_percentage,
         "is_favorite": meal.id in fav_ids,

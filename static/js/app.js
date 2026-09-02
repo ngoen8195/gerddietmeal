@@ -5,6 +5,7 @@ const API = {
     put: (url, body) => fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json()),
     del: (url) => fetch(url, { method: 'DELETE' }),
 };
+window.API = API;
 
 const DEFAULT_IMG = '/resources/default_meal_img.jpg';
 let currentMealPlan = [];
@@ -13,12 +14,55 @@ let allMeals = [];
 let allFavorites = [];
 let availableCategories = [];
 let scrapePollInterval = null;
+window.homeConfig = null;
 
 // Pagination state
 let foodPage = 1;
 let mealPage = 1;
 let favPage = 1;
-const PAGE_SIZE = 50;
+
+function getDynamicPageSize(gridId = 'meal-lib-grid') {
+    let cols = 1;
+    const gridEl = document.getElementById(gridId);
+    if (gridEl && gridEl.clientWidth > 0) {
+        const computedCols = window.getComputedStyle(gridEl).getPropertyValue('grid-template-columns');
+        if (computedCols && computedCols !== 'none') {
+            cols = computedCols.split(' ').filter(Boolean).length;
+        }
+    }
+    if (!cols || cols < 1) {
+        const containerWidth = (gridEl && gridEl.clientWidth) ? gridEl.clientWidth : (document.querySelector('.main-content')?.clientWidth || window.innerWidth - 60);
+        cols = Math.max(1, Math.floor((containerWidth + 20) / (260 + 20)));
+    }
+
+    // Find multiple of cols between 50 and 60 (preferring the largest in range)
+    let bestSize = 50;
+    let found = false;
+    for (let s = 60; s >= 50; s--) {
+        if (s % cols === 0) {
+            bestSize = s;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        const rowCount = Math.round(55 / cols) || 1;
+        bestSize = rowCount * cols;
+    }
+    return bestSize;
+}
+
+let dynamicPageResizeTimer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(dynamicPageResizeTimer);
+    dynamicPageResizeTimer = setTimeout(() => {
+        const activeTabBtn = document.querySelector('.tab-btn.active');
+        const activeTab = activeTabBtn ? activeTabBtn.dataset.tab : null;
+        if (activeTab === 'food-library') loadFoods(foodPage);
+        else if (activeTab === 'meal-library') loadMeals(mealPage);
+        else if (activeTab === 'favorites') loadFavorites(favPage);
+    }, 300);
+});
 
 // ─── UI Utilities ────────────────────────────────
 function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
@@ -60,6 +104,7 @@ function showNotification(title, message) {
 
     container.appendChild(alert);
 }
+window.showNotification = showNotification;
 
 function showConfirmDialog(title, message, confirmText = 'Delete') {
     return new Promise((resolve) => {
@@ -92,6 +137,7 @@ function showConfirmDialog(title, message, confirmText = 'Delete') {
         modal.classList.add('visible');
     });
 }
+window.showConfirmDialog = showConfirmDialog;
 
 // ─── Quantity Helpers ─────────────────────────────
 function parseQtyJS(qtyStr) {
@@ -448,13 +494,21 @@ function renderWeeklyPlan() {
         return;
     }
     grid.innerHTML = '';
+    
+    // Use fallback values if homeConfig is not loaded yet
+    const counts = {
+        breakfast: window.homeConfig ? window.homeConfig.slot_count_breakfast : 1,
+        lunch: window.homeConfig ? window.homeConfig.slot_count_lunch : 3,
+        dinner: window.homeConfig ? window.homeConfig.slot_count_dinner : 3
+    };
+
     DAYS.forEach(day => {
         const container = document.createElement('div');
         container.className = 'day-row-container';
 
         const labelDiv = document.createElement('div');
         labelDiv.className = 'day-label';
-        labelDiv.textContent = day; // Full name
+        labelDiv.textContent = day;
         container.appendChild(labelDiv);
 
         const dayGrid = document.createElement('div');
@@ -462,42 +516,96 @@ function renderWeeklyPlan() {
 
         const slots = currentMealPlan.filter(s => s.day === day);
 
-        // 1. Breakfast Column
-        const bCol = document.createElement('div');
-        bCol.className = 'meal-col';
-        const bSlot = slots.find(s => s.meal_type === 'breakfast' && s.slot_index === 0);
-        if (bSlot) bCol.appendChild(createMealCard(bSlot.meal, 'breakfast', bSlot.date, 'breakfast_0'));
-        dayGrid.appendChild(bCol);
-
-        // 2. Lunch Column
-        const lCol = document.createElement('div');
-        lCol.className = 'meal-col';
-        [0, 1, 2].forEach(i => {
-            const s = slots.find(sl => sl.meal_type === 'lunch' && sl.slot_index === i);
-            if (s) lCol.appendChild(createMealCard(s.meal, i === 0 ? 'lunch-dinner' : 'compact', s.date, `lunch_${i}`));
+        ['breakfast', 'lunch', 'dinner'].forEach(mealCat => {
+            const col = document.createElement('div');
+            col.className = 'meal-col';
+            const count = counts[mealCat];
+            
+            for (let i = 0; i < count; i++) {
+                const s = slots.find(sl => sl.meal_type === mealCat && sl.slot_index === i);
+                const isSingle = count === 1;
+                let cardType = 'compact';
+                if (isSingle) {
+                    cardType = 'full_single';
+                } else {
+                    const slotId = `${mealCat}_${i}`;
+                    cardType = (window.homeConfig && window.homeConfig.slot_card_types && window.homeConfig.slot_card_types[slotId])
+                                ? window.homeConfig.slot_card_types[slotId]
+                                : (i === 0 ? 'full_multi' : 'compact');
+                }
+                const dateStr = s ? s.date : getISODate(currentWeekStart); // fallback date
+                
+                col.appendChild(createMealCard(s ? s.meal : null, cardType, dateStr, `${mealCat}_${i}`));
+            }
+            dayGrid.appendChild(col);
         });
-        dayGrid.appendChild(lCol);
-
-        // 3. Dinner Column
-        const dCol = document.createElement('div');
-        dCol.className = 'meal-col';
-        [0, 1, 2].forEach(i => {
-            const s = slots.find(sl => sl.meal_type === 'dinner' && sl.slot_index === i);
-            if (s) dCol.appendChild(createMealCard(s.meal, i === 0 ? 'lunch-dinner' : 'compact', s.date, `dinner_${i}`));
-        });
-        dayGrid.appendChild(dCol);
 
         container.appendChild(dayGrid);
         grid.appendChild(container);
     });
 }
+window.renderWeeklyPlan = renderWeeklyPlan;
+
+function applyHomeConfigStyles() {
+    if (!window.homeConfig) return;
+    
+    const root = document.documentElement;
+    root.style.setProperty('--meal-card-x', `${window.homeConfig.card_height_single}px`);
+    root.style.setProperty('--meal-card-y', `${window.homeConfig.card_height_compact}px`);
+    root.style.setProperty('--meal-gap', `${window.homeConfig.card_gap}px`);
+    
+    // We update inline styles for full_multi cards since it varies per column based on count.
+    // That is better handled during render or in CSS if we know the counts.
+    // But since it depends on the column, let's inject a dynamic CSS rule.
+    let styleEl = document.getElementById('dynamic-config-styles');
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'dynamic-config-styles';
+        document.head.appendChild(styleEl);
+    }
+    
+    const getSlotCount = (mealCat) => window.homeConfig[`slot_count_${mealCat}`] || 1;
+    
+    const calcHeight = (mealCat) => {
+        const count = getSlotCount(mealCat);
+        if (count <= 1) return window.homeConfig.card_height_single;
+        
+        let compactCount = 0;
+        let multiCount = 0;
+        for(let i = 0; i < count; i++) {
+            const slotId = `${mealCat}_${i}`;
+            const type = (window.homeConfig.slot_card_types && window.homeConfig.slot_card_types[slotId])
+                         ? window.homeConfig.slot_card_types[slotId]
+                         : (i === 0 ? 'full_multi' : 'compact');
+            if (type === 'compact') compactCount++;
+            else multiCount++;
+        }
+        
+        if (multiCount === 0) return window.homeConfig.card_height_compact;
+        
+        const totalGap = (count - 1) * window.homeConfig.card_gap;
+        // Image height = (Full Single Card height - (no. of slots * compact height) - ((no. of slots -1) * gap)) / no. of Full Multi slots
+        const imageHeight = (window.homeConfig.card_height_single - (count * window.homeConfig.card_height_compact) - totalGap) / multiCount;
+        
+        // Full Multi Card height = Image height + Info box height (which is compact height)
+        return Math.floor(imageHeight + window.homeConfig.card_height_compact);
+    };
+    
+    styleEl.innerHTML = `
+        .meal-card-full.full_multi.breakfast { height: ${calcHeight('breakfast')}px; }
+        .meal-card-full.full_multi.lunch { height: ${calcHeight('lunch')}px; }
+        .meal-card-full.full_multi.dinner { height: ${calcHeight('dinner')}px; }
+    `;
+}
+window.applyHomeConfigStyles = applyHomeConfigStyles;
 
 function createMealCard(meal, type, dateStr, mealTypeStr) {
     const card = document.createElement('div');
     const isCompact = type === 'compact';
     const isMissing = !meal || !meal.name;
+    const mealCat = mealTypeStr.split('_')[0];
 
-    card.className = isCompact ? 'meal-card-compact' : `meal-card-full ${type}`;
+    card.className = isCompact ? `meal-card-compact ${mealCat}` : `meal-card-full ${type} ${mealCat}`;
     if (!isMissing && meal.avoid_percentage > 25) card.classList.add('has-avoid');
     if (!isMissing) card.dataset.mealId = meal.id;
 
@@ -946,10 +1054,11 @@ initCategoryCombobox();
 // ─── FOOD LIBRARY ──────────────────────────────────
 async function loadFoods(page = 1) {
     foodPage = page;
+    const pageSize = getDynamicPageSize('food-grid');
     const cat = document.getElementById('food-category-filter').value;
     const reflux = document.getElementById('food-reflux-filter').value;
     const search = document.getElementById('food-search').value;
-    let url = `/api/foods/?page=${foodPage}&page_size=${PAGE_SIZE}&`;
+    let url = `/api/foods/?page=${foodPage}&page_size=${pageSize}&`;
     if (cat) url += `category=${encodeURIComponent(cat)}&`;
     if (reflux) url += `reflux=${reflux}&`;
     if (search) url += `search=${encodeURIComponent(search)}&`;
@@ -974,22 +1083,12 @@ function renderFoods() {
         const editIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.9087 3.87352C16.4681 3.31421 17.2266 3 18.0176 3C18.4093 3 18.7971 3.07714 19.1589 3.22702C19.5208 3.3769 19.8495 3.59658 20.1265 3.87352C20.4034 4.15046 20.6231 4.47924 20.773 4.84108C20.9229 5.20292 21 5.59074 21 5.98239C21 6.37404 20.9229 6.76186 20.773 7.1237C20.6231 7.48554 20.4034 7.81432 20.1265 8.09126L19.0231 9.19466C18.6326 9.58519 17.9994 9.58519 17.6089 9.19467L14.8053 6.39114C14.4148 6.00062 14.4148 5.36745 14.8053 4.97693L15.9087 3.87352ZM13.3911 7.80536C13.0006 7.41483 12.3674 7.41483 11.9769 7.80536L5.01084 14.7714C4.37004 15.4122 3.91545 16.2151 3.69566 17.0943L3.02986 19.7575C2.94467 20.0982 3.04452 20.4587 3.2929 20.7071C3.54128 20.9555 3.90177 21.0553 4.24254 20.9701L6.90572 20.3043C7.78488 20.0846 8.58778 19.63 9.22857 18.9892L16.1946 12.0231C16.5852 11.6326 16.5852 10.9994 16.1946 10.6089L13.3911 7.80536Z M12 20C12 19.4477 12.4477 19 13 19L20 19C20.5523 19 21 19.4477 21 20C21 20.5523 20.5523 21 20 21L13 21C12.4477 21 12 20.5523 12 20Z"/></svg>';
         const deleteIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10.1111 2C9.37473 2 8.77778 2.59695 8.77778 3.33333C8.77778 3.70152 8.4793 4 8.11111 4L8 4L5 4C4.44772 4 4 4.44772 4 5C4 5.55228 4.44772 6 5 6L8 6H8.11111L15.8873 6C15.8878 6 15.8884 6 15.8889 6H16L19 6C19.5523 6 20 5.55228 20 5C20 4.44772 19.5523 4 19 4H15.8881C15.5203 3.99956 15.2222 3.70126 15.2222 3.33333C15.2222 2.59695 14.6253 2 13.8889 2H10.1111Z M6 8C5.72035 8 5.45348 8.1171 5.26412 8.32289C5.07477 8.52868 4.98023 8.80436 5.00346 9.08305L5.77422 18.3322C5.94698 20.4054 7.68005 22 9.7604 22H14.2396C16.32 22 18.053 20.4054 18.2258 18.3322L18.9965 9.08305C19.0198 8.80436 18.9252 8.52868 18.7359 8.32289C18.5465 8.1171 18.2797 8 18 8H6Z" fill="currentColor"/></svg>';
 
-        const mealIcons = {
-            'breakfast': '🍳',
-            'lunch/dinner': '🍲',
-            'both': '🍱',
-            'none': '✖'
-        };
-        const mType = f.meal_type || 'none';
-        const mIcon = mealIcons[mType] || '🍴';
-
         return `
         <div class="food-card">
             <h4 title="${esc(f.name)}">${esc(f.name)}</h4>
             <div class="food-category">${esc(f.category)}</div>
             <div class="food-card-meta">
                 <span class="food-badge ${f.reflux === 'avoid' ? 'avoid' : f.reflux === 'remedy' ? 'remedy' : 'safe'}">${f.reflux === 'avoid' ? '🚫 Avoid' : f.reflux === 'remedy' ? '💊 Remedy' : '✅ Safe'}</span>
-                <span class="food-type-tag">${mIcon} ${esc(mType)}</span>
             </div>
             <div class="food-card-actions">
                 <button class="btn-icon" onclick="openEditFood('${f.id}')" title="Edit">${editIcon}</button>
@@ -1017,10 +1116,6 @@ document.getElementById('btn-add-food').addEventListener('click', () => {
     refluxSel.value = 'ok';
     refluxSel.dispatchEvent(new Event('change'));
 
-    const mealTypeSel = document.getElementById('food-form-meal-type');
-    mealTypeSel.value = 'none';
-    mealTypeSel.dispatchEvent(new Event('change'));
-
     document.getElementById('food-modal').classList.add('visible');
 });
 
@@ -1044,10 +1139,6 @@ window.openEditFood = async (id) => {
     refluxSel.value = food.reflux;
     refluxSel.dispatchEvent(new Event('change'));
 
-    const mealTypeSel = document.getElementById('food-form-meal-type');
-    mealTypeSel.value = food.meal_type || 'none';
-    mealTypeSel.dispatchEvent(new Event('change'));
-
     document.getElementById('food-modal').classList.add('visible');
 };
 
@@ -1056,7 +1147,6 @@ document.getElementById('food-modal-save').addEventListener('click', async () =>
         name: document.getElementById('food-form-name').value.trim(),
         category: document.getElementById('food-form-category').value.trim() || 'Uncategorized',
         reflux: document.getElementById('food-form-reflux').value,
-        meal_type: document.getElementById('food-form-meal-type').value,
     };
     if (!data.name) return alert('Name is required');
     if (editingFoodId) await API.put(`/api/foods/${editingFoodId}`, data);
@@ -1078,14 +1168,26 @@ window.deleteFood = async (id) => {
 // ─── MEAL LIBRARY ──────────────────────────────────
 async function loadMeals(page = 1) {
     mealPage = page;
+    const pageSize = getDynamicPageSize('meal-lib-grid');
     const search = document.getElementById('meal-search').value;
-    let url = `/api/meals/?page=${mealPage}&page_size=${PAGE_SIZE}`;
+    let url = `/api/meals/?page=${mealPage}&page_size=${pageSize}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
 
     const data = await API.get(url);
     allMeals = data.items;
     renderMealLibrary();
     renderPagination('meal-pagination', data.total_pages, data.page, 'loadMeals');
+}
+
+function getMealTypeIconsHtml(mealType) {
+    const mealTypeIcons = {
+        'breakfast': '🍳',
+        'lunch': '🍲',
+        'dinner': '🍽️'
+    };
+    const types = (mealType || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    const icons = types.map(t => mealTypeIcons[t] ? `<span class="meal-type-card-icon" title="${t.charAt(0).toUpperCase() + t.slice(1)}">${mealTypeIcons[t]}</span>` : '').filter(Boolean);
+    return icons.join(' ');
 }
 
 function renderMealLibrary() {
@@ -1105,8 +1207,11 @@ function renderMealLibrary() {
             return h.toFixed(1) + ' hrs';
         };
 
+        const typeIconsHtml = getMealTypeIconsHtml(m.meal_type);
+        const langBadge = m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>';
+
         return `
-        <div class="meal-lib-card ${m.avoid_percentage > 25 ? 'has-avoid' : ''}">
+        <div class="meal-lib-card ${m.avoid_percentage > 25 ? 'has-avoid' : ''}" data-meal-id="${m.id}">
             <div class="meal-lib-card-img-wrapper" onclick="openViewMeal('${m.id}')">
                 <img class="meal-lib-card-img" src="${esc(m.image_url || DEFAULT_IMG)}" alt="${esc(m.name)}" onerror="this.src='${DEFAULT_IMG}'">
                 ${sourceDomain ? `
@@ -1121,7 +1226,10 @@ function renderMealLibrary() {
                     <span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${(m.calories !== null && m.calories !== undefined) ? Math.round(m.calories) : '---'} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • 
                     ${(m.ingredient_count || 0)} ingredients
                     ${m.cook_time_hours ? ' • ' + formatTime(m.cook_time_hours) : ''}
-                    ${m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>'}
+                </div>
+                <div class="meal-lib-card-meta">
+                    ${langBadge}
+                    ${typeIconsHtml ? `<span class="meal-lib-card-types">${typeIconsHtml}</span>` : ''}
                 </div>
                 <div class="meal-lib-card-actions">
                     <button class="btn-icon" onclick="openEditMeal('${m.id}')" title="Edit">${editIcon}</button>
@@ -1298,6 +1406,128 @@ document.getElementById('btn-open-source').addEventListener('click', () => {
     }
 });
 
+let currentEditingMealType = 'none';
+
+function updateMealCardTypesInDOM(mealId, newMealType) {
+    // 1. Update in-memory collections
+    if (typeof allMeals !== 'undefined' && Array.isArray(allMeals)) {
+        const m = allMeals.find(x => String(x.id) === String(mealId));
+        if (m) m.meal_type = newMealType;
+    }
+    if (typeof allFavorites !== 'undefined' && Array.isArray(allFavorites)) {
+        const m = allFavorites.find(x => String(x.id) === String(mealId));
+        if (m) m.meal_type = newMealType;
+    }
+    if (typeof currentMealPlan !== 'undefined' && Array.isArray(currentMealPlan)) {
+        currentMealPlan.forEach(slot => {
+            if (slot.meal && String(slot.meal.id) === String(mealId)) {
+                slot.meal.meal_type = newMealType;
+            }
+        });
+    }
+
+    // 2. Immediately update DOM for all cards with data-meal-id
+    const cards = document.querySelectorAll(`[data-meal-id="${mealId}"]`);
+    cards.forEach(card => {
+        const metaEl = card.querySelector('.meal-lib-card-meta');
+        if (metaEl) {
+            let typesContainer = metaEl.querySelector('.meal-lib-card-types');
+            const iconsHtml = getMealTypeIconsHtml(newMealType);
+            if (iconsHtml) {
+                if (!typesContainer) {
+                    typesContainer = document.createElement('span');
+                    typesContainer.className = 'meal-lib-card-types';
+                    metaEl.appendChild(typesContainer);
+                }
+                typesContainer.innerHTML = iconsHtml;
+            } else if (typesContainer) {
+                typesContainer.remove();
+            }
+        }
+    });
+}
+
+function renderMealTypeHashtags(wrapper, meal) {
+    if (!wrapper || !meal) return;
+    wrapper.innerHTML = '';
+    
+    let rawTypes = (meal.meal_type || '').split(',').map(s => s.trim().toLowerCase()).filter(s => s && s !== 'none');
+    
+    const trigger = document.createElement('div');
+    trigger.className = `meal-type-hashtag-trigger ${rawTypes.length > 0 ? 'has-tags' : ''}`;
+    
+    const updateTriggerText = () => {
+        if (rawTypes.length === 0) {
+            trigger.className = 'meal-type-hashtag-trigger';
+            trigger.innerHTML = '<span>#</span>';
+            trigger.title = 'Add meal types';
+        } else {
+            trigger.className = 'meal-type-hashtag-trigger has-tags';
+            trigger.innerHTML = rawTypes.map(t => `<span>#${esc(t)}</span>`).join(' ');
+            trigger.title = 'Edit meal types';
+        }
+    };
+    updateTriggerText();
+    
+    const popover = document.createElement('div');
+    popover.className = 'meal-type-popover';
+    
+    const availableOptions = [
+        { value: 'breakfast', label: 'Breakfast' },
+        { value: 'lunch', label: 'Lunch' },
+        { value: 'dinner', label: 'Dinner' }
+    ];
+    
+    const renderPopoverItems = () => {
+        popover.innerHTML = '';
+        availableOptions.forEach(opt => {
+            const isSelected = rawTypes.includes(opt.value);
+            const item = document.createElement('div');
+            item.className = `meal-type-popover-item ${isSelected ? 'selected' : ''}`;
+            item.innerHTML = `
+                <div class="meal-type-popover-checkbox"></div>
+                <span>${opt.label}</span>
+            `;
+            item.onclick = async (e) => {
+                e.stopPropagation();
+                if (isSelected) {
+                    rawTypes = rawTypes.filter(t => t !== opt.value);
+                } else {
+                    rawTypes.push(opt.value);
+                }
+                updateTriggerText();
+                renderPopoverItems();
+                
+                const newMealType = rawTypes.length ? rawTypes.join(',') : 'none';
+                meal.meal_type = newMealType;
+                currentEditingMealType = newMealType;
+                updateMealCardTypesInDOM(meal.id, newMealType);
+                try {
+                    await API.put(`/api/meals/${meal.id}`, { meal_type: newMealType });
+                } catch (err) {
+                    console.error("Failed to update meal type:", err);
+                }
+            };
+            popover.appendChild(item);
+        });
+    };
+    renderPopoverItems();
+    
+    trigger.onclick = (e) => {
+        e.stopPropagation();
+        popover.classList.toggle('open');
+    };
+    
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(popover);
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.view-meal-types-wrapper')) {
+        document.querySelectorAll('.meal-type-popover.open').forEach(el => el.classList.remove('open'));
+    }
+});
+
 async function openMealModal(mode, mealId = null, prefillData = null) {
     editingMealId = mealId;
     mealModalMode = mode;
@@ -1366,6 +1596,8 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
             setVal('meal-form-servings', meal.servings);
             setVal('meal-form-link', meal.source_url);
 
+            currentEditingMealType = meal.meal_type || 'none';
+
             // Update Modal Image
             const modalImg = document.getElementById('meal-modal-img');
             if (modalImg) modalImg.src = meal.image_url || DEFAULT_IMG;
@@ -1377,6 +1609,11 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
             document.getElementById('view-meal-source').innerHTML = meal.source_url
                 ? `From <a href="${esc(meal.source_url)}" target="_blank" class="view-source-link">${esc(shortDomain)}</a>`
                 : 'Custom Recipe';
+
+            const typesWrapper = document.getElementById('view-meal-types-wrapper');
+            if (typesWrapper) {
+                renderMealTypeHashtags(typesWrapper, meal);
+            }
 
             const formatTime = (h) => {
                 if (!h) return 'N/A';
@@ -1573,10 +1810,13 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
         setVal('meal-form-link', prefillData.source_url);
         const modalImg = document.getElementById('meal-modal-img');
         if (modalImg) modalImg.src = prefillData.image_url || DEFAULT_IMG;
+        
+        currentEditingMealType = prefillData.meal_type || 'none';
         (prefillData.ingredients || []).forEach(ing => addIngredientRow(ing.name, ing.quantity, ing.unit, ing.comment, false));
     }
 
     if ((!mealId && !prefillData) || mode === 'add') {
+        currentEditingMealType = 'none';
         if (!prefillData || !prefillData.ingredients || prefillData.ingredients.length === 0) {
             addIngredientRow('', '', '', '');
         }
@@ -1762,6 +2002,7 @@ async function saveMeal() {
         source_url: document.getElementById('meal-form-link').value.trim(),
         cook_time_hours: parseFloat(document.getElementById('meal-form-time').value) || 0,
         servings: document.getElementById('meal-form-servings').value.trim(),
+        meal_type: currentEditingMealType || 'none',
         ingredients,
     };
     if (!data.name) return alert('Meal name is required');
@@ -1783,9 +2024,10 @@ window.deleteMeal = async (id) => {
 // ─── FAVORITES ─────────────────────────────────────
 async function loadFavorites(page = 1) {
     favPage = page;
+    const pageSize = getDynamicPageSize('fav-grid');
     const searchEl = document.getElementById('fav-search');
     const search = searchEl ? searchEl.value : '';
-    let url = `/api/favorites/?page=${favPage}&page_size=${PAGE_SIZE}`;
+    let url = `/api/favorites/?page=${favPage}&page_size=${pageSize}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
 
     try {
@@ -1812,8 +2054,11 @@ function renderFavorites() {
             return h.toFixed(1) + ' hrs';
         };
 
+        const typeIconsHtml = getMealTypeIconsHtml(m.meal_type);
+        const langBadge = m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>';
+
         return `
-        <div class="meal-lib-card ${m.avoid_percentage > 25 ? 'has-avoid' : ''}">
+        <div class="meal-lib-card ${m.avoid_percentage > 25 ? 'has-avoid' : ''}" data-meal-id="${m.id}">
             <div class="meal-lib-card-img-wrapper" onclick="openViewMeal('${m.id}')">
                 <img class="meal-lib-card-img" src="${esc(m.image_url || DEFAULT_IMG)}" alt="${esc(m.name)}" onerror="this.src='${DEFAULT_IMG}'">
                 ${sourceDomain ? `
@@ -1828,7 +2073,10 @@ function renderFavorites() {
                     <span class="calorie-tag" ${m.calories_incomplete ? 'title="Some ingredients missing kcal data"' : ''}>${(m.calories !== null && m.calories !== undefined) ? Math.round(m.calories) : '---'} kcal${m.calories_incomplete ? ' <span class="incomplete-tag">(!)</span>' : ''}</span> • 
                     ${(m.ingredient_count || 0)} ingredients
                     ${m.cook_time_hours ? ' • ' + formatTime(m.cook_time_hours) : ''}
-                    ${m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>'}
+                </div>
+                <div class="meal-lib-card-meta">
+                    ${langBadge}
+                    ${typeIconsHtml ? `<span class="meal-lib-card-types">${typeIconsHtml}</span>` : ''}
                 </div>
                 <div class="meal-lib-card-actions">
                     <button class="btn btn-secondary" onclick="removeFav('${m.id}')" style="font-size:.75rem; padding: 4px 10px; height: auto; display: flex; align-items: center; gap: 6px;">
@@ -1859,13 +2107,46 @@ window.removeFav = async (mealId) => {
 
 // ─── User Guide Popover ────────────────────────────
 const guideSteps = [
-    { title: "Home Tab", content: "Welcome to GERD Diet Meal Planner. The Home tab is where you can generate and manage your weekly GERD-safe meal schedule. You can refresh individual meals to find something else." },
-    { title: "Food Library", content: "Track individual ingredients here, categorizing them as Safe, Avoid, or Remedy for your acid reflux. This helps calculate the safety score of your meals." },
-    { title: "Meal Library", content: "Store all your recipes here. You can manually add them or automatically scrape them from websites. Click on a meal to edit servings, ingredients, or check calories." },
-    { title: "Favorite Meals", content: "Your go-to collection. Star your favorite meals so they are easy to find and more likely to be selected when generating your weekly plan." },
-    { title: "Step 1: Add Meals", content: "To start using the app properly, go to the Meal Library and add or scrape some recipes you like. Make sure to review the ingredients so the app can calculate if they are GERD-safe." },
-    { title: "Step 2: Generate Plan", content: "Once you have some meals, go back to the Home tab and click 'Generate Meal Plan'. The app will automatically build a balanced week for you." },
-    { title: "Step 3: Adjust & Enjoy", content: "You can click on any meal card in your plan to see its details. Adjust the servings up or down, and the calories will update automatically. Enjoy your GERD-safe journey!" }
+    {
+        title: "Home Tab",
+        content: "Welcome to GERD Diet Meal Planner! The Home tab is where you generate and manage your weekly GERD-safe meal schedule. Click on any meal card to view recipe details, or click the refresh icon on a card to swap in another meal.",
+        tab: "home"
+    },
+    {
+        title: "Food Library",
+        content: "Track individual ingredients categorized as Safe (✅), Avoid (🚫), or Remedy (💊) for acid reflux. These safety classifications determine whether recipes in your library are GERD-safe.",
+        tab: "food-library"
+    },
+    {
+        title: "Meal Library",
+        content: "Store and explore all your recipes with calorie info, cooking time, language badges (VN/EN), and meal type icons (🍳 Breakfast, 🍲 Lunch, 🍽️ Dinner). Open any meal and click the # icon to assign or edit its meal types.",
+        tab: "meal-library"
+    },
+    {
+        title: "Trigger Alert (Red Left Border)",
+        content: "By default, any meal containing more than 25% GERD-trigger ('avoid') ingredients automatically displays a red left border on its card to warn you before you cook or eat.",
+        tab: "meal-library"
+    },
+    {
+        title: "Favorite Meals",
+        content: "Star (⭐) your go-to recipes to save them in Favorites. Starred meals are easy to find and receive higher priority when generating your weekly plan.",
+        tab: "favorites"
+    },
+    {
+        title: "Step 1: Add Meals",
+        content: "To get started, go to the Meal Library and add or scrape recipes you like. Make sure to review the ingredients so the app can verify they are GERD-safe.",
+        tab: "meal-library"
+    },
+    {
+        title: "Step 2: Generate Plan",
+        content: "Once you have some meals, head back to the Home tab and click 'Generate Meal Plan'. The app will automatically build a balanced, acid reflux-safe schedule for your week.",
+        tab: "home"
+    },
+    {
+        title: "Step 3: Adjust & Enjoy",
+        content: "Click on any meal card in your plan to see full details. You can adjust servings up or down with automatic calorie recalculation. Enjoy your GERD-safe journey!",
+        tab: "home"
+    }
 ];
 
 let currentGuideStep = 0;
@@ -1913,12 +2194,9 @@ function updateGuidePopover() {
     guideNext.textContent = currentGuideStep === guideSteps.length - 1 ? 'Finish' : 'Next';
 
     // Switch tabs automatically based on guide step
-    if (currentGuideStep === 0) switchTab('home');
-    if (currentGuideStep === 1) switchTab('food-library');
-    if (currentGuideStep === 2) switchTab('meal-library');
-    if (currentGuideStep === 3) switchTab('favorites');
-    if (currentGuideStep === 4) switchTab('meal-library');
-    if (currentGuideStep >= 5) switchTab('home');
+    if (step.tab) {
+        switchTab(step.tab);
+    }
 }
 
 // ─── Init: Seed data on first load ─────────────────
@@ -1928,6 +2206,11 @@ async function init() {
         await API.post('/api/fdc/seed');
         await API.post('/api/meal-plan/cleanup'); // Cleanup old plans outside range
     } catch (e) { }
+    
+    try {
+        window.homeConfig = await API.get('/api/config');
+        applyHomeConfigStyles();
+    } catch (e) { console.error("Failed to load config", e); }
 
     // Initialize Weekly Plan dropdown regardless of tab
     updateWeekDropdown();
