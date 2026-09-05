@@ -272,6 +272,7 @@ async def get_weekly_plan(start_date: str, session: AsyncSession = Depends(get_s
     fav_result = await session.execute(select(FavoriteMeal.meal_id))
     fav_ids = {row[0] for row in fav_result.fetchall()}
     avoid_names = await get_avoid_food_names(session)
+    remedy_names = await get_remedy_food_names(session)
     
     slots = []
     
@@ -305,7 +306,7 @@ async def get_weekly_plan(start_date: str, session: AsyncSession = Depends(get_s
                 "date": current_date,
                 "meal_type": base_type,
                 "slot_index": slot_idx,
-                "meal": format_meal_out(pm.meal, fav_ids, avoid_names) if pm and pm.meal else None
+                "meal": format_meal_out(pm.meal, fav_ids, avoid_names, remedy_names) if pm and pm.meal else None
             })
             
     return {"slots": slots}
@@ -387,7 +388,8 @@ async def refresh_single_meal(date: str, meal_type: str, session: AsyncSession =
     )
     updated_meal = updated_result.scalar_one_or_none()
     avoid_names = await get_avoid_food_names(session)
-    return {"status": "success", "meal": format_meal_out(updated_meal, fav_ids, avoid_names)}
+    remedy_names = await get_remedy_food_names(session)
+    return {"status": "success", "meal": format_meal_out(updated_meal, fav_ids, avoid_names, remedy_names)}
 
 
 @router.post("/cleanup")

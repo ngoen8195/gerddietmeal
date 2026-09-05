@@ -56,6 +56,7 @@ class IngredientOut(BaseModel):
     calories: float = 0.0
     calories_incomplete: bool = False
     is_avoid: bool = False
+    is_remedy: bool = False
 
     class Config:
         from_attributes = True

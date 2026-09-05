@@ -12,7 +12,9 @@
         rel="stylesheet">
     <meta name="description"
         content="Sophisticated meal planning for acid reflux management. Plan GERD-safe meals weekly.">
-    <link rel="icon" type="image/x-icon" href="/resources/icons/gerddietmeal.ico">
+    <link rel="icon" type="image/png" href="/resources/icons/gerddietmeal_noname_blue.png">
+    <link rel="shortcut icon" type="image/x-icon" href="/resources/icons/gerddietmeal_noname_blue.ico">
+    <link rel="apple-touch-icon" href="/resources/icons/gerddietmeal_noname_blue.png">
     <link rel="stylesheet" href="/static/css/design-tokens.css">
 </head>
 
@@ -20,7 +22,7 @@
     <div class="app-container">
         <header class="app-header">
             <div class="logo">
-                <img src="/resources/icons/gerddietmeal_noname.png" alt="GERD Diet Meal Planner Logo">
+                <img src="/resources/icons/gerddietmeal_noname_blue.png" alt="GERD Diet Meal Planner Logo">
                 &nbsp;<span class="logo-bold">gerd</span><span class="logo-light">dietmeal</span>
             </div>
             <nav class="tab-nav" role="tablist">
@@ -138,7 +140,13 @@
                             <input type="text" id="meal-search" class="input-shadcn"
                                 placeholder="Search by name or ingredient...">
                         </div>
-                        <button class="btn btn-secondary" id="btn-search-meals">Search</button>
+                        <select id="meal-type-filter" class="select-shadcn">
+                            <option value="">All Meal Types</option>
+                            <option value="breakfast">🍳 Breakfast</option>
+                            <option value="lunch">🍲 Lunch</option>
+                            <option value="dinner">🍽️ Dinner</option>
+                            <option value="none">⚪ Unassigned</option>
+                        </select>
                         <button class="btn btn-secondary" id="btn-scrape-meals"><span>⬇</span> Scrape</button>
                         <button class="btn btn-primary" id="btn-add-meal"><span>+</span> Add Meal</button>
                     </div>

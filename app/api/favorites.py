@@ -10,7 +10,7 @@ import app.schemas.schemas as schemas
 import math
 import traceback
 
-from app.api.utils import get_avoid_food_names, format_meal_out
+from app.api.utils import get_avoid_food_names, get_remedy_food_names, format_meal_out
 from app.core.logger import logger
 
 router = APIRouter(prefix="/api/favorites", tags=["favorites"])
@@ -57,8 +57,9 @@ async def list_favorites(
         # In this view, we know they are all favorited
         fav_ids = {m.id for m in meals}
         avoid_names = await get_avoid_food_names(session)
+        remedy_names = await get_remedy_food_names(session)
         
-        items = [format_meal_out(m, fav_ids, avoid_names) for m in meals]
+        items = [format_meal_out(m, fav_ids, avoid_names, remedy_names) for m in meals]
                 
         return {
             "items": items,

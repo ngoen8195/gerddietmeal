@@ -130,15 +130,19 @@ def check_ingredient_avoid(ingredient_name: str, avoid_names: Set[str]) -> bool:
 
 check_ingredient_remedy = check_ingredient_avoid
 
-def format_meal_out(meal: Meal, fav_ids: Set[int], avoid_names: Set[str]) -> Dict:
+def format_meal_out(meal: Meal, fav_ids: Set[int], avoid_names: Set[str], remedy_names: Optional[Set[str]] = None) -> Dict:
     """Consolidated meal formatting for API responses."""
     ingredients_out = []
     avoid_count = 0
+    remedy_count = 0
     
     for i in (meal.ingredients or []):
-        is_avoid = check_ingredient_avoid(i.name, avoid_names)
+        is_avoid = check_ingredient_avoid(i.name, avoid_names) if avoid_names else False
+        is_remedy = check_ingredient_remedy(i.name, remedy_names) if remedy_names else False
         if is_avoid:
             avoid_count += 1
+        if is_remedy:
+            remedy_count += 1
         
         ingredients_out.append({
             "id": i.id,
@@ -151,7 +155,8 @@ def format_meal_out(meal: Meal, fav_ids: Set[int], avoid_names: Set[str]) -> Dic
             "fdc_name": getattr(i, 'fdc_name', None),
             "calories": getattr(i, 'calories', 0.0),
             "calories_incomplete": getattr(i, 'calories_incomplete', False),
-            "is_avoid": is_avoid
+            "is_avoid": is_avoid,
+            "is_remedy": is_remedy
         })
     
     total_ingredients = len(ingredients_out)

@@ -1170,8 +1170,10 @@ async function loadMeals(page = 1) {
     mealPage = page;
     const pageSize = getDynamicPageSize('meal-lib-grid');
     const search = document.getElementById('meal-search').value;
+    const mealType = document.getElementById('meal-type-filter') ? document.getElementById('meal-type-filter').value : '';
     let url = `/api/meals/?page=${mealPage}&page_size=${pageSize}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (mealType) url += `&meal_type=${encodeURIComponent(mealType)}`;
 
     const data = await API.get(url);
     allMeals = data.items;
@@ -1179,15 +1181,22 @@ async function loadMeals(page = 1) {
     renderPagination('meal-pagination', data.total_pages, data.page, 'loadMeals');
 }
 
-function getMealTypeIconsHtml(mealType) {
+function getMealCardTypeTriggerHtml(mealType) {
     const mealTypeIcons = {
         'breakfast': '🍳',
         'lunch': '🍲',
         'dinner': '🍽️'
     };
-    const types = (mealType || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    const types = (mealType || '').split(',').map(s => s.trim().toLowerCase()).filter(s => s && s !== 'none');
+    if (types.length === 0) {
+        return '<span class="meal-type-card-icon meal-type-none" title="Select meal type">#</span>';
+    }
     const icons = types.map(t => mealTypeIcons[t] ? `<span class="meal-type-card-icon" title="${t.charAt(0).toUpperCase() + t.slice(1)}">${mealTypeIcons[t]}</span>` : '').filter(Boolean);
-    return icons.join(' ');
+    return icons.length > 0 ? icons.join(' ') : '<span class="meal-type-card-icon meal-type-none" title="Select meal type">#</span>';
+}
+
+function getMealTypeIconsHtml(mealType) {
+    return getMealCardTypeTriggerHtml(mealType);
 }
 
 function renderMealLibrary() {
@@ -1207,7 +1216,6 @@ function renderMealLibrary() {
             return h.toFixed(1) + ' hrs';
         };
 
-        const typeIconsHtml = getMealTypeIconsHtml(m.meal_type);
         const langBadge = m.language === 'vi' ? '<span class="vn-badge">VN</span>' : '<span class="en-badge">EN</span>';
 
         return `
@@ -1229,7 +1237,11 @@ function renderMealLibrary() {
                 </div>
                 <div class="meal-lib-card-meta">
                     ${langBadge}
-                    ${typeIconsHtml ? `<span class="meal-lib-card-types">${typeIconsHtml}</span>` : ''}
+                    <div class="meal-lib-card-types-wrapper" onclick="event.stopPropagation()">
+                        <div class="meal-card-type-trigger" onclick="toggleMealCardTypePopover('${m.id}', event)" title="Select meal type">
+                            ${getMealCardTypeTriggerHtml(m.meal_type)}
+                        </div>
+                    </div>
                 </div>
                 <div class="meal-lib-card-actions">
                     <button class="btn-icon" onclick="openEditMeal('${m.id}')" title="Edit">${editIcon}</button>
@@ -1242,7 +1254,8 @@ function renderMealLibrary() {
     }).join('');
 }
 
-document.getElementById('btn-search-meals').addEventListener('click', () => loadMeals(1));
+const mealTypeFilter = document.getElementById('meal-type-filter');
+if (mealTypeFilter) mealTypeFilter.addEventListener('change', () => loadMeals(1));
 document.getElementById('meal-search').addEventListener('input', debounce(() => loadMeals(1), 300));
 document.getElementById('meal-search').addEventListener('keydown', e => { if (e.key === 'Enter') loadMeals(1); });
 
@@ -1429,56 +1442,46 @@ function updateMealCardTypesInDOM(mealId, newMealType) {
     // 2. Immediately update DOM for all cards with data-meal-id
     const cards = document.querySelectorAll(`[data-meal-id="${mealId}"]`);
     cards.forEach(card => {
-        const metaEl = card.querySelector('.meal-lib-card-meta');
-        if (metaEl) {
-            let typesContainer = metaEl.querySelector('.meal-lib-card-types');
-            const iconsHtml = getMealTypeIconsHtml(newMealType);
-            if (iconsHtml) {
-                if (!typesContainer) {
-                    typesContainer = document.createElement('span');
-                    typesContainer.className = 'meal-lib-card-types';
-                    metaEl.appendChild(typesContainer);
+        const trigger = card.querySelector('.meal-card-type-trigger');
+        if (trigger) {
+            trigger.innerHTML = getMealCardTypeTriggerHtml(newMealType);
+        }
+        const popover = card.querySelector('.meal-type-popover');
+        if (popover) {
+            const rawTypes = (newMealType || '').split(',').map(s => s.trim().toLowerCase()).filter(s => s && s !== 'none');
+            popover.querySelectorAll('.meal-type-popover-item').forEach(item => {
+                const label = item.querySelector('span')?.textContent.toLowerCase();
+                if (label) {
+                    item.classList.toggle('selected', rawTypes.includes(label));
                 }
-                typesContainer.innerHTML = iconsHtml;
-            } else if (typesContainer) {
-                typesContainer.remove();
-            }
+            });
         }
     });
+
+    // 3. Update view modal if open for this meal
+    const viewModal = document.getElementById('meal-modal');
+    if (viewModal && viewModal.classList.contains('visible') && String(editingMealId) === String(mealId)) {
+        const typesWrapper = document.getElementById('view-meal-types-wrapper');
+        const mealObj = (typeof allMeals !== 'undefined' && allMeals.find(x => String(x.id) === String(mealId)))
+                     || (typeof allFavorites !== 'undefined' && allFavorites.find(x => String(x.id) === String(mealId)));
+        if (typesWrapper && mealObj) {
+            renderMealTypeHashtags(typesWrapper, mealObj);
+        }
+    }
 }
 
-function renderMealTypeHashtags(wrapper, meal) {
-    if (!wrapper || !meal) return;
-    wrapper.innerHTML = '';
-    
-    let rawTypes = (meal.meal_type || '').split(',').map(s => s.trim().toLowerCase()).filter(s => s && s !== 'none');
-    
-    const trigger = document.createElement('div');
-    trigger.className = `meal-type-hashtag-trigger ${rawTypes.length > 0 ? 'has-tags' : ''}`;
-    
-    const updateTriggerText = () => {
-        if (rawTypes.length === 0) {
-            trigger.className = 'meal-type-hashtag-trigger';
-            trigger.innerHTML = '<span>#</span>';
-            trigger.title = 'Add meal types';
-        } else {
-            trigger.className = 'meal-type-hashtag-trigger has-tags';
-            trigger.innerHTML = rawTypes.map(t => `<span>#${esc(t)}</span>`).join(' ');
-            trigger.title = 'Edit meal types';
-        }
-    };
-    updateTriggerText();
-    
+function createMealTypePopover(meal, onUpdate) {
     const popover = document.createElement('div');
     popover.className = 'meal-type-popover';
-    
+
     const availableOptions = [
         { value: 'breakfast', label: 'Breakfast' },
         { value: 'lunch', label: 'Lunch' },
         { value: 'dinner', label: 'Dinner' }
     ];
-    
-    const renderPopoverItems = () => {
+
+    const renderItems = () => {
+        let rawTypes = (meal.meal_type || '').split(',').map(s => s.trim().toLowerCase()).filter(s => s && s !== 'none');
         popover.innerHTML = '';
         availableOptions.forEach(opt => {
             const isSelected = rawTypes.includes(opt.value);
@@ -1490,17 +1493,17 @@ function renderMealTypeHashtags(wrapper, meal) {
             `;
             item.onclick = async (e) => {
                 e.stopPropagation();
+                let currentTypes = (meal.meal_type || '').split(',').map(s => s.trim().toLowerCase()).filter(s => s && s !== 'none');
                 if (isSelected) {
-                    rawTypes = rawTypes.filter(t => t !== opt.value);
+                    currentTypes = currentTypes.filter(t => t !== opt.value);
                 } else {
-                    rawTypes.push(opt.value);
+                    currentTypes.push(opt.value);
                 }
-                updateTriggerText();
-                renderPopoverItems();
-                
-                const newMealType = rawTypes.length ? rawTypes.join(',') : 'none';
+                const newMealType = currentTypes.length ? currentTypes.join(',') : 'none';
                 meal.meal_type = newMealType;
                 currentEditingMealType = newMealType;
+                renderItems();
+                if (onUpdate) onUpdate(newMealType);
                 updateMealCardTypesInDOM(meal.id, newMealType);
                 try {
                     await API.put(`/api/meals/${meal.id}`, { meal_type: newMealType });
@@ -1511,20 +1514,81 @@ function renderMealTypeHashtags(wrapper, meal) {
             popover.appendChild(item);
         });
     };
-    renderPopoverItems();
-    
+    renderItems();
+    return popover;
+}
+
+window.toggleMealCardTypePopover = function(mealId, e) {
+    e.stopPropagation();
+    const wrapper = e.currentTarget.closest('.meal-lib-card-types-wrapper');
+    if (!wrapper) return;
+
+    let popover = wrapper.querySelector('.meal-type-popover');
+    const wasOpen = popover && popover.classList.contains('open');
+
+    // Close all open popovers across the document
+    document.querySelectorAll('.meal-type-popover.open').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.meal-lib-card.has-open-popover').forEach(el => el.classList.remove('has-open-popover'));
+
+    if (wasOpen) return;
+
+    // Find meal object
+    const meal = (typeof allMeals !== 'undefined' && allMeals.find(x => String(x.id) === String(mealId)))
+              || (typeof allFavorites !== 'undefined' && allFavorites.find(x => String(x.id) === String(mealId)))
+              || { id: mealId, meal_type: 'none' };
+
+    if (!popover) {
+        popover = createMealTypePopover(meal, (newType) => {
+            const trigger = wrapper.querySelector('.meal-card-type-trigger');
+            if (trigger) trigger.innerHTML = getMealCardTypeTriggerHtml(newType);
+        });
+        wrapper.appendChild(popover);
+    }
+
+    popover.classList.add('open');
+    const card = wrapper.closest('.meal-lib-card');
+    if (card) card.classList.add('has-open-popover');
+};
+
+function renderMealTypeHashtags(wrapper, meal) {
+    if (!wrapper || !meal) return;
+    wrapper.innerHTML = '';
+
+    const trigger = document.createElement('div');
+
+    const updateTriggerText = () => {
+        const rawTypes = (meal.meal_type || '').split(',').map(s => s.trim().toLowerCase()).filter(s => s && s !== 'none');
+        if (rawTypes.length === 0) {
+            trigger.className = 'meal-type-hashtag-trigger';
+            trigger.innerHTML = '<span>#</span>';
+            trigger.title = 'Add meal types';
+        } else {
+            trigger.className = 'meal-type-hashtag-trigger has-tags';
+            trigger.innerHTML = rawTypes.map(t => `<span>#${esc(t)}</span>`).join(' ');
+            trigger.title = 'Edit meal types';
+        }
+    };
+    updateTriggerText();
+
+    const popover = createMealTypePopover(meal, () => {
+        updateTriggerText();
+    });
+
     trigger.onclick = (e) => {
         e.stopPropagation();
-        popover.classList.toggle('open');
+        const isOpen = popover.classList.contains('open');
+        document.querySelectorAll('.meal-type-popover.open').forEach(el => el.classList.remove('open'));
+        if (!isOpen) popover.classList.add('open');
     };
-    
+
     wrapper.appendChild(trigger);
     wrapper.appendChild(popover);
 }
 
 document.addEventListener('click', (e) => {
-    if (!e.target.closest('.view-meal-types-wrapper')) {
+    if (!e.target.closest('.view-meal-types-wrapper') && !e.target.closest('.meal-lib-card-types-wrapper')) {
         document.querySelectorAll('.meal-type-popover.open').forEach(el => el.classList.remove('open'));
+        document.querySelectorAll('.meal-lib-card.has-open-popover').forEach(el => el.classList.remove('has-open-popover'));
     }
 });
 
@@ -1714,9 +1778,10 @@ async function openMealModal(mode, mealId = null, prefillData = null) {
                     }
 
                     const tr = document.createElement('tr');
+                    const ingredientStatusClass = ing.is_avoid ? 'avoid-text' : (ing.is_remedy ? 'remedy-text' : '');
                     tr.innerHTML = `
                         <td class="view-ingredient-name-cell">
-                            <div class="view-ingredient-name ${ing.is_avoid ? 'avoid-text' : ''}" title="${tooltipText}">
+                            <div class="view-ingredient-name ${ingredientStatusClass}" title="${tooltipText}">
                                 ${esc(ing.name)}${ing.calories_incomplete ? ' <span class="incomplete-tag" title="Missing kcal data">(!)</span>' : ''}
                             </div>
                             ${ing.comment ? `<div class="view-ingredient-comment" title="${esc(ing.comment)}">${esc(ing.comment)}</div>` : ''}
@@ -2076,7 +2141,11 @@ function renderFavorites() {
                 </div>
                 <div class="meal-lib-card-meta">
                     ${langBadge}
-                    ${typeIconsHtml ? `<span class="meal-lib-card-types">${typeIconsHtml}</span>` : ''}
+                    <div class="meal-lib-card-types-wrapper" onclick="event.stopPropagation()">
+                        <div class="meal-card-type-trigger" onclick="toggleMealCardTypePopover('${m.id}', event)" title="Select meal type">
+                            ${getMealCardTypeTriggerHtml(m.meal_type)}
+                        </div>
+                    </div>
                 </div>
                 <div class="meal-lib-card-actions">
                     <button class="btn btn-secondary" onclick="removeFav('${m.id}')" style="font-size:.75rem; padding: 4px 10px; height: auto; display: flex; align-items: center; gap: 6px;">

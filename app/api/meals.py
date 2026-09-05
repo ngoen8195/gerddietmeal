@@ -12,7 +12,7 @@ import os
 import shutil
 import uuid
 
-from app.api.utils import get_avoid_food_names, format_meal_out
+from app.api.utils import get_avoid_food_names, get_remedy_food_names, format_meal_out
 
 router = APIRouter(prefix="/api/meals", tags=["meals"])
 
@@ -35,9 +35,10 @@ async def list_meals(
     page: int = 1,
     page_size: int = 50,
     search: str = None,
+    meal_type: str = None,
     session: AsyncSession = Depends(get_session),
 ):
-    """List meals with pagination and optional search by name/ingredient."""
+    """List meals with pagination and optional search by name/ingredient and meal type."""
     # Base query for meals
     stmt = select(Meal).options(selectinload(Meal.ingredients))
     
@@ -46,6 +47,12 @@ async def list_meals(
         stmt = stmt.outerjoin(MealIngredient).where(
             Meal.name.ilike(f"%{search}%") | MealIngredient.name.ilike(f"%{search}%")
         ).distinct()
+
+    if meal_type:
+        if meal_type.lower() == "none":
+            stmt = stmt.where((Meal.meal_type == "none") | (Meal.meal_type == "") | (Meal.meal_type.is_(None)))
+        else:
+            stmt = stmt.where(Meal.meal_type.ilike(f"%{meal_type}%"))
 
     # Get total count for pagination
     count_stmt = select(func.count()).select_from(stmt.subquery())
@@ -63,8 +70,9 @@ async def list_meals(
     fav_result = await session.execute(select(FavoriteMeal.meal_id))
     fav_ids = {row[0] for row in fav_result.fetchall()}
     avoid_names = await get_avoid_food_names(session)
+    remedy_names = await get_remedy_food_names(session)
     
-    items = [format_meal_out(m, fav_ids, avoid_names) for m in meals]
+    items = [format_meal_out(m, fav_ids, avoid_names, remedy_names) for m in meals]
     
     import math
     return {
@@ -150,8 +158,9 @@ async def get_meal(meal_id: int, session: AsyncSession = Depends(get_session)):
     fav_result = await session.execute(select(FavoriteMeal.meal_id).where(FavoriteMeal.meal_id == meal_id))
     fav_ids = {row[0] for row in fav_result.fetchall()}
     avoid_names = await get_avoid_food_names(session)
+    remedy_names = await get_remedy_food_names(session)
     
-    return format_meal_out(meal, fav_ids, avoid_names)
+    return format_meal_out(meal, fav_ids, avoid_names, remedy_names)
 
 
 @router.post("/", response_model=MealOut, status_code=201)
@@ -194,7 +203,8 @@ async def create_meal(meal_data: MealCreate, session: AsyncSession = Depends(get
     )
     meal = result.scalar_one()
     avoid_names = await get_avoid_food_names(session)
-    return format_meal_out(meal, set(), avoid_names)
+    remedy_names = await get_remedy_food_names(session)
+    return format_meal_out(meal, set(), avoid_names, remedy_names)
 
 
 @router.put("/{meal_id}", response_model=MealOut)
@@ -257,8 +267,9 @@ async def update_meal(meal_id: int, meal_data: MealUpdate, session: AsyncSession
     fav_result = await session.execute(select(FavoriteMeal.meal_id).where(FavoriteMeal.meal_id == meal_id))
     fav_ids = {row[0] for row in fav_result.fetchall()}
     avoid_names = await get_avoid_food_names(session)
+    remedy_names = await get_remedy_food_names(session)
     
-    return format_meal_out(meal, fav_ids, avoid_names)
+    return format_meal_out(meal, fav_ids, avoid_names, remedy_names)
 
 
 @router.delete("/{meal_id}", status_code=204)

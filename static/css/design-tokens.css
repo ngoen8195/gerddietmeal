@@ -928,11 +928,16 @@ main {
     border: none;
     border-left: 3px solid transparent;
     border-radius: var(--radius);
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
     height: 335px;
     display: flex;
     flex-direction: column;
     transition: background var(--transition);
+}
+
+.meal-lib-card.has-open-popover {
+    z-index: 50;
 }
 
 .meal-lib-card.has-avoid,
@@ -945,6 +950,10 @@ main {
     color: #EF4444 !important;
 }
 
+.remedy-text {
+    color: #2563EB !important;
+}
+
 .meal-lib-card:hover {
     background: #E5E7EB;
 }
@@ -954,6 +963,9 @@ main {
     height: 200px;
     width: 100%;
     cursor: pointer;
+    overflow: hidden;
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
 }
 
 .meal-lib-card-img {
@@ -1409,6 +1421,7 @@ main {
     .food-filters .cb-wrapper,
     .meal-lib-search .cb-wrapper,
     .food-filters select,
+    .meal-lib-search select,
     .food-filters button,
     .meal-lib-search button {
         width: 100%;
@@ -2305,11 +2318,51 @@ main {
     border: 0px solid #BFDBFE;
 }
 
-.meal-lib-card-types {
+.meal-lib-card-types,
+.meal-lib-card-types-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.meal-card-type-trigger {
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    padding: 2px 5px;
+    border-radius: var(--radius);
+    user-select: none;
+    transition: all var(--transition);
+    border: 1px solid transparent;
     font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+.meal-card-type-trigger:hover {
+    background: #E5E7EB;
+    border-color: var(--border);
+}
+
+.meal-card-type-trigger .meal-type-none {
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+}
+
+.meal-card-type-trigger:hover .meal-type-none {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: var(--primary-light, #DBEAFE);
+}
+
+.meal-lib-card-types-wrapper .meal-type-popover {
+    left: 0;
+    right: auto;
 }
 
 /* ═══ Shadcn Alert Dialog ═══ */
