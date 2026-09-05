@@ -48,7 +48,7 @@
 
 /* ─── Glassmorphism Components ─────────────────── */
 .glass-panel {
-    background: var(--bgl);
+    background: var(--bg);
     border-radius: 10px;
 }
 
